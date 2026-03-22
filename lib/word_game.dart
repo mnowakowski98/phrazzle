@@ -5,8 +5,10 @@ class WordGame {
     bool isFirstRecurse = true,
   ]) {
     // Check if the sub phrase contains a whole word from the root phrase
-    // TODO: Current implementation probably will have false positives - check this when less stupid
-    if (isFirstRecurse == true && rootPhrase.contains(subPhrase)) return false;
+    if (isFirstRecurse == true) {
+      final wordsInRootPhrase = rootPhrase.split(' ');
+      if (wordsInRootPhrase.contains(subPhrase)) return false;
+    }
 
     final currentChar = subPhrase[0];
 
