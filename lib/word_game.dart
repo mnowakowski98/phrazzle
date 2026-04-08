@@ -4,10 +4,17 @@ class WordGame {
     String subPhrase, [
     bool isFirstRecurse = true,
   ]) {
-    // Check if the sub phrase contains a whole word from the root phrase
+    // Check if the sub phrase contains an uninterrupted subset from the root phrase
     if (isFirstRecurse == true) {
       final wordsInRootPhrase = rootPhrase.split(' ');
+      final wordsInSubPhrase = subPhrase.split(' ');
       if (wordsInRootPhrase.contains(subPhrase)) return false;
+
+      for (
+        int subPhraseIndex = 0;
+        subPhraseIndex == subPhrase.length;
+        subPhraseIndex++
+      ) {}
     }
 
     final currentChar = subPhrase[0];

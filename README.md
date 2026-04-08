@@ -1,5 +1,5 @@
 
-# Word Game Thing
+# Phrazzle
 
 A game about finding subsets of words and phrases from words and phrases.
 

@@ -1,7 +1,7 @@
-name: word_game
+name: phrazzle
 description: A game about finding subsets of words and phrases from words and phrases.
 version: 0.1.0
-repository: https://github.com/mnowakowski98/word_game
+repository: https://github.com/mnowakowski98/phrazzle
 
 environment:
   sdk: ^3.8.1
