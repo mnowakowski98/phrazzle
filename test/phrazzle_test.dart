@@ -19,28 +19,26 @@ void main() {
       expect(game.getScore(id), null);
     });
 
-    test(
-      'Throws if trying to increment a player score that does not exist',
-      () {
-        final game = Phrazzle();
-        throwsA(() => game.incrementScore('derp', 5));
-      },
-    );
-
-    test('Can not start if no players are added', () {
-      final game = Phrazzle();
-      expect(game.start(), false);
-    });
-
     test('Starts if at least one player is added', () {
       final game = Phrazzle();
       game.addPlayer();
       expect(game.start(), true);
     });
 
-    test('Throws when ending', () {
+    test('Does not start if no players are added', () {
       final game = Phrazzle();
-      throwsA(game.end());
+      expect(game.start(), false);
+    });
+
+    test('Throws StateError when incrementing player scores', () {
+      final game = Phrazzle();
+      final id = game.addPlayer();
+      expect(() => game.incrementScore(id, 5), throwsStateError);
+    });
+
+    test('Throws StateError when ending', () {
+      final game = Phrazzle();
+      expect(game.end(), throwsStateError);
     });
   });
 
@@ -81,28 +79,33 @@ void main() {
       expect(winners[1], id2);
     });
 
-    test('Throws when adding players', () {
+    test(
+      'Throws RangeError if trying to increment a player score that does not exist',
+      () {
+        final game = Phrazzle();
+        expect(() => game.incrementScore('derp', 5), throwsRangeError);
+      },
+    );
+
+    test('Throws StateError when adding players', () {
       final game = Phrazzle();
       game.addPlayer();
       game.start();
-
-      throwsA(game.addPlayer());
+      expect(game.addPlayer(), throwsStateError);
     });
 
-    test('Throws when removing players', () {
+    test('Throws StateError when removing players', () {
       final game = Phrazzle();
       final id = game.addPlayer();
       game.start();
-
-      throwsA(() => game.removePlayer(id));
+      expect(() => game.removePlayer(id), throwsStateError);
     });
 
-    test('Throws when starting', () {
+    test('Throws StateError when starting', () {
       final game = Phrazzle();
       game.addPlayer();
       game.start();
-
-      throwsA(game.start());
+      expect(game.start(), throwsStateError);
     });
   });
 
