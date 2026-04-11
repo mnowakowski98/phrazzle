@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+    
+        {
+            "name": "phrazzle",
+            "cwd": "phrazzle",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "phrazzle (profile mode)",
+            "cwd": "phrazzle",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "phrazzle (release mode)",
+            "cwd": "phrazzle",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+    ]
+}
