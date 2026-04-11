@@ -1,6 +1,7 @@
 import 'package:phrazzle_lib/phrazzle.dart';
 import 'dart:io';
 
+/// Display info for players
 class Player {
   String id;
   String name;
@@ -11,41 +12,55 @@ class Player {
 
 void main(List<String> arguments) {
   final game = Phrazzle();
-  String? line;
+  String? input;
+
+  // Register players
   final players = <Player>[];
-
+  var playerIndex = 1;
+  print('Enter player names (leave empty to finish)\n---');
   do {
-    print('Enter player name:');
-    line = stdin.readLineSync();
-    if (line!.isNotEmpty) players.add(Player(game.addPlayer(), line));
-  } while (line.isNotEmpty);
+    print('Player $playerIndex:');
+    input = stdin.readLineSync();
+    if (input!.isNotEmpty) {
+      players.add(Player(game.addPlayer(), input));
+      playerIndex++;
+    }
+  } while (input.isNotEmpty);
 
-  print('Root phrase:');
-  final rootPhrase = stdin.readLineSync();
-  if (rootPhrase == null) throw Error();
+  // Get starting phrase
+  late final String startingPhrase;
+  do {
+    print('Enter starting phrase:');
+    input = stdin.readLineSync();
+    if (input!.isNotEmpty) startingPhrase = input;
+  } while (input.isEmpty);
 
+  // Player turn loop
+  game.start();
   for (final player in players) {
-    String? subPhraseLine;
-    var phraseIndex = 0;
     final subPhrases = <String>[];
+    var phraseIndex = 1;
 
+    // Get player phrase entries
     print('Player: ${player.name}');
     do {
-      print('Phrase #: $phraseIndex');
-      subPhraseLine = stdin.readLineSync();
-      if (subPhraseLine!.isNotEmpty) {
-        subPhrases.add(subPhraseLine);
+      print('Entry: $phraseIndex');
+      input = stdin.readLineSync();
+      if (input!.isNotEmpty) {
+        subPhrases.add(input);
         phraseIndex++;
       }
-    } while (subPhraseLine.isNotEmpty);
+    } while (input.isNotEmpty);
 
+    // Calculate score
     game.incrementScore(
       player.id,
-      Phrazzle.scorePhrases(rootPhrase, subPhrases),
+      Phrazzle.scorePhrases(startingPhrase, subPhrases),
     );
     player.score = game.getScore(player.id);
   }
 
+  // Display winning player(s)
   final winnerIds = game.end();
   final winningPlayers = players.where(
     (final player) => winnerIds.contains(player.id),
