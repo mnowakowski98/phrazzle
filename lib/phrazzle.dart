@@ -4,7 +4,7 @@ class Phrazzle {
   final _scores = <String, int>{};
 
   String addPlayer() {
-    final id = Uuid().toString();
+    final id = Uuid().v4();
     _scores[id] = 0;
     return id;
   }
@@ -33,7 +33,7 @@ class Phrazzle {
       return currentMax;
     });
     final winners = _scores.entries.where((final score) => score.value == max);
-    return List.from(winners.map((final winner) => winner.key));
+    return List<String>.from(winners.map((final winner) => winner.key));
   }
 
   static bool isValidSubPhrase(
