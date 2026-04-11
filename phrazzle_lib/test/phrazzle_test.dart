@@ -175,5 +175,11 @@ void main() {
       final subPhrase = 'words of the';
       expect(Phrazzle.isValidSubPhrase(rootPhrase, subPhrase), false);
     });
+
+    test('Sub phrase is longer than the root phrase', () {
+      final rootPhrase = 'test';
+      final subPhrase = 'testingtest';
+      expect(Phrazzle.isValidSubPhrase(rootPhrase, subPhrase), false);
+    });
   });
 }
