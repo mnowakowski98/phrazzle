@@ -43,14 +43,14 @@ class PhrazzleBase {
 
   /// Determines if a sub phrase is valid from a given root phrase
   static bool isValidSubPhrase(
-    String rootPhraseRaw,
-    String subPhraseRaw, [
+    String rootPhrase,
+    String subPhrase, [
     bool isFirstRecurse = true,
   ]) {
     // Check if the sub phrase contains an uninterrupted word or phrase from the root phrase
     if (isFirstRecurse == true) {
-      final wordsInRootPhrase = rootPhraseRaw.split(' ');
-      final wordsInSubPhrase = subPhraseRaw.split(' ');
+      final wordsInRootPhrase = rootPhrase.split(' ');
+      final wordsInSubPhrase = subPhrase.split(' ');
 
       if (wordsInSubPhrase.any(
         (final string) => wordsInRootPhrase.contains(string),
@@ -60,25 +60,25 @@ class PhrazzleBase {
     }
 
     // Prep phrases
-    final rootPhrase = !isFirstRecurse
-        ? rootPhraseRaw
-        : rootPhraseRaw.trim().toLowerCase().replaceAll(' ', '');
-    final subPhrase = !isFirstRecurse
-        ? subPhraseRaw
-        : subPhraseRaw.trim().toLowerCase().replaceAll(' ', '');
+    final rootPhraseTransform = !isFirstRecurse
+        ? rootPhrase
+        : rootPhrase.trim().toLowerCase().replaceAll(' ', '');
+    final subPhraseTransform = !isFirstRecurse
+        ? subPhrase
+        : subPhrase.trim().toLowerCase().replaceAll(' ', '');
 
-    final currentChar = subPhrase[0];
+    final currentChar = subPhraseTransform[0];
 
     // Check if current processing char is in the root phrase
-    if (rootPhrase.contains(currentChar) == false) return false;
+    if (rootPhraseTransform.contains(currentChar) == false) return false;
 
     // No more chars to check, sub phrase is valid
-    if (subPhrase.length == 1) return true;
+    if (subPhraseTransform.length == 1) return true;
 
     // Check next char with truncated phrases
     return isValidSubPhrase(
-      rootPhrase.substring(rootPhrase.indexOf(currentChar)),
-      subPhrase.substring(1),
+      rootPhraseTransform.substring(rootPhraseTransform.indexOf(currentChar)),
+      subPhraseTransform.substring(1),
       false,
     );
   }
