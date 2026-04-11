@@ -1,6 +1,6 @@
 library;
 
-import 'package:phrazzle/phrazzle.dart';
+import 'package:phrazzle_lib/phrazzle.dart';
 
 export 'src/phrazzle_base.dart';
 

@@ -1,4 +1,4 @@
-import 'package:phrazzle/phrazzle.dart';
+import 'package:phrazzle_lib/phrazzle.dart';
 import 'dart:io';
 
 class Player {
