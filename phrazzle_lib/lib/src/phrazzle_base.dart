@@ -4,6 +4,7 @@ class PhrazzleBase {
   final _scores = <String, int>{};
   var _started = false;
 
+  /// Add a player to the game and get id
   String addPlayer() {
     if (_started) throw StateError('Game already started');
 
@@ -12,25 +13,14 @@ class PhrazzleBase {
     return id;
   }
 
+  /// Remove a player by id
   int? removePlayer(String id) {
     if (_started) throw StateError('Game already started');
 
     return _scores.remove(id);
   }
 
-  int? getScore(String id) => _scores[id];
-
-  int incrementScore(String id, int amount) {
-    if (_started == false) throw StateError('Game not started yet');
-
-    final currentScore = _scores[id];
-    if (currentScore == null) {
-      throw RangeError('Incremented score that does not exist');
-    }
-    _scores[id] = currentScore + amount;
-    return _scores[id]!;
-  }
-
+  /// Start the game
   bool start() {
     if (_started) throw StateError('Game already started');
 
@@ -39,6 +29,7 @@ class PhrazzleBase {
     return true;
   }
 
+  /// End the game and get winning player ids
   List<String> end() {
     if (_started == false) throw StateError('Game not started yet');
 
@@ -50,15 +41,16 @@ class PhrazzleBase {
     return List<String>.from(winners.map((final winner) => winner.key));
   }
 
+  /// Determines if a sub phrase is valid from a given root phrase
   static bool isValidSubPhrase(
-    String rootPhrase,
-    String subPhrase, [
+    String rootPhraseRaw,
+    String subPhraseRaw, [
     bool isFirstRecurse = true,
   ]) {
-    // Check if the sub phrase contains an uninterrupted subset from the root phrase
+    // Check if the sub phrase contains an uninterrupted word or phrase from the root phrase
     if (isFirstRecurse == true) {
-      final wordsInRootPhrase = rootPhrase.split(' ');
-      final wordsInSubPhrase = subPhrase.split(' ');
+      final wordsInRootPhrase = rootPhraseRaw.split(' ');
+      final wordsInSubPhrase = subPhraseRaw.split(' ');
 
       if (wordsInSubPhrase.any(
         (final string) => wordsInRootPhrase.contains(string),
@@ -66,6 +58,14 @@ class PhrazzleBase {
         return false;
       }
     }
+
+    // Prep phrases
+    final rootPhrase = !isFirstRecurse
+        ? rootPhraseRaw
+        : rootPhraseRaw.trim().toLowerCase().replaceAll(' ', '');
+    final subPhrase = !isFirstRecurse
+        ? subPhraseRaw
+        : subPhraseRaw.trim().toLowerCase().replaceAll(' ', '');
 
     final currentChar = subPhrase[0];
 
@@ -83,6 +83,7 @@ class PhrazzleBase {
     );
   }
 
+  /// Scores a chain of sub phrases until invalid or done
   static int scorePhrases(String phrase, List<String> subPhrases) {
     var invalidSubPhrase = false;
     return subPhrases.fold(0, (final score, final subPhrase) {
@@ -94,5 +95,20 @@ class PhrazzleBase {
       }
       return score + 1;
     });
+  }
+
+  /// Get a player's score
+  int? getPlayerScore(String id) => _scores[id];
+
+  /// Increment a player's score
+  int incrementPlayerScore(String id, int amount) {
+    if (_started == false) throw StateError('Game not started yet');
+
+    final currentScore = _scores[id];
+    if (currentScore == null) {
+      throw RangeError('Incremented score that does not exist');
+    }
+    _scores[id] = currentScore + amount;
+    return _scores[id]!;
   }
 }

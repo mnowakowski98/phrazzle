@@ -53,11 +53,11 @@ void main(List<String> arguments) {
     } while (input.isNotEmpty);
 
     // Calculate score
-    game.incrementScore(
+    game.incrementPlayerScore(
       player.id,
       Phrazzle.scorePhrases(startingPhrase, subPhrases),
     );
-    player.score = game.getScore(player.id);
+    player.score = game.getPlayerScore(player.id);
   }
 
   // Display winning player(s)
