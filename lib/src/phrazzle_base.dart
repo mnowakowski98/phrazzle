@@ -2,18 +2,27 @@ import 'package:uuid/uuid.dart';
 
 class PhrazzleBase {
   final _scores = <String, int>{};
+  var _started = false;
 
   String addPlayer() {
+    if (_started) throw StateError('Game already started');
+
     final id = Uuid().v4();
     _scores[id] = 0;
     return id;
   }
 
-  int? removePlayer(String id) => _scores.remove(id);
+  int? removePlayer(String id) {
+    if (_started) throw StateError('Game already started');
+
+    return _scores.remove(id);
+  }
 
   int? getScore(String id) => _scores[id];
 
   int incrementScore(String id, int amount) {
+    if (_started == false) throw StateError('Game not started yet');
+
     final currentScore = _scores[id];
     if (currentScore == null) {
       throw RangeError('Incremented score that does not exist');
@@ -23,11 +32,16 @@ class PhrazzleBase {
   }
 
   bool start() {
+    if (_started) throw StateError('Game already started');
+
     if (_scores.isEmpty) return false;
+    _started = true;
     return true;
   }
 
   List<String> end() {
+    if (_started == false) throw StateError('Game not started yet');
+
     final max = _scores.values.fold(0, (final currentMax, final value) {
       if (value > currentMax) return value;
       return currentMax;

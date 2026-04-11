@@ -38,7 +38,7 @@ void main() {
 
     test('Throws StateError when ending', () {
       final game = Phrazzle();
-      expect(game.end(), throwsStateError);
+      expect(() => game.end(), throwsStateError);
     });
   });
 
@@ -83,6 +83,8 @@ void main() {
       'Throws RangeError if trying to increment a player score that does not exist',
       () {
         final game = Phrazzle();
+        game.addPlayer();
+        game.start();
         expect(() => game.incrementScore('derp', 5), throwsRangeError);
       },
     );
@@ -91,7 +93,7 @@ void main() {
       final game = Phrazzle();
       game.addPlayer();
       game.start();
-      expect(game.addPlayer(), throwsStateError);
+      expect(() => game.addPlayer(), throwsStateError);
     });
 
     test('Throws StateError when removing players', () {
@@ -105,7 +107,7 @@ void main() {
       final game = Phrazzle();
       game.addPlayer();
       game.start();
-      expect(game.start(), throwsStateError);
+      expect(() => game.start(), throwsStateError);
     });
   });
 
