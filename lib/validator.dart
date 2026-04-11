@@ -1,4 +1,4 @@
-class WordGame {
+class Validator {
   bool isValidSubPhrase(
     String rootPhrase,
     String subPhrase, [
@@ -8,13 +8,10 @@ class WordGame {
     if (isFirstRecurse == true) {
       final wordsInRootPhrase = rootPhrase.split(' ');
       final wordsInSubPhrase = subPhrase.split(' ');
-      if (wordsInRootPhrase.contains(subPhrase)) return false;
 
-      for (
-        int subPhraseIndex = 0;
-        subPhraseIndex == subPhrase.length;
-        subPhraseIndex++
-      ) {}
+      return !wordsInSubPhrase.any(
+        (final string) => wordsInRootPhrase.contains(string),
+      );
     }
 
     final currentChar = subPhrase[0];

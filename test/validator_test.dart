@@ -1,8 +1,8 @@
-import 'package:phrazzle/word_game.dart';
+import 'package:phrazzle/validator.dart';
 import 'package:test/test.dart';
 
 void main() {
-  final game = WordGame();
+  final game = Validator();
 
   group('Valid sub phrases', () {
     test('General', () {
