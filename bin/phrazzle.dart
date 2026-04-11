@@ -15,11 +15,12 @@ void main(List<String> arguments) {
   final players = <Player>[];
 
   do {
-    print('Enter player name: \n');
+    print('Enter player name:');
     line = stdin.readLineSync();
-    if (line != null) players.add(Player(game.addPlayer(), line));
-  } while (line != null);
+    if (line!.isNotEmpty) players.add(Player(game.addPlayer(), line));
+  } while (line.isNotEmpty);
 
+  print('Root phrase:');
   final rootPhrase = stdin.readLineSync();
   if (rootPhrase == null) throw Error();
 
@@ -28,19 +29,32 @@ void main(List<String> arguments) {
     var phraseIndex = 0;
     final subPhrases = <String>[];
 
-    print('Player: ${player.name}\n');
+    print('Player: ${player.name}');
     do {
-      print('Phrase #: $phraseIndex\n');
+      print('Phrase #: $phraseIndex');
       subPhraseLine = stdin.readLineSync();
-      if (subPhraseLine != null) subPhrases.add(subPhraseLine);
-    } while (subPhraseLine != null);
+      if (subPhraseLine!.isNotEmpty) {
+        subPhrases.add(subPhraseLine);
+        phraseIndex++;
+      }
+    } while (subPhraseLine.isNotEmpty);
 
+    game.incrementScore(
+      player.id,
+      Phrazzle.scorePhrases(rootPhrase, subPhrases),
+    );
     player.score = game.getScore(player.id);
   }
 
-  final winners = game.end().fold(
-    '',
-    (final accum, final player) => '$accum:$player',
+  final winnerIds = game.end();
+  final winningPlayers = players.where(
+    (final player) => winnerIds.contains(player.id),
   );
-  print(winners);
+
+  print('Winner(s):');
+  for (final player in winningPlayers) {
+    print('Player: ${player.name}');
+    print('Score: ${player.score}');
+    print('\n');
+  }
 }
