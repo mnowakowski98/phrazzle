@@ -46,9 +46,11 @@ class Phrazzle {
       final wordsInRootPhrase = rootPhrase.split(' ');
       final wordsInSubPhrase = subPhrase.split(' ');
 
-      return !wordsInSubPhrase.any(
+      if (wordsInSubPhrase.any(
         (final string) => wordsInRootPhrase.contains(string),
-      );
+      )) {
+        return false;
+      }
     }
 
     final currentChar = subPhrase[0];
