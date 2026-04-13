@@ -39,11 +39,11 @@ void main(List<String> arguments) {
       }
     } while (subPhraseLine.isNotEmpty);
 
-    game.incrementScore(
+    final score = game.incrementScore(
       player.id,
       Phrazzle.scorePhrases(rootPhrase, subPhrases),
     );
-    player.score = game.getScore(player.id);
+    player.score = score;
   }
 
   final winnerIds = game.end();

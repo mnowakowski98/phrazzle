@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  phrazzle_lib:
+    path: ../phrazzle_lib/
 
 dev_dependencies:
   flutter_test:

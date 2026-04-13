@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phrazzle_lib/phrazzle.dart';
 
 class _Player {
   final String id;
@@ -21,10 +22,13 @@ class _GameState extends State<Game> {
   String inputValue = '';
   _FormState formState = .players;
 
+  final game = Phrazzle();
+
   final players = <_Player>[];
   String rootPhrase = '';
   int playerEntriesIndex = 0;
   final entries = <String>[];
+  final winners = <_Player>[];
 
   String prompt() {
     switch (formState) {
@@ -45,7 +49,8 @@ class _GameState extends State<Game> {
     setState(() {
       switch (formState) {
         case .players:
-          players.add(_Player(text, text, 0));
+          final id = game.addPlayer();
+          players.add(_Player(id, text, 0));
           break;
         case .rootPhrase:
           rootPhrase = inputValue;
@@ -68,11 +73,22 @@ class _GameState extends State<Game> {
           break;
         case .rootPhrase:
           entries.clear();
+          game.start();
           formState = .entries;
           break;
         case .entries:
-          players[playerEntriesIndex].score = 0; // TODO: Get score from lib
+          final player = players[playerEntriesIndex];
+          final score = game.incrementScore(
+            player.id,
+            Phrazzle.scorePhrases(rootPhrase, entries),
+          );
+          player.score = score;
           if (++playerEntriesIndex >= players.length) {
+            winners.clear();
+            final winnerIds = game.end();
+            winners.addAll(
+              players.where((final player) => winnerIds.contains(player.id)),
+            );
             formState = .winners;
           }
           entries.clear();
@@ -99,7 +115,12 @@ class _GameState extends State<Game> {
       case .entries:
         return ListView(children: [for (final entry in entries) Text(entry)]);
       case .winners:
-        return null;
+        return ListView(
+          children: [
+            for (final winner in winners)
+              Text('Player: ${winner.name} - Score: ${winner.score}'),
+          ],
+        );
     }
   }
 
