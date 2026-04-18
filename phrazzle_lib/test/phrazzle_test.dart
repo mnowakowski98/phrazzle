@@ -3,6 +3,11 @@ import 'package:test/test.dart';
 
 void main() {
   group('Game not started', () {
+    test('Game started returns false', () {
+      final game = Phrazzle();
+      expect(game.started, false);
+    });
+
     test('Can add a player with 0 score', () {
       final game = Phrazzle();
       final id = game.addPlayer();
@@ -43,6 +48,13 @@ void main() {
   });
 
   group('Game started', () {
+    test('Game started returns true', () {
+      final game = Phrazzle();
+      game.addPlayer();
+      game.start();
+      expect(game.started, true);
+    });
+
     test('Can increment a player score', () {
       final game = Phrazzle();
       final id = game.addPlayer();

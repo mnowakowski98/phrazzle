@@ -52,6 +52,10 @@ class _GameState extends State<Game> {
 
   void nextPage() {
     setState(() {
+      if (formStates[formStateIndex + 1] == .entries && game.started == false) {
+        game.start();
+      }
+
       final isEntryForm = formState() == .entries;
 
       // Score entries if end of player entries

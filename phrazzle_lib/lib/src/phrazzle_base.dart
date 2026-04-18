@@ -3,9 +3,10 @@ import 'package:uuid/uuid.dart';
 class PhrazzleBase {
   final _scores = <String, int>{};
   var _started = false;
+  bool get started => _started;
 
   String addPlayer() {
-    if (_started) throw StateError('Game already started');
+    if (started) throw StateError('Game already started');
 
     final id = Uuid().v4();
     _scores[id] = 0;
@@ -13,7 +14,7 @@ class PhrazzleBase {
   }
 
   int? removePlayer(String id) {
-    if (_started) throw StateError('Game already started');
+    if (started) throw StateError('Game already started');
 
     return _scores.remove(id);
   }
@@ -21,7 +22,7 @@ class PhrazzleBase {
   int? getScore(String id) => _scores[id];
 
   int incrementScore(String id, int amount) {
-    if (_started == false) throw StateError('Game not started yet');
+    if (started == false) throw StateError('Game not started yet');
 
     final currentScore = _scores[id];
     if (currentScore == null) {
@@ -32,7 +33,7 @@ class PhrazzleBase {
   }
 
   bool start() {
-    if (_started) throw StateError('Game already started');
+    if (started) throw StateError('Game already started');
 
     if (_scores.isEmpty) return false;
     _started = true;
@@ -40,7 +41,7 @@ class PhrazzleBase {
   }
 
   List<String> end() {
-    if (_started == false) throw StateError('Game not started yet');
+    if (started == false) throw StateError('Game not started yet');
 
     final max = _scores.values.fold(0, (final currentMax, final value) {
       if (value > currentMax) return value;
