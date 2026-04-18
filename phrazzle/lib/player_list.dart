@@ -16,9 +16,24 @@ class PlayerList extends StatelessWidget {
   @override
   build(BuildContext context) {
     return Expanded(
-      child: ListView(
+      child: Column(
+        crossAxisAlignment: .start,
         children: [
-          for (final player in players) ListTile(title: Text(player.name)),
+          Expanded(
+            child: ListView(
+              children: [
+                ListTile(
+                  title: Text('Players'),
+                  titleTextStyle: TextStyle(
+                    fontWeight: .bold,
+                    color: Color.fromARGB(255, 0, 0, 0),
+                  ),
+                ),
+                for (final player in players)
+                  ListTile(title: Text(player.name)),
+              ],
+            ),
+          ),
         ],
       ),
     );
