@@ -11,17 +11,17 @@ void main() {
     test('Can add a player with 0 score', () {
       final game = Phrazzle();
       final id = game.addPlayer();
-      expect(game.getScore(id), 0);
+      expect(game.getPlayerScore(id), 0);
     });
 
     test('Can remove a player', () {
       final game = Phrazzle();
       final id = game.addPlayer();
-      assert(game.getScore(id) != null);
+      assert(game.getPlayerScore(id) != null);
 
       final lastScore = game.removePlayer(id);
       expect(lastScore, greaterThanOrEqualTo(0));
-      expect(game.getScore(id), null);
+      expect(game.getPlayerScore(id), null);
     });
 
     test('Starts if at least one player is added', () {
@@ -38,7 +38,7 @@ void main() {
     test('Throws StateError when incrementing player scores', () {
       final game = Phrazzle();
       final id = game.addPlayer();
-      expect(() => game.incrementScore(id, 5), throwsStateError);
+      expect(() => game.incrementPlayerScore(id, 5), throwsStateError);
     });
 
     test('Throws StateError when ending', () {
@@ -61,8 +61,8 @@ void main() {
       game.start();
 
       final amount = 5;
-      expect(game.incrementScore(id, amount), amount);
-      expect(game.getScore(id), amount);
+      expect(game.incrementPlayerScore(id, amount), amount);
+      expect(game.getPlayerScore(id), amount);
     });
 
     test('Returns winner id on end', () {
@@ -71,8 +71,8 @@ void main() {
       final id2 = game.addPlayer();
       game.start();
 
-      game.incrementScore(id1, 5);
-      game.incrementScore(id2, 10);
+      game.incrementPlayerScore(id1, 5);
+      game.incrementPlayerScore(id2, 10);
 
       expect(game.end()[0], id2);
     });
@@ -83,8 +83,8 @@ void main() {
       final id2 = game.addPlayer();
       game.start();
 
-      game.incrementScore(id1, 10);
-      game.incrementScore(id2, 10);
+      game.incrementPlayerScore(id1, 10);
+      game.incrementPlayerScore(id2, 10);
 
       final winners = game.end();
       expect(winners[0], id1);
@@ -97,7 +97,7 @@ void main() {
         final game = Phrazzle();
         game.addPlayer();
         game.start();
-        expect(() => game.incrementScore('derp', 5), throwsRangeError);
+        expect(() => game.incrementPlayerScore('derp', 5), throwsRangeError);
       },
     );
 
@@ -145,6 +145,18 @@ void main() {
       final subPhrase = 'her';
       expect(Phrazzle.isValidSubPhrase(rootPhrase, subPhrase), true);
     });
+
+    test('Ignores capitalization', () {
+      final rootPhrase = 'qwerty';
+      final subPhrase = 'QwEr';
+      expect(Phrazzle.isValidSubPhrase(rootPhrase, subPhrase), true);
+    });
+
+    test('Ignores spaces', () {
+      final rootPhrase = 'chicken nugget';
+      final subPhrase = 'chugg';
+      expect(Phrazzle.isValidSubPhrase(rootPhrase, subPhrase), true);
+    });
   });
 
   group('Invalid sub phrases', () {
@@ -173,6 +185,12 @@ void main() {
       // Same as above
       final rootPhrase = 'testing words of the testing';
       final subPhrase = 'words of the';
+      expect(Phrazzle.isValidSubPhrase(rootPhrase, subPhrase), false);
+    });
+
+    test('Sub phrase is longer than the root phrase', () {
+      final rootPhrase = 'test';
+      final subPhrase = 'testingtest';
       expect(Phrazzle.isValidSubPhrase(rootPhrase, subPhrase), false);
     });
   });
