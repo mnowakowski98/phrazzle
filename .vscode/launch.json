@@ -6,7 +6,8 @@
             "name": "phrazzle",
             "cwd": "phrazzle",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "program": "lib/main.dart",
         },
         {
             "name": "phrazzle (profile mode)",

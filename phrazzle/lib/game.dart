@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:phrazzle/player.dart';
 import 'package:phrazzle/player_entries.dart';
 import 'package:phrazzle/player_list.dart';
+import 'package:phrazzle/starting_phrase.dart';
 import 'package:phrazzle/winners.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
@@ -27,98 +29,73 @@ class _GameState extends State<Game> {
   final game = Phrazzle();
 
   int playerIndex = 0;
-  final players = <Player>[];
-  String rootPhrase = '';
-  final playerPhraseEntries = <String>[];
-  final winners = <Player>[];
+  String startingPhrase = '';
 
-  void commitText(String text) {
-    setState(() {
-      switch (formState()) {
-        case .players:
-          players.add(Player(game.addPlayer(), text, 0));
-          break;
-        case .startingPhrase:
-          rootPhrase = text;
-          break;
-        case .entries:
-          playerPhraseEntries.add(text);
-          break;
-        case .winners:
-          break;
-      }
-    });
+  final playerNames = <String, String>{};
+  final playerPhraseEntries = <String, List<String>>{};
+  List<Player> players() {
+    final players = <Player>[];
+    for (final player in game.scores.entries) {
+      players.add(Player(player.key, playerNames[player.key]!, player.value));
+    }
+    return players;
   }
 
   void nextPage() {
     setState(() {
-      if (formStates[formStateIndex + 1] == .entries && game.started == false) {
-        game.start();
-      }
-
       final isEntryForm = formState() == .entries;
 
       // Score entries if end of player entries
       if (isEntryForm) {
-        final score = Phrazzle.scorePhrases(rootPhrase, playerPhraseEntries);
-        final totalScore = game.incrementScore(players[playerIndex].id, score);
-        players[playerIndex].score = totalScore;
+        final player = players()[playerIndex];
+        final score = Phrazzle.scorePhrases(
+          startingPhrase,
+          playerPhraseEntries[player.id]!,
+        );
+        player.score = game.incrementScore(player.id, score);
       }
 
       final isEndOfPlayerEntries =
-          isEntryForm && ++playerIndex >= players.length;
+          isEntryForm && ++playerIndex >= players().length;
 
       final nextFormExists = formStateIndex + 1 < formStates.length;
 
+      // Move to next form state
       if ((isEntryForm == false || isEndOfPlayerEntries) && nextFormExists) {
         formStateIndex++;
       }
-
-      if (formState() == .players) players.clear();
-      if (formState() == .startingPhrase) rootPhrase = '';
-      if (formState() == .entries) playerPhraseEntries.clear;
-      if (formState() == .winners) winners.clear();
     });
-  }
-
-  String? prompt() {
-    switch (formState()) {
-      case .players:
-        return 'Enter player name';
-      case .startingPhrase:
-        return 'Enter starting phrase';
-      case .entries:
-        return 'Enter derived phrase';
-      case .winners:
-        return null;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasStartingPhrase = startingPhrase != '';
     return Column(
       crossAxisAlignment: .start,
       children: [
-        if (rootPhrase != '') Text(rootPhrase),
-        Divider(),
-        if (formState() == .players) PlayerList(players),
-        if (formState() == .startingPhrase) Expanded(child: Placeholder()),
-        if (formState() == .entries) PlayerEntries(playerPhraseEntries),
-        if (formState() == .winners) Winners(winners),
-        Divider(),
-        Text(prompt() ?? '-'),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(onChanged: (value) => inputValue = value),
-            ),
-            TextButton(
-              onPressed: () => commitText(inputValue),
-              child: Text('Enter'),
-            ),
-            TextButton(child: Text('Next'), onPressed: () => nextPage()),
-          ],
-        ),
+        if (hasStartingPhrase) Text(startingPhrase),
+        if (hasStartingPhrase) Divider(),
+        if (formState() == .players)
+          PlayerList(
+            players(),
+            allowEdit: true,
+            onPlayerAdd: (name) =>
+                setState(() => playerNames[game.addPlayer()] = name),
+            onDone: () {
+              if (players().isEmpty) return;
+              setState(() => formStateIndex++);
+            },
+          ),
+        if (formState() == .startingPhrase)
+          StartingPhrase((final phrase) => startingPhrase = phrase),
+        if (formState() == .entries)
+          PlayerEntries(
+            (final entries) => setState(() {
+              playerPhraseEntries[players()[playerIndex].id] = entries;
+              nextPage();
+            }),
+          ),
+        if (formState() == .winners) Winners(players()),
       ],
     );
   }

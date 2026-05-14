@@ -1,39 +1,66 @@
 import 'package:flutter/material.dart';
+import 'package:phrazzle/player.dart';
+import 'package:phrazzle/player_tile.dart';
 
-class Player {
-  final String id;
-  final String name;
-  int score = 0;
-
-  Player(this.id, this.name, this.score);
-}
-
-class PlayerList extends StatelessWidget {
+class PlayerList extends StatefulWidget {
   final List<Player> players;
 
-  const PlayerList(this.players, {super.key});
+  final bool allowEdit;
+  final void Function(String name)? onPlayerAdd;
+  final void Function()? onDone;
+
+  const PlayerList(
+    this.players, {
+    super.key,
+    this.allowEdit = false,
+    this.onPlayerAdd,
+    this.onDone,
+  });
+
+  @override
+  State<PlayerList> createState() => _PlayerListState();
+}
+
+class _PlayerListState extends State<PlayerList> {
+  var inputText = '';
 
   @override
   build(BuildContext context) {
     return Expanded(
-      child: Column(
-        crossAxisAlignment: .start,
+      child: ListView(
         children: [
-          Expanded(
-            child: ListView(
+          ListTile(
+            title: Text('Players'),
+            titleTextStyle: TextStyle(
+              fontWeight: .bold,
+              color: Color.fromARGB(255, 0, 0, 0),
+            ),
+            subtitle: Row(
+              crossAxisAlignment: .end,
               children: [
-                ListTile(
-                  title: Text('Players'),
-                  titleTextStyle: TextStyle(
-                    fontWeight: .bold,
-                    color: Color.fromARGB(255, 0, 0, 0),
-                  ),
+                Expanded(
+                  child: TextField(onChanged: (final text) => inputText = text),
                 ),
-                for (final player in players)
-                  ListTile(title: Text(player.name)),
+                TextButton(
+                  onPressed: () {
+                    if (widget.onPlayerAdd != null) {
+                      widget.onPlayerAdd!(inputText);
+                    }
+                  },
+                  child: Text('Add'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (widget.onDone != null) {
+                      widget.onDone!();
+                    }
+                  },
+                  child: Text('Done'),
+                ),
               ],
             ),
           ),
+          for (final player in widget.players) PlayerTile(player),
         ],
       ),
     );

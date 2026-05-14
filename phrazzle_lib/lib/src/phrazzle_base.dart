@@ -2,6 +2,8 @@ import 'package:uuid/uuid.dart';
 
 class PhrazzleBase {
   final _scores = <String, int>{};
+  Map<String, int> get scores => Map.unmodifiable(_scores);
+
   var _started = false;
   bool get started => _started;
 

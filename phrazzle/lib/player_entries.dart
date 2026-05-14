@@ -1,15 +1,43 @@
 import 'package:flutter/material.dart';
 
-class PlayerEntries extends StatelessWidget {
-  final List<String> entries;
+class PlayerEntries extends StatefulWidget {
+  final void Function(List<String> entries) onEnd;
 
-  const PlayerEntries(this.entries, {super.key});
+  const PlayerEntries(this.onEnd, {super.key});
+
+  @override
+  State<PlayerEntries> createState() => _PlayerEntriesState();
+}
+
+class _PlayerEntriesState extends State<PlayerEntries> {
+  final entries = <String>[];
+  var inputText = '';
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: ListView(
-        children: [for (final entry in entries) ListTile(title: Text(entry))],
+        children: [
+          ListTile(
+            title: Text('Derived phrases'),
+            subtitle: Row(
+              children: [
+                TextField(
+                  onChanged: (final text) => setState(() => inputText = text),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => entries.add(inputText)),
+                  child: Text('Enter'),
+                ),
+                TextButton(
+                  onPressed: () => widget.onEnd(entries),
+                  child: Text('Done'),
+                ),
+              ],
+            ),
+          ),
+          for (final entry in entries) ListTile(title: Text(entry)),
+        ],
       ),
     );
   }
