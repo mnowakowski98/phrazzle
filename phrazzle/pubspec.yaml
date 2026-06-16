@@ -1,7 +1,7 @@
 name: phrazzle
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.0+1
+repository: https://github.com/mnowakowski98/phrazzle
 
 environment:
   sdk: ^3.11.4

@@ -1,6 +1,6 @@
 name: phrazzle_lib
 description: A game about finding subsets of words and phrases from words and phrases.
-version: 1.0.0
+publish_to: 'none'
 repository: https://github.com/mnowakowski98/phrazzle
 
 environment:
