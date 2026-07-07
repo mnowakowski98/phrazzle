@@ -48,7 +48,7 @@ class _GameState extends State<Game> {
       // Score entries if end of player entries
       if (isEntryForm) {
         final player = players()[playerIndex];
-        final score = Phrazzle.scorePhrases(
+        final score = Phrazzle.getNumberOfValidPhrases(
           startingPhrase,
           playerPhraseEntries[player.id]!,
         );

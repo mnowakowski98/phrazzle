@@ -11,7 +11,8 @@ final game = Phrazzle();
 class PhrazzleCentral {
   /// Get information about a given game
   @Route.get('/game/')
-  Future<Response> getGameInformation() async {
+  Future<Response> getGameInformation(Request request) async {
+    return Response.ok('test');
     throw Exception('Not implemented');
   }
 
