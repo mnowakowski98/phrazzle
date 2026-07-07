@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:phrazzle_lib/phrazzle.dart';
 import 'game.dart';
 
 void main() {
   runApp(const MainApp());
 }
-
-final game = Phrazzle();
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});

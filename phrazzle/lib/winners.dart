@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:phrazzle/player.dart';
 import 'package:phrazzle/player_tile.dart';
+
+import 'package:phrazzle_lib/phrazzle.dart';
 
 class Winners extends StatelessWidget {
   final List<Player> players;
