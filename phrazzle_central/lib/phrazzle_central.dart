@@ -5,39 +5,60 @@ import 'package:phrazzle_lib/phrazzle.dart';
 
 part 'phrazzle_central.g.dart';
 
-final game = Phrazzle();
+Game game = Game();
+Round? round;
 
 /// Service for the creation, cordination and status of games
 class PhrazzleCentral {
-  /// Get information about a given game
-  @Route.get('/game/')
-  Future<Response> getGameInformation(Request request) async {
-    return Response.ok('test');
-    throw Exception('Not implemented');
+  /// Reset the game
+  @Route.post('/game')
+  Future<Response> createGame(Request _) async {
+    game = Game();
+    print('Started new game');
+    return Response.ok(null);
   }
 
-  /// Create a new game
-  @Route.post('/game/')
-  Future<Response> createGame(Request request) async {
-    throw Exception('Not implemented');
+  /// Join the game with a given player name
+  @Route.post('/game/<playerName>')
+  Future<Response> joinGame(Request _, String playerName) async {
+    final playerId = game.addPlayer(playerName);
+    print('Added player: $playerName');
+    return Response.ok(playerId);
   }
 
-  /// Set a starting phrase for a given game
-  @Route.put('/game/set/<phrase>')
-  Future<Response> setGamePhrase(Request request, String phrase) async {
-    throw Exception('Not implemented');
+  // Start the game
+  @Route.put('/game/<phrase>')
+  Future<Response> startGame(Request _, String phrase) async {
+    if (game.isStarted) {
+      round?.scoreRound();
+      final winnerIds = game.end();
+      final winningPlayers = game.players.entries.where(
+        (final playerEntry) => winnerIds.contains(playerEntry.key),
+      );
+
+      print('Ended game');
+      return Response.ok(winningPlayers.toString());
+    }
+
+    final started = game.start();
+    if (started) round = Round(phrase, game.players.values.toList());
+
+    print('Started game');
+    return Response.ok('$started');
   }
 
-  /// Join a game with a given player name
-  @Route.post('/game/join/<player>')
-  Future<Response> joinGame(Request request, String player) async {
-    throw Exception('Not implemeted');
-  }
+  // Add player sub phrase
+  @Route.post('/game/phrase/<playerId>/<phrase>')
+  Future<Response> addSubPhrase(
+    Request _,
+    String playerId,
+    String phrase,
+  ) async {
+    final player = game.players[playerId];
+    round?.addPlayerSubPhrase(player!, phrase);
 
-  /// Start a game
-  @Route.put('/game/start/<gameId>')
-  Future<Response> startGame(Request request, String gameId) async {
-    throw Exception('Not implemented');
+    print('Added player phrase: $phrase to ${player?.name}');
+    return Response.ok(null);
   }
 
   Router get router => _$PhrazzleCentralRouter(this);
