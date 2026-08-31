@@ -29,17 +29,6 @@ class PhrazzleCentral {
   // Start the game
   @Route.put('/game/<phrase>')
   Future<Response> startGame(Request _, String phrase) async {
-    if (game.isStarted) {
-      round?.scoreRound();
-      final winnerIds = game.end();
-      final winningPlayers = game.players.entries.where(
-        (final playerEntry) => winnerIds.contains(playerEntry.key),
-      );
-
-      print('Ended game');
-      return Response.ok(winningPlayers.toString());
-    }
-
     final started = game.start();
     if (started) round = Round(phrase, game.players.values.toList());
 
@@ -59,6 +48,18 @@ class PhrazzleCentral {
 
     print('Added player phrase: $phrase to ${player?.name}');
     return Response.ok(null);
+  }
+
+  @Route.delete('/game')
+  Future<Response> endGame(Request _) async {
+    round?.scoreRound();
+    final winnerIds = game.end();
+    final winningPlayers = game.players.entries.where(
+      (final playerEntry) => winnerIds.contains(playerEntry.key),
+    );
+
+    print('Ended game');
+    return Response.ok(winningPlayers.toString());
   }
 
   Router get router => _$PhrazzleCentralRouter(this);

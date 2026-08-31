@@ -12,5 +12,6 @@ Router _$PhrazzleCentralRouter(PhrazzleCentral service) {
   router.add('POST', r'/game/<playerName>', service.joinGame);
   router.add('PUT', r'/game/<phrase>', service.startGame);
   router.add('POST', r'/game/phrase/<playerId>/<phrase>', service.addSubPhrase);
+  router.add('DELETE', r'/game', service.endGame);
   return router;
 }
