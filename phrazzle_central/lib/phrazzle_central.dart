@@ -30,7 +30,7 @@ class PhrazzleCentral {
   @Route.put('/game/<phrase>')
   Future<Response> startGame(Request _, String phrase) async {
     final started = game.start();
-    if (started) round = Round(phrase, game.players.values.toList());
+    if (started) round = Round(phrase, game.players.keys.toList());
 
     print('Started game');
     return Response.ok('$started');
@@ -43,10 +43,9 @@ class PhrazzleCentral {
     String playerId,
     String phrase,
   ) async {
-    final player = game.players[playerId];
-    round?.addPlayerSubPhrase(player!, phrase);
+    round?.addPlayerSubPhrase(playerId, phrase);
 
-    print('Added player phrase: $phrase to ${player?.name}');
+    print('Added player phrase: $phrase to ${game.players[playerId]?.name}');
     return Response.ok(null);
   }
 

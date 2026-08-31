@@ -27,10 +27,11 @@ void main(List<String> arguments) {
 
   // Start game and create a round
   game.start();
-  final round = Round(startingPhrase, game.players.values.toList());
+  final round = Round(startingPhrase, game.players.keys.toList());
 
   // Player turn loop
-  for (final player in game.players.values) {
+  for (final playerId in game.players.keys) {
+    final player = game.players[playerId]!;
     var phraseIndex = 1;
 
     // Get player phrase entries
@@ -39,7 +40,7 @@ void main(List<String> arguments) {
       print('Entry: $phraseIndex');
       input = stdin.readLineSync();
       if (input!.isNotEmpty) {
-        round.addPlayerSubPhrase(player, input);
+        round.addPlayerSubPhrase(playerId, input);
         phraseIndex++;
       }
     } while (input.isNotEmpty);
