@@ -67,12 +67,9 @@ class PhrazzleCentral {
     final scores = round!.scoreRound();
     game.incrementScores(scores);
     final winnerIds = game.end();
-    final winningPlayers = game.players.entries.where(
-      (final playerEntry) => winnerIds.contains(playerEntry.key),
-    );
 
     print('Ended game');
-    return Response.ok(winningPlayers.toString());
+    return Response.ok(winnerIds);
   }
 
   Router get router => _$PhrazzleCentralRouter(this);

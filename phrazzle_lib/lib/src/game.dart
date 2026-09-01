@@ -24,6 +24,7 @@ class GameInfo {
   Map<String, dynamic> toJson() => _$GameInfoToJson(this);
 }
 
+/// Class that handles Game lobby information
 class Game {
   static const gameStartedMessage = 'Game already started';
 
