@@ -2,24 +2,27 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import 'package:phrazzle_lib/phrazzle.dart';
+import 'package:shelf_web_socket/shelf_web_socket.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 part 'phrazzle_central.g.dart';
 
 Game game = Game();
 Round? round;
 
+Map<String, WebSocketChannel> channels = {};
+
+void updateGameState() {
+  for (final channel in channels.values) {
+    channel.sink.add(game.export().toJson().toString());
+    if (round != null) {
+      channel.sink.add(round!.export().toJson().toString());
+    }
+  }
+}
+
 /// Service for the creation, cordination and status of games
 class PhrazzleCentral {
-  @Route.get('/game')
-  Future<Response> getGameInfo(Request _) async {
-    return Response.ok(game.export().toJson().toString());
-  }
-
-  @Route.get('/round')
-  Future<Response> getRoundInfo(Request _) async {
-    return Response.ok(round?.export().toJson().toString());
-  }
-
   /// Reset the game
   @Route.post('/game')
   Future<Response> createGame(Request _) async {
@@ -30,23 +33,27 @@ class PhrazzleCentral {
 
   /// Join the game with a given player name
   @Route.post('/game/<playerName>')
-  Future<Response> joinGame(Request _, String playerName) async {
-    final playerId = game.addPlayer(playerName);
-    print('Added player: $playerName');
-    return Response.ok(playerId);
+  Future<Response> joinGame(Request req, String playerName) async {
+    final socketHandlerResponse = webSocketHandler((websocket, _) {
+      final playerId = game.addPlayer(playerName);
+      channels[playerId] = websocket;
+      print('Added player: $playerName');
+      websocket.sink.add(playerId);
+    })(req);
+
+    return socketHandlerResponse;
   }
 
-  // Start the game
+  /// Start the game
   @Route.put('/game/<phrase>')
   Future<Response> startGame(Request _, String phrase) async {
     final started = game.start();
     if (started) round = Round(phrase, game.players.keys.toList());
-
     print('Started game');
     return Response.ok('$started');
   }
 
-  // Add player sub phrase
+  /// Add player sub phrase
   @Route.post('/game/phrase/<playerId>/<phrase>')
   Future<Response> addSubPhrase(
     Request _,
@@ -59,7 +66,7 @@ class PhrazzleCentral {
     return Response.ok(null);
   }
 
-  // End the game
+  /// End the game
   @Route.delete('/game')
   Future<Response> endGame(Request _) async {
     if (game.isStarted == false) return Response.ok(false);

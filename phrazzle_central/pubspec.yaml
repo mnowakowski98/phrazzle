@@ -12,6 +12,8 @@ dependencies:
   phrazzle_lib:
     path: ../phrazzle_lib/
   shelf_router: ^1.1.4
+  shelf_web_socket: ^3.0.0
+  web_socket_channel: ^3.0.3
 
 dev_dependencies:
   build_runner: ^2.15.0
