@@ -47,7 +47,8 @@ void main(List<String> arguments) {
   }
 
   // Score round
-  round.scoreRound();
+  final scores = round.scoreRound();
+  game.incrementScores(scores);
 
   // Display winning player(s)
   final winnerIds = game.end();

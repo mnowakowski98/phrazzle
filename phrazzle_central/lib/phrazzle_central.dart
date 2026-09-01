@@ -49,9 +49,13 @@ class PhrazzleCentral {
     return Response.ok(null);
   }
 
+  // End the game
   @Route.delete('/game')
   Future<Response> endGame(Request _) async {
-    round?.scoreRound();
+    if (game.isStarted == false) return Response.ok(false);
+
+    final scores = round!.scoreRound();
+    game.incrementScores(scores);
     final winnerIds = game.end();
     final winningPlayers = game.players.entries.where(
       (final playerEntry) => winnerIds.contains(playerEntry.key),

@@ -26,6 +26,13 @@ class Game {
     return _players.remove(id);
   }
 
+  /// Increment scores for players given players
+  void incrementScores(Map<String, int> scores) {
+    for (final entry in scores.entries) {
+      _players[entry.key]!.score += entry.value;
+    }
+  }
+
   /// Start the game, prevent player map modification
   bool start() {
     if (isStarted) throw StateError(gameStartedMessage);

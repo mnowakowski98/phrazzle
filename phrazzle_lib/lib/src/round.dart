@@ -53,7 +53,7 @@ class Round {
   }
 
   /// Set player scores from their sub phrases
-  void scoreRound() {
+  Map<String, int> scoreRound() {
     if (isScored) throw Exception('Round has already been scored');
     for (final entry in _subPhrases.entries) {
       final score = PhrazzleBase.getNumberOfValidPhrases(
@@ -63,6 +63,7 @@ class Round {
       _scores[entry.key] = score;
     }
     _isScored = true;
+    return scores;
   }
 
   RoundInfo export() {
