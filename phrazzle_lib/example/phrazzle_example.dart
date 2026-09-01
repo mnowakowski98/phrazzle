@@ -17,6 +17,9 @@ void main(List<String> arguments) {
     }
   } while (input.isNotEmpty);
 
+  print('Players\n---');
+  print('${game.playerNames}\n');
+
   // Get starting phrase
   late final String startingPhrase;
   do {
@@ -27,20 +30,19 @@ void main(List<String> arguments) {
 
   // Start game and create a round
   game.start();
-  final round = Round(startingPhrase, game.players.keys.toList());
+  final round = Round(startingPhrase, game.playerIds);
 
   // Player turn loop
-  for (final playerId in game.players.keys) {
-    final player = game.players[playerId]!;
+  for (final playerEntry in game.players.entries) {
     var phraseIndex = 1;
 
     // Get player phrase entries
-    print('Player: ${player.name}');
+    print('Player: ${playerEntry.value.name}\n---');
     do {
       print('Entry: $phraseIndex');
       input = stdin.readLineSync();
       if (input!.isNotEmpty) {
-        round.addPlayerSubPhrase(playerId, input);
+        round.addPlayerSubPhrase(playerEntry.key, input);
         phraseIndex++;
       }
     } while (input.isNotEmpty);
@@ -52,14 +54,14 @@ void main(List<String> arguments) {
 
   // Display winning player(s)
   final winnerIds = game.end();
-  final winningPlayers = game.players.entries.where(
-    (final playerEntry) => winnerIds.contains(playerEntry.key),
-  );
+  final winningPlayers = game.players.entries
+      .where((final playerEntry) => winnerIds.contains(playerEntry.key))
+      .map((player) => player.value);
 
   print('Winner(s):');
   for (final player in winningPlayers) {
-    print('Player: ${player.value.name}');
-    print('Score: ${player.value.score}');
+    print('Player: ${player.name}');
+    print('Score: ${player.score}');
     print('\n');
   }
 }

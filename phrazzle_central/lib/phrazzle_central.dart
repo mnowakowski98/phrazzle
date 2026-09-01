@@ -10,6 +10,16 @@ Round? round;
 
 /// Service for the creation, cordination and status of games
 class PhrazzleCentral {
+  @Route.get('/game')
+  Future<Response> getGameInfo(Request _) async {
+    return Response.ok(game.export().toJson().toString());
+  }
+
+  @Route.get('/round')
+  Future<Response> getRoundInfo(Request _) async {
+    return Response.ok(round?.export().toJson().toString());
+  }
+
   /// Reset the game
   @Route.post('/game')
   Future<Response> createGame(Request _) async {
