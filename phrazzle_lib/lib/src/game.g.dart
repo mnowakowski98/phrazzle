@@ -6,16 +6,8 @@ part of 'game.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-GameInfo _$GameInfoFromJson(Map<String, dynamic> json) => GameInfo(
-  playerNames: Map<String, String>.from(json['playerNames'] as Map),
-  playerScores: Map<String, int>.from(json['playerScores'] as Map),
-  isStarted: json['isStarted'] as bool,
-  isEnded: json['isEnded'] as bool,
-);
-
-Map<String, dynamic> _$GameInfoToJson(GameInfo instance) => <String, dynamic>{
-  'playerNames': instance.playerNames,
-  'playerScores': instance.playerScores,
+Map<String, dynamic> _$GameToJson(Game instance) => <String, dynamic>{
+  'players': instance.players.map((k, e) => MapEntry(k, e.toJson())),
   'isStarted': instance.isStarted,
   'isEnded': instance.isEnded,
 };

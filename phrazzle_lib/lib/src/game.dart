@@ -5,32 +5,37 @@ import 'package:uuid/uuid.dart';
 
 part 'game.g.dart';
 
-@JsonSerializable()
-class GameInfo {
-  final Map<String, String> playerNames;
-  final Map<String, int> playerScores;
-  final bool isStarted;
-  final bool isEnded;
+// @JsonSerializable()
+// class GameInfo {
+//   final Map<String, String> playerNames;
+//   final Map<String, int> playerScores;
+//   final bool isStarted;
+//   final bool isEnded;
 
-  GameInfo({
-    required this.playerNames,
-    required this.playerScores,
-    required this.isStarted,
-    required this.isEnded,
-  });
+//   GameInfo({
+//     required this.playerNames,
+//     required this.playerScores,
+//     required this.isStarted,
+//     required this.isEnded,
+//   });
 
-  factory GameInfo.fromJson(Map<String, dynamic> json) =>
-      _$GameInfoFromJson(json);
-  Map<String, dynamic> toJson() => _$GameInfoToJson(this);
-}
+//   factory GameInfo.fromJson(Map<String, dynamic> json) =>
+//       _$GameInfoFromJson(json);
+//   Map<String, dynamic> toJson() => _$GameInfoToJson(this);
+// }
 
 /// Class that handles Game lobby information
+@JsonSerializable(explicitToJson: true, createFactory: false)
 class Game {
+  @JsonKey(includeFromJson: false, includeToJson: false)
   static const gameStartedMessage = 'Game already started';
 
   final _players = <String, Player>{};
   Map<String, Player> get players => Map.unmodifiable(_players);
+
+  @JsonKey(includeToJson: false)
   List<String> get playerIds => List.unmodifiable(players.keys.toList());
+  @JsonKey(includeToJson: false)
   List<String> get playerNames =>
       List.unmodifiable(players.values.map((player) => player.name));
 
@@ -87,12 +92,12 @@ class Game {
     return List<String>.from(winners.map((final winner) => winner.key));
   }
 
-  GameInfo export() {
-    return GameInfo(
-      playerNames: players.map((id, player) => MapEntry(id, player.name)),
-      playerScores: players.map((id, player) => MapEntry(id, player.score)),
-      isStarted: isStarted,
-      isEnded: isEnded,
-    );
-  }
+  // GameInfo export() {
+  //   return GameInfo(
+  //     playerNames: players.map((id, player) => MapEntry(id, player.name)),
+  //     playerScores: players.map((id, player) => MapEntry(id, player.score)),
+  //     isStarted: isStarted,
+  //     isEnded: isEnded,
+  //   );
+  // }
 }
