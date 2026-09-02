@@ -6,17 +6,7 @@ part of 'round.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-RoundInfo _$RoundInfoFromJson(Map<String, dynamic> json) => RoundInfo(
-  initialPhrase: json['initialPhrase'] as String,
-  subPhrases: (json['subPhrases'] as Map<String, dynamic>).map(
-    (k, e) =>
-        MapEntry(k, (e as List<dynamic>).map((e) => e as String).toList()),
-  ),
-  scores: Map<String, int>.from(json['scores'] as Map),
-  isScored: json['isScored'] as bool,
-);
-
-Map<String, dynamic> _$RoundInfoToJson(RoundInfo instance) => <String, dynamic>{
+Map<String, dynamic> _$RoundToJson(Round instance) => <String, dynamic>{
   'initialPhrase': instance.initialPhrase,
   'subPhrases': instance.subPhrases,
   'scores': instance.scores,

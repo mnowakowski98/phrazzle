@@ -4,25 +4,7 @@ import 'phrazzle_base.dart';
 
 part 'round.g.dart';
 
-@JsonSerializable()
-class RoundInfo {
-  final String initialPhrase;
-  final Map<String, List<String>> subPhrases;
-  final Map<String, int> scores;
-  final bool isScored;
-
-  RoundInfo({
-    required this.initialPhrase,
-    required this.subPhrases,
-    required this.scores,
-    required this.isScored,
-  });
-
-  factory RoundInfo.fromJson(Map<String, dynamic> json) =>
-      _$RoundInfoFromJson(json);
-  Map<String, dynamic> toJson() => _$RoundInfoToJson(this);
-}
-
+@JsonSerializable(explicitToJson: true, createFactory: false)
 class Round {
   final String initialPhrase;
 
@@ -46,6 +28,8 @@ class Round {
     );
   }
 
+  Map<String, dynamic> toJson() => _$RoundToJson(this);
+
   /// Add a sub phrase for a player
   void addPlayerSubPhrase(String playerId, String subPhrase) {
     if (_isScored) throw Exception('Round has already been scored');
@@ -64,14 +48,5 @@ class Round {
     }
     _isScored = true;
     return scores;
-  }
-
-  RoundInfo export() {
-    return RoundInfo(
-      initialPhrase: initialPhrase,
-      subPhrases: subPhrases,
-      scores: scores,
-      isScored: isScored,
-    );
   }
 }

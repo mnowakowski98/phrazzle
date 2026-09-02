@@ -45,6 +45,8 @@ class Game {
   var _isEnded = false;
   bool get isEnded => _isEnded;
 
+  Map<String, dynamic> toJson() => _$GameToJson(this);
+
   /// Add a player to the game and get id
   String addPlayer(String name) {
     if (isStarted) throw StateError(gameStartedMessage);
