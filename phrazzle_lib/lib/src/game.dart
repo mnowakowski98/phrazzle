@@ -1,28 +1,11 @@
+import 'dart:async';
+
 import 'package:json_annotation/json_annotation.dart';
 
 import 'player.dart';
 import 'package:uuid/uuid.dart';
 
 part 'game.g.dart';
-
-// @JsonSerializable()
-// class GameInfo {
-//   final Map<String, String> playerNames;
-//   final Map<String, int> playerScores;
-//   final bool isStarted;
-//   final bool isEnded;
-
-//   GameInfo({
-//     required this.playerNames,
-//     required this.playerScores,
-//     required this.isStarted,
-//     required this.isEnded,
-//   });
-
-//   factory GameInfo.fromJson(Map<String, dynamic> json) =>
-//       _$GameInfoFromJson(json);
-//   Map<String, dynamic> toJson() => _$GameInfoToJson(this);
-// }
 
 /// Class that handles Game lobby information
 @JsonSerializable(explicitToJson: true, createFactory: false)
@@ -45,6 +28,18 @@ class Game {
   var _isEnded = false;
   bool get isEnded => _isEnded;
 
+  var _sendUpdates = false;
+  StreamController<String>? _updateController;
+
+  Stream<String> getUpdateStream() {
+    _updateController ??= StreamController<String>.broadcast(
+      onListen: () => _sendUpdates = true,
+      onCancel: () => _sendUpdates = false,
+    );
+
+    return _updateController!.stream;
+  }
+
   Map<String, dynamic> toJson() => _$GameToJson(this);
 
   /// Add a player to the game and get id
@@ -53,6 +48,8 @@ class Game {
 
     final id = Uuid().v4();
     _players[id] = Player(name);
+
+    if (_sendUpdates) _updateController?.add(toJson().toString());
     return id;
   }
 
@@ -60,7 +57,9 @@ class Game {
   Player? removePlayer(String id) {
     if (isStarted) throw StateError(gameStartedMessage);
 
-    return _players.remove(id);
+    final player = _players.remove(id);
+    if (_sendUpdates) _updateController?.add(toJson().toString());
+    return player;
   }
 
   /// Increment scores for players given players
@@ -68,6 +67,7 @@ class Game {
     for (final entry in scores.entries) {
       _players[entry.key]!.score += entry.value;
     }
+    if (_sendUpdates) _updateController?.add(toJson().toString());
   }
 
   /// Start the game, prevent player map modification
@@ -76,6 +76,7 @@ class Game {
     if (_players.isEmpty) return false;
 
     _isStarted = true;
+    if (_sendUpdates) _updateController?.add(toJson().toString());
     return true;
   }
 
@@ -91,15 +92,9 @@ class Game {
     final winners = _players.entries.where(
       (final player) => player.value.score == max,
     );
+    if (_sendUpdates) _updateController?.add(toJson().toString());
+    _sendUpdates = false;
+    _updateController?.close();
     return List<String>.from(winners.map((final winner) => winner.key));
   }
-
-  // GameInfo export() {
-  //   return GameInfo(
-  //     playerNames: players.map((id, player) => MapEntry(id, player.name)),
-  //     playerScores: players.map((id, player) => MapEntry(id, player.score)),
-  //     isStarted: isStarted,
-  //     isEnded: isEnded,
-  //   );
-  // }
 }

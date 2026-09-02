@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:json_annotation/json_annotation.dart';
 
 import 'phrazzle_base.dart';
@@ -17,6 +19,18 @@ class Round {
   var _isScored = false;
   bool get isScored => _isScored;
 
+  var _sendUpdates = false;
+  StreamController<String>? _updateController;
+
+  Stream<String> getUpdateStream() {
+    _updateController ??= StreamController<String>.broadcast(
+      onListen: () => _sendUpdates = true,
+      onCancel: () => _sendUpdates = false,
+    );
+
+    return _updateController!.stream;
+  }
+
   Round._internal(this.initialPhrase, this._subPhrases, this._scores);
 
   /// Create sub phrase map from a list of players
@@ -34,6 +48,7 @@ class Round {
   void addPlayerSubPhrase(String playerId, String subPhrase) {
     if (_isScored) throw Exception('Round has already been scored');
     _subPhrases[playerId]?.add(subPhrase);
+    if (_sendUpdates) _updateController?.sink.add(toJson().toString());
   }
 
   /// Set player scores from their sub phrases
@@ -47,6 +62,9 @@ class Round {
       _scores[entry.key] = score;
     }
     _isScored = true;
+    if (_sendUpdates) _updateController?.sink.add(toJson().toString());
+    _sendUpdates = false;
+    _updateController?.close();
     return scores;
   }
 }

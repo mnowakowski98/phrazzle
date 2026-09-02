@@ -12,15 +12,6 @@ Round? round;
 
 Map<String, WebSocketChannel> channels = {};
 
-void updateGameState() {
-  for (final channel in channels.values) {
-    channel.sink.add(game.export().toJson().toString());
-    if (round != null) {
-      channel.sink.add(round!.export().toJson().toString());
-    }
-  }
-}
-
 /// Service for the creation, cordination and status of games
 class PhrazzleCentral {
   /// Reset the game
@@ -34,11 +25,19 @@ class PhrazzleCentral {
   /// Join the game with a given player name
   @Route.post('/game/<playerName>')
   Future<Response> joinGame(Request req, String playerName) async {
-    final socketHandlerResponse = webSocketHandler((websocket, _) {
+    final socketHandlerResponse = webSocketHandler((websocket, _) async {
       final playerId = game.addPlayer(playerName);
       channels[playerId] = websocket;
-      print('Added player: $playerName');
       websocket.sink.add(playerId);
+      websocket.sink.add(game.toJson().toString());
+
+      game.getUpdateStream().listen((data) => websocket.sink.add(data));
+
+      if (round != null) {
+        round!.getUpdateStream().listen((data) => websocket.sink.add(data));
+      }
+
+      print('Added player: $playerName');
     })(req);
 
     return socketHandlerResponse;
@@ -48,7 +47,14 @@ class PhrazzleCentral {
   @Route.put('/game/<phrase>')
   Future<Response> startGame(Request _, String phrase) async {
     final started = game.start();
-    if (started) round = Round(phrase, game.players.keys.toList());
+    if (started) {
+      round = Round(phrase, game.players.keys.toList());
+
+      for (final channel in channels.values) {
+        round!.getUpdateStream().listen((data) => channel.sink.add(data));
+      }
+    }
+
     print('Started game');
     return Response.ok('$started');
   }
