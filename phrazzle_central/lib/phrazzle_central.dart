@@ -29,12 +29,17 @@ class PhrazzleCentral {
       final playerId = game.addPlayer(playerName);
       channels[playerId] = websocket;
       websocket.sink.add(playerId);
-      websocket.sink.add(game.toJson().toString());
 
-      game.getUpdateStream().listen((data) => websocket.sink.add(data));
+      websocket.sink.add(game.toJson().toString());
+      game.getJsonUpdateStream().listen(
+        (data) => websocket.sink.add(data.toString()),
+      );
 
       if (round != null) {
-        round!.getUpdateStream().listen((data) => websocket.sink.add(data));
+        websocket.sink.add(round!.toJson().toString());
+        round!.getUpdateStream().listen(
+          (data) => websocket.sink.add(data.toString()),
+        );
       }
 
       print('Added player: $playerName');

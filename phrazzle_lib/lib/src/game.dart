@@ -29,10 +29,10 @@ class Game {
   bool get isEnded => _isEnded;
 
   var _sendUpdates = false;
-  StreamController<String>? _updateController;
+  StreamController<Map<String, dynamic>>? _updateController;
 
-  Stream<String> getUpdateStream() {
-    _updateController ??= StreamController<String>.broadcast(
+  Stream<Map<String, dynamic>> getJsonUpdateStream() {
+    _updateController ??= StreamController<Map<String, dynamic>>.broadcast(
       onListen: () => _sendUpdates = true,
       onCancel: () => _sendUpdates = false,
     );
@@ -49,7 +49,7 @@ class Game {
     final id = Uuid().v4();
     _players[id] = Player(name);
 
-    if (_sendUpdates) _updateController?.add(toJson().toString());
+    if (_sendUpdates) _updateController?.add(toJson());
     return id;
   }
 
@@ -58,7 +58,7 @@ class Game {
     if (isStarted) throw StateError(gameStartedMessage);
 
     final player = _players.remove(id);
-    if (_sendUpdates) _updateController?.add(toJson().toString());
+    if (_sendUpdates) _updateController?.add(toJson());
     return player;
   }
 
@@ -67,7 +67,7 @@ class Game {
     for (final entry in scores.entries) {
       _players[entry.key]!.score += entry.value;
     }
-    if (_sendUpdates) _updateController?.add(toJson().toString());
+    if (_sendUpdates) _updateController?.add(toJson());
   }
 
   /// Start the game, prevent player map modification
@@ -76,7 +76,7 @@ class Game {
     if (_players.isEmpty) return false;
 
     _isStarted = true;
-    if (_sendUpdates) _updateController?.add(toJson().toString());
+    if (_sendUpdates) _updateController?.add(toJson());
     return true;
   }
 
@@ -92,7 +92,7 @@ class Game {
     final winners = _players.entries.where(
       (final player) => player.value.score == max,
     );
-    if (_sendUpdates) _updateController?.add(toJson().toString());
+    if (_sendUpdates) _updateController?.add(toJson());
     _sendUpdates = false;
     _updateController?.close();
     return List<String>.from(winners.map((final winner) => winner.key));

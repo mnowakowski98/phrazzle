@@ -20,10 +20,10 @@ class Round {
   bool get isScored => _isScored;
 
   var _sendUpdates = false;
-  StreamController<String>? _updateController;
+  StreamController<Map<String, dynamic>>? _updateController;
 
-  Stream<String> getUpdateStream() {
-    _updateController ??= StreamController<String>.broadcast(
+  Stream<Map<String, dynamic>> getUpdateStream() {
+    _updateController ??= StreamController<Map<String, dynamic>>.broadcast(
       onListen: () => _sendUpdates = true,
       onCancel: () => _sendUpdates = false,
     );
@@ -48,7 +48,7 @@ class Round {
   void addPlayerSubPhrase(String playerId, String subPhrase) {
     if (_isScored) throw Exception('Round has already been scored');
     _subPhrases[playerId]?.add(subPhrase);
-    if (_sendUpdates) _updateController?.sink.add(toJson().toString());
+    if (_sendUpdates) _updateController?.sink.add(toJson());
   }
 
   /// Set player scores from their sub phrases
@@ -62,7 +62,7 @@ class Round {
       _scores[entry.key] = score;
     }
     _isScored = true;
-    if (_sendUpdates) _updateController?.sink.add(toJson().toString());
+    if (_sendUpdates) _updateController?.sink.add(toJson());
     _sendUpdates = false;
     _updateController?.close();
     return scores;
