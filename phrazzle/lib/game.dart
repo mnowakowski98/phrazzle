@@ -1,10 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-
-import 'package:phrazzle/player_list.dart';
-import 'package:phrazzle_lib/phrazzle.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:http/http.dart' as http;
+
+import 'package:phrazzle/game_lobby.dart';
+import 'package:phrazzle_lib/phrazzle.dart';
 
 class Game extends StatefulWidget {
   const Game({super.key});
@@ -14,17 +15,53 @@ class Game extends StatefulWidget {
 }
 
 class _GameState extends State<Game> {
+  var enableJoinButton = false;
   final _nameController = TextEditingController();
 
   WebSocketChannel? _channel;
   String? playerId;
 
-  void joinGame(String playerName) {
+  Phrazzle? game;
+  Round? round;
+
+  void joinGame(String playerName) async {
     if (playerName.isEmpty) return;
+    final res = await http.post(
+      Uri.parse('http://localhost:3000/game/$playerName'),
+    );
     setState(() {
+      playerId = res.body;
       _channel = WebSocketChannel.connect(
-        Uri.parse('ws://localhost:3000/game/$playerName'),
+        Uri.parse('ws://localhost:3000/game/$playerId'),
       );
+
+      _channel?.sink.done.whenComplete(() {
+        setState(() {
+          playerId = null;
+          game = null;
+          round = null;
+        });
+      });
+
+      _channel?.stream.listen((data) {
+        final json = jsonDecode(data);
+        switch (json['typeKey']) {
+          case 'game':
+            setState(() => game = Phrazzle.fromJson(json));
+            break;
+          case 'round':
+            setState(() => round = Round.fromJson(json));
+            break;
+        }
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(() {
+      setState(() => enableJoinButton = _nameController.text.isNotEmpty);
     });
   }
 
@@ -32,34 +69,27 @@ class _GameState extends State<Game> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(child: TextField(controller: _nameController)),
-            TextButton(
-              onPressed: () {
-                joinGame(_nameController.text);
-              },
-              child: Text('Join'),
-            ),
-          ],
-        ),
-        Text(playerId ?? ''),
-        StreamBuilder(
-          stream: _channel?.stream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == .none ||
-                snapshot.connectionState == .done) {
-              return Text('Not connected');
-            }
-            if (snapshot.connectionState == .waiting) return Text('Loading');
-            final Map<String, dynamic> jsonData = jsonDecode(snapshot.data);
-            return PlayerList([
-              for (final Map<String, dynamic> playerJson
-                  in jsonData['players'].values)
-                Player.fromJson(playerJson),
-            ], '');
-          },
-        ),
+        if (playerId == null)
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _nameController,
+                  decoration: InputDecoration(hintText: 'Enter a player name'),
+                ),
+              ),
+              TextButton(
+                onPressed: enableJoinButton
+                    ? () {
+                        joinGame(_nameController.text);
+                      }
+                    : null,
+                child: Text('Join'),
+              ),
+            ],
+          ),
+        if (game?.isStarted == false && game?.isEnded == false)
+          GameLobby(game!),
       ],
     );
   }

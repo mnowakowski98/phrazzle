@@ -24,30 +24,41 @@ class PhrazzleCentral {
     return Response.ok(null);
   }
 
-  /// Join the game with a given player name
-  @Route.post('/game/<playerName>')
-  Future<Response> joinGame(Request req, String playerName) async {
-    final socketHandlerResponse = webSocketHandler((websocket, _) async {
-      final playerId = game.addPlayer(playerName);
-      channels[playerId] = websocket;
-      websocket.sink.add(playerId);
+  /// Join the game as an existing player
+  @Route.get('/game/<playerId>')
+  Future<Response> joinGame(Request req, String playerId) async {
+    final res = webSocketHandler((channel, _) async {
+      channels[playerId] = channel;
 
-      websocket.sink.add(jsonEncode(game.toJson()));
+      channel.sink.done.whenComplete(() {
+        channels.remove(playerId);
+        game.removePlayer(playerId);
+        print('Removed player: $playerId');
+      });
+
+      channel.sink.add(jsonEncode(game.toJson()));
       game.getJsonUpdateStream().listen(
-        (data) => websocket.sink.add(jsonEncode(data)),
+        (data) => channel.sink.add(jsonEncode(data)),
       );
 
       if (round != null) {
-        websocket.sink.add(jsonEncode(round!.toJson()));
+        channel.sink.add(jsonEncode(round!.toJson()));
         round!.getUpdateStream().listen(
-          (data) => websocket.sink.add(jsonEncode(data)),
+          (data) => channel.sink.add(jsonEncode(data)),
         );
       }
 
-      print('Added player: $playerName');
+      print('Player: $playerId joined');
     })(req);
+    return res;
+  }
 
-    return socketHandlerResponse;
+  /// Create a player with a given name
+  @Route.post('/game/<playerName>')
+  Future<Response> addPlayer(Request _, String playerName) async {
+    final playerId = game.addPlayer(playerName);
+    print('Added player: $playerId - $playerName');
+    return Response.ok(playerId);
   }
 
   /// Start the game
