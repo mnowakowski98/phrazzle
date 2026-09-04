@@ -46,6 +46,18 @@ class Game {
     return json;
   }
 
+  Game();
+  factory Game.fromJson(Map<String, dynamic> json) {
+    final game = Game();
+    game._isStarted = json['isStarted'];
+    game._isEnded = json['isEnded'];
+    final Map<String, dynamic> players = json['players'];
+    for (final player in players.entries) {
+      game._players[player.key] = Player.fromJson(player.value);
+    }
+    return game;
+  }
+
   /// Add a player to the game and get id
   String addPlayer(String name) {
     if (isStarted) throw StateError(gameStartedMessage);

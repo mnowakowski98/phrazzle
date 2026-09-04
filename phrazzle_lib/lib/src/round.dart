@@ -42,6 +42,16 @@ class Round {
     );
   }
 
+  factory Round.fromJson(Map<String, dynamic> json) {
+    final round = Round._internal(
+      json['initialPhrase'],
+      json['subPhrases'],
+      json['scores'],
+    );
+    round._isScored = json['isScored'];
+    return round;
+  }
+
   Map<String, dynamic> toJson() {
     final json = _$RoundToJson(this);
     json['typeKey'] = 'round';
