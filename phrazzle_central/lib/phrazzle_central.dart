@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
@@ -30,15 +32,15 @@ class PhrazzleCentral {
       channels[playerId] = websocket;
       websocket.sink.add(playerId);
 
-      websocket.sink.add(game.toJson().toString());
+      websocket.sink.add(jsonEncode(game.toJson()));
       game.getJsonUpdateStream().listen(
-        (data) => websocket.sink.add(data.toString()),
+        (data) => websocket.sink.add(jsonEncode(data)),
       );
 
       if (round != null) {
-        websocket.sink.add(round!.toJson().toString());
+        websocket.sink.add(jsonEncode(round!.toJson()));
         round!.getUpdateStream().listen(
-          (data) => websocket.sink.add(data.toString()),
+          (data) => websocket.sink.add(jsonEncode(data)),
         );
       }
 
@@ -56,7 +58,9 @@ class PhrazzleCentral {
       round = Round(phrase, game.players.keys.toList());
 
       for (final channel in channels.values) {
-        round!.getUpdateStream().listen((data) => channel.sink.add(data));
+        round!.getUpdateStream().listen(
+          (data) => channel.sink.add(jsonEncode(data)),
+        );
       }
     }
 

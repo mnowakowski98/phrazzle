@@ -42,7 +42,11 @@ class Round {
     );
   }
 
-  Map<String, dynamic> toJson() => _$RoundToJson(this);
+  Map<String, dynamic> toJson() {
+    final json = _$RoundToJson(this);
+    json['typeKey'] = 'round';
+    return json;
+  }
 
   /// Add a sub phrase for a player
   void addPlayerSubPhrase(String playerId, String subPhrase) {

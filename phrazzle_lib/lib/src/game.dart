@@ -40,7 +40,11 @@ class Game {
     return _updateController!.stream;
   }
 
-  Map<String, dynamic> toJson() => _$GameToJson(this);
+  Map<String, dynamic> toJson() {
+    final json = _$GameToJson(this);
+    json['typeKey'] = 'game';
+    return json;
+  }
 
   /// Add a player to the game and get id
   String addPlayer(String name) {
