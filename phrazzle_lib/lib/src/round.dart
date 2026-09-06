@@ -43,11 +43,15 @@ class Round {
   }
 
   factory Round.fromJson(Map<String, dynamic> json) {
-    final round = Round._internal(
-      json['initialPhrase'],
-      json['subPhrases'],
-      json['scores'],
+    final Map<String, dynamic> phrasesRaw = json['subPhrases'];
+    final phrases = phrasesRaw.map(
+      (key, value) => MapEntry(key, List<String>.from(value)),
     );
+    final Map<String, dynamic> scoresRaw = json['scores'];
+    final scores = scoresRaw.map(
+      (key, value) => MapEntry<String, int>(key, value),
+    );
+    final round = Round._internal(json['initialPhrase'], phrases, scores);
     round._isScored = json['isScored'];
     return round;
   }

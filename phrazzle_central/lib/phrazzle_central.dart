@@ -69,6 +69,7 @@ class PhrazzleCentral {
       round = Round(phrase, game.players.keys.toList());
 
       for (final channel in channels.values) {
+        channel.sink.add(jsonEncode(round!.toJson()));
         round!.getUpdateStream().listen(
           (data) => channel.sink.add(jsonEncode(data)),
         );

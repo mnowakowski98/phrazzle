@@ -1,10 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:phrazzle/phrase_entry.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:phrazzle/game_lobby.dart';
+import 'package:phrazzle/lobby.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class Game extends StatefulWidget {
@@ -88,8 +89,9 @@ class _GameState extends State<Game> {
               ),
             ],
           ),
-        if (game?.isStarted == false && game?.isEnded == false)
-          GameLobby(game!),
+        if (game?.isStarted == false && game?.isEnded == false) Lobby(game!),
+        if (game?.isStarted == true && game?.isEnded == false && round != null)
+          PhraseEntry(round!),
       ],
     );
   }
