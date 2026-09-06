@@ -28,6 +28,9 @@ class Game {
   var _isEnded = false;
   bool get isEnded => _isEnded;
 
+  final _winnerIds = <String>[];
+  List<String> get winners => List.unmodifiable(_winnerIds);
+
   var _sendUpdates = false;
   StreamController<Map<String, dynamic>>? _updateController;
 
@@ -97,7 +100,7 @@ class Game {
   }
 
   /// End the game and get winning player ids
-  List<String> end() {
+  void end() {
     if (isStarted == false) throw StateError('Game not started yet');
     _isEnded = true;
 
@@ -105,12 +108,13 @@ class Game {
       if (value.score > currentMax) return value.score;
       return currentMax;
     });
-    final winners = _players.entries.where(
+    final winnerEntries = _players.entries.where(
       (final player) => player.value.score == max,
     );
+    _winnerIds.addAll(winnerEntries.map((entry) => entry.key));
+
     if (_sendUpdates) _updateController?.add(toJson());
     _sendUpdates = false;
     _updateController?.close();
-    return List<String>.from(winners.map((final winner) => winner.key));
   }
 }

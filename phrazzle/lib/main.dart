@@ -13,8 +13,8 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
+          seedColor: Colors.green,
+          brightness: Brightness.light,
         ),
       ),
       home: Scaffold(

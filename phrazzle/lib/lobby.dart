@@ -1,4 +1,7 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+
+import 'package:http/http.dart' as http;
+
 import 'package:phrazzle/player_list.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
@@ -9,6 +12,20 @@ class Lobby extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PlayerList(game.players.values.toList(), '');
+    return Column(
+      children: [
+        PlayerList(game.players.values.toList()),
+        TextButton(
+          onPressed: () async {
+            // TODO: Remove hardcoded url
+            // TODO: Make start phrase user enterable
+            await http.put(
+              Uri.parse('http://localhost:3000/game/testingstartphrase'),
+            );
+          },
+          child: Text('Start'),
+        ),
+      ],
+    );
   }
 }

@@ -17,7 +17,7 @@ class Game extends StatefulWidget {
 
 class _GameState extends State<Game> {
   var enableJoinButton = false;
-  final _nameController = TextEditingController();
+  final nameController = TextEditingController();
 
   WebSocketChannel? _channel;
   String? playerId;
@@ -25,6 +25,7 @@ class _GameState extends State<Game> {
   Phrazzle? game;
   Round? round;
 
+  // TODO: Remove hardcoded urls
   void joinGame(String playerName) async {
     if (playerName.isEmpty) return;
     final res = await http.post(
@@ -61,44 +62,45 @@ class _GameState extends State<Game> {
   @override
   void initState() {
     super.initState();
-    _nameController.addListener(() {
-      setState(() => enableJoinButton = _nameController.text.isNotEmpty);
+    nameController.addListener(() {
+      setState(() => enableJoinButton = nameController.text.isNotEmpty);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        if (playerId == null)
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _nameController,
-                  decoration: InputDecoration(hintText: 'Enter a player name'),
-                ),
-              ),
-              TextButton(
-                onPressed: enableJoinButton
-                    ? () {
-                        joinGame(_nameController.text);
-                      }
-                    : null,
-                child: Text('Join'),
-              ),
-            ],
+    if (playerId == null) {
+      return Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: nameController,
+              decoration: InputDecoration(hintText: 'Enter a player name'),
+            ),
           ),
-        if (game?.isStarted == false && game?.isEnded == false) Lobby(game!),
-        if (game?.isStarted == true && game?.isEnded == false && round != null)
-          PhraseEntry(round!),
-      ],
-    );
+          TextButton(
+            onPressed: enableJoinButton
+                ? () {
+                    joinGame(nameController.text);
+                  }
+                : null,
+            child: Text('Join'),
+          ),
+        ],
+      );
+    }
+
+    if (game?.isStarted == false && game?.isEnded == false) return Lobby(game!);
+    if (game?.isStarted == true && game?.isEnded == false && round != null) {
+      return PhraseEntry(round!, playerId!);
+    }
+
+    return Placeholder();
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    nameController.dispose();
     _channel?.sink.close();
     super.dispose();
   }

@@ -53,15 +53,15 @@ void main(List<String> arguments) {
   game.incrementScores(scores);
 
   // Display winning player(s)
-  final winnerIds = game.end();
-  final winningPlayers = game.players.entries
-      .where((final playerEntry) => winnerIds.contains(playerEntry.key))
-      .map((player) => player.value);
+  // final winnerIds = game.end();
+  // final winningPlayers = game.players.entries
+  //     .where((final playerEntry) => winnerIds.contains(playerEntry.key))
+  //     .map((player) => player.value);
 
-  print('Winner(s):');
-  for (final player in winningPlayers) {
-    print('Player: ${player.name}');
-    print('Score: ${player.score}');
-    print('\n');
-  }
+  // print('Winner(s):');
+  // for (final player in winningPlayers) {
+  //   print('Player: ${player.name}');
+  //   print('Score: ${player.score}');
+  //   print('\n');
+  // }
 }

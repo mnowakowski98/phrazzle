@@ -5,17 +5,14 @@ import 'package:phrazzle_lib/phrazzle.dart';
 
 class PlayerList extends StatefulWidget {
   final List<Player> players;
-  final String localPlayerId;
 
-  const PlayerList(this.players, this.localPlayerId, {super.key});
+  const PlayerList(this.players, {super.key});
 
   @override
   State<PlayerList> createState() => _PlayerListState();
 }
 
 class _PlayerListState extends State<PlayerList> {
-  var inputText = '';
-
   @override
   build(BuildContext context) {
     return Expanded(
@@ -23,7 +20,10 @@ class _PlayerListState extends State<PlayerList> {
         children: [
           ListTile(
             title: Text('Players'),
-            titleTextStyle: TextStyle(fontWeight: .bold),
+            titleTextStyle: TextStyle(
+              fontWeight: .bold,
+              color: Colors.lightBlue,
+            ),
           ),
           for (final player in widget.players) PlayerTile(player),
         ],

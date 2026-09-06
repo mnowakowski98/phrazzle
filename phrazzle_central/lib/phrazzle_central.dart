@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:shelf/shelf.dart';
@@ -26,32 +27,30 @@ class PhrazzleCentral {
 
   /// Join the game as an existing player
   @Route.get('/game/<playerId>')
-  Future<Response> joinGame(Request req, String playerId) async {
-    final res = webSocketHandler((channel, _) async {
-      channels[playerId] = channel;
+  FutureOr<Response> joinGame(Request req, String playerId) =>
+      webSocketHandler((channel, _) {
+        channels[playerId] = channel;
 
-      // channel.sink.done.whenComplete(() {
-      //   channels.remove(playerId);
-      //   game.removePlayer(playerId);
-      //   print('Removed player: $playerId');
-      // });
+        channel.sink.done.whenComplete(() {
+          channels.remove(playerId);
+          // game.removePlayer(playerId);
+          print('Player: $playerId left');
+        });
 
-      channel.sink.add(jsonEncode(game.toJson()));
-      game.getJsonUpdateStream().listen(
-        (data) => channel.sink.add(jsonEncode(data)),
-      );
-
-      if (round != null) {
-        channel.sink.add(jsonEncode(round!.toJson()));
-        round!.getUpdateStream().listen(
+        channel.sink.add(jsonEncode(game.toJson()));
+        game.getJsonUpdateStream().listen(
           (data) => channel.sink.add(jsonEncode(data)),
         );
-      }
 
-      print('Player: $playerId joined');
-    })(req);
-    return res;
-  }
+        if (round != null) {
+          channel.sink.add(jsonEncode(round!.toJson()));
+          round!.getUpdateStream().listen(
+            (data) => channel.sink.add(jsonEncode(data)),
+          );
+        }
+
+        print('Player: $playerId joined');
+      })(req);
 
   /// Create a player with a given name
   @Route.post('/game/<playerName>')
@@ -100,10 +99,10 @@ class PhrazzleCentral {
 
     final scores = round!.scoreRound();
     game.incrementScores(scores);
-    final winnerIds = game.end();
+    game.end();
 
     print('Ended game');
-    return Response.ok(winnerIds);
+    return Response.ok(null);
   }
 
   Router get router => _$PhrazzleCentralRouter(this);
