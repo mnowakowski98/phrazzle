@@ -23,10 +23,7 @@ class _PlayerListState extends State<PlayerList> {
         children: [
           ListTile(
             title: Text('Players'),
-            titleTextStyle: TextStyle(
-              fontWeight: .bold,
-              color: Color.fromARGB(255, 0, 0, 0),
-            ),
+            titleTextStyle: TextStyle(fontWeight: .bold),
           ),
           for (final player in widget.players) PlayerTile(player),
         ],

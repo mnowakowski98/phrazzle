@@ -30,11 +30,11 @@ class PhrazzleCentral {
     final res = webSocketHandler((channel, _) async {
       channels[playerId] = channel;
 
-      channel.sink.done.whenComplete(() {
-        channels.remove(playerId);
-        game.removePlayer(playerId);
-        print('Removed player: $playerId');
-      });
+      // channel.sink.done.whenComplete(() {
+      //   channels.remove(playerId);
+      //   game.removePlayer(playerId);
+      //   print('Removed player: $playerId');
+      // });
 
       channel.sink.add(jsonEncode(game.toJson()));
       game.getJsonUpdateStream().listen(
