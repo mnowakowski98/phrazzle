@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:phrazzle/phrase_entry.dart';
+import 'package:phrazzle/winners.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 
@@ -93,6 +94,9 @@ class _GameState extends State<Game> {
     if (game?.isStarted == false && game?.isEnded == false) return Lobby(game!);
     if (game?.isStarted == true && game?.isEnded == false && round != null) {
       return PhraseEntry(round!, playerId!);
+    }
+    if (game?.isStarted == true && game?.isEnded == true) {
+      return Winners(game!.winners);
     }
 
     return Placeholder();

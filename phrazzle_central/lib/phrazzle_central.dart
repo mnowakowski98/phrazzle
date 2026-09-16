@@ -33,6 +33,8 @@ class PhrazzleCentral {
 
         channel.sink.done.whenComplete(() {
           channels.remove(playerId);
+          // TODO: Maybe?(separate players from active socket connections)
+          // Potentially assume players are derived/different from users
           // game.removePlayer(playerId);
           print('Player: $playerId left');
         });

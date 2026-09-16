@@ -61,6 +61,12 @@ class _PhraseEntryState extends State<PhraseEntry> {
             ],
           ),
         ),
+        TextButton(
+          onPressed: () async {
+            await http.delete(Uri.parse('http://localhost:3000/game'));
+          },
+          child: Text('Done'),
+        ),
       ],
     );
   }
