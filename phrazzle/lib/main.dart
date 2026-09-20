@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import 'game.dart';
 
 void main() {
@@ -18,6 +20,17 @@ class MainApp extends StatelessWidget {
         ),
       ),
       home: Scaffold(
+        appBar: AppBar(
+          title: Text('Phrazzle'),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                http.post(Uri.parse('http://localhost:3000/game'));
+              },
+              child: Text('Reset game'),
+            ),
+          ],
+        ),
         body: Padding(padding: EdgeInsets.all(8.0), child: Game()),
       ),
     );
