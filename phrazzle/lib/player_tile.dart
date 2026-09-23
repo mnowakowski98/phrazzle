@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phrazzle/player.dart';
+import 'package:phrazzle_lib/phrazzle.dart';
 
 class PlayerTile extends StatelessWidget {
   final Player player;

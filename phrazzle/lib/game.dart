@@ -1,12 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:phrazzle/player.dart';
-import 'package:phrazzle/player_entries.dart';
-import 'package:phrazzle/player_list.dart';
-import 'package:phrazzle/starting_phrase.dart';
-import 'package:phrazzle/winners.dart';
-import 'package:phrazzle_lib/phrazzle.dart';
+import 'dart:convert';
 
-enum _FormState { players, startingPhrase, entries, winners }
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:phrazzle/phrase_entry.dart';
+import 'package:phrazzle/winners.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:http/http.dart' as http;
+
+import 'package:phrazzle/lobby.dart';
+import 'package:phrazzle_lib/phrazzle.dart';
 
 class Game extends StatefulWidget {
   const Game({super.key});
@@ -16,87 +18,95 @@ class Game extends StatefulWidget {
 }
 
 class _GameState extends State<Game> {
-  String inputValue = '';
-  static const List<_FormState> formStates = [
-    .players,
-    .startingPhrase,
-    .entries,
-    .winners,
-  ];
-  int formStateIndex = 0;
-  _FormState formState() => formStates[formStateIndex];
+  String playerName = '';
+  bool get allowJoin => playerName.isNotEmpty;
 
-  final game = Phrazzle();
+  WebSocketChannel? _channel;
+  String? playerId;
 
-  int playerIndex = 0;
-  String startingPhrase = '';
+  Phrazzle? game;
+  Round? round;
 
-  final playerNames = <String, String>{};
-  final playerPhraseEntries = <String, List<String>>{};
-  List<Player> players() {
-    final players = <Player>[];
-    for (final player in game.scores.entries) {
-      players.add(Player(player.key, playerNames[player.key]!, player.value));
-    }
-    return players;
-  }
-
-  void nextPage() {
+  // TODO: Remove hardcoded urls
+  void joinGame() async {
+    if (playerName.isEmpty) return;
+    final res = await http.post(
+      Uri.parse('http://localhost:3000/game/$playerName'),
+    );
     setState(() {
-      final isEntryForm = formState() == .entries;
+      playerId = res.body;
+      _channel = WebSocketChannel.connect(
+        Uri.parse('ws://localhost:3000/game/$playerId'),
+      );
 
-      // Score entries if end of player entries
-      if (isEntryForm) {
-        final player = players()[playerIndex];
-        final score = Phrazzle.scorePhrases(
-          startingPhrase,
-          playerPhraseEntries[player.id]!,
-        );
-        player.score = game.incrementScore(player.id, score);
-      }
+      _channel?.sink.done.whenComplete(() {
+        setState(() {
+          playerId = null;
+          game = null;
+          round = null;
+        });
+      });
 
-      final isEndOfPlayerEntries =
-          isEntryForm && ++playerIndex >= players().length;
-
-      final nextFormExists = formStateIndex + 1 < formStates.length;
-
-      // Move to next form state
-      if ((isEntryForm == false || isEndOfPlayerEntries) && nextFormExists) {
-        formStateIndex++;
-      }
+      _channel?.stream.listen((data) {
+        final json = jsonDecode(data);
+        switch (json['typeKey']) {
+          case 'game':
+            setState(() => game = Phrazzle.fromJson(json));
+            break;
+          case 'round':
+            setState(() => round = Round.fromJson(json));
+            break;
+        }
+      });
     });
   }
 
   @override
+  void dispose() {
+    _channel?.sink.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final hasStartingPhrase = startingPhrase != '';
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        if (hasStartingPhrase) Text(startingPhrase),
-        if (hasStartingPhrase) Divider(),
-        if (formState() == .players)
-          PlayerList(
-            players(),
-            allowEdit: true,
-            onPlayerAdd: (name) =>
-                setState(() => playerNames[game.addPlayer()] = name),
-            onDone: () {
-              if (players().isEmpty) return;
-              setState(() => formStateIndex++);
-            },
+    if (playerId == null) {
+      return Row(
+        children: [
+          Expanded(
+            child: Focus(
+              child: TextField(
+                decoration: InputDecoration(hintText: 'Enter a player name'),
+                onChanged: (value) => setState(() => playerName = value),
+              ),
+              onKeyEvent: (node, event) {
+                if (event is KeyUpEvent || event.logicalKey != .enter) {
+                  return .ignored;
+                }
+                if (allowJoin) joinGame();
+                return .handled;
+              },
+            ),
           ),
-        if (formState() == .startingPhrase)
-          StartingPhrase((final phrase) => startingPhrase = phrase),
-        if (formState() == .entries)
-          PlayerEntries(
-            (final entries) => setState(() {
-              playerPhraseEntries[players()[playerIndex].id] = entries;
-              nextPage();
-            }),
+          TextButton(
+            onPressed: allowJoin ? joinGame : null,
+            child: Text('Join'),
           ),
-        if (formState() == .winners) Winners(players()),
-      ],
-    );
+        ],
+      );
+    }
+
+    if (game?.isStarted == false && game?.isEnded == false) return Lobby(game!);
+    if (game?.isStarted == true && game?.isEnded == false && round != null) {
+      return PhraseEntry(round!, playerId!);
+    }
+    if (game?.isStarted == true && game?.isEnded == true) {
+      return Winners(
+        game!.players.entries
+            .where((player) => game!.winners.contains(player.key))
+            .map((player) => player.value),
+      );
+    }
+
+    return Placeholder();
   }
 }

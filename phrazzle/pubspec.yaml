@@ -1,7 +1,7 @@
 name: phrazzle
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.0+1
+repository: https://github.com/mnowakowski98/phrazzle
 
 environment:
   sdk: ^3.11.4
@@ -9,8 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  http: ^1.6.0
   phrazzle_lib:
     path: ../phrazzle_lib/
+  web_socket_channel: ^3.0.3
 
 dev_dependencies:
   flutter_test:

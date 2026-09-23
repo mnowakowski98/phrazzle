@@ -1,61 +1,4 @@
-import 'package:uuid/uuid.dart';
-
-class PhrazzleBase {
-  final _scores = <String, int>{};
-  Map<String, int> get scores => Map.unmodifiable(_scores);
-
-  var _started = false;
-  bool get started => _started;
-
-  /// Add a player to the game and get id
-  String addPlayer() {
-    if (started) throw StateError('Game already started');
-
-    final id = Uuid().v4();
-    _scores[id] = 0;
-    return id;
-  }
-
-  /// Remove a player by id
-  int? removePlayer(String id) {
-    if (started) throw StateError('Game already started');
-
-    return _scores.remove(id);
-  }
-
-  int? getScore(String id) => _scores[id];
-
-  int incrementScore(String id, int amount) {
-    if (started == false) throw StateError('Game not started yet');
-
-    final currentScore = _scores[id];
-    if (currentScore == null) {
-      throw RangeError('Incremented score that does not exist');
-    }
-    _scores[id] = currentScore + amount;
-    return _scores[id]!;
-  }
-
-  bool start() {
-    if (started) throw StateError('Game already started');
-
-    if (_scores.isEmpty) return false;
-    _started = true;
-    return true;
-  }
-
-  /// End the game and get winning player ids
-  List<String> end() {
-    if (started == false) throw StateError('Game not started yet');
-
-    final max = _scores.values.fold(0, (final currentMax, final value) {
-      if (value > currentMax) return value;
-      return currentMax;
-    });
-    final winners = _scores.entries.where((final score) => score.value == max);
-    return List<String>.from(winners.map((final winner) => winner.key));
-  }
-
+abstract class PhrazzleBase {
   /// Determines if a sub phrase is valid from a given root phrase
   static bool isValidSubPhrase(
     String rootPhrase,
@@ -99,7 +42,7 @@ class PhrazzleBase {
   }
 
   /// Scores a chain of sub phrases until invalid or done
-  static int scorePhrases(String phrase, List<String> subPhrases) {
+  static int getNumberOfValidPhrases(String phrase, List<String> subPhrases) {
     var invalidSubPhrase = false;
     return subPhrases.fold(0, (final score, final subPhrase) {
       if (invalidSubPhrase) return score;
@@ -110,20 +53,5 @@ class PhrazzleBase {
       }
       return score + 1;
     });
-  }
-
-  /// Get a player's score
-  int? getPlayerScore(String id) => _scores[id];
-
-  /// Increment a player's score
-  int incrementPlayerScore(String id, int amount) {
-    if (_started == false) throw StateError('Game not started yet');
-
-    final currentScore = _scores[id];
-    if (currentScore == null) {
-      throw RangeError('Incremented score that does not exist');
-    }
-    _scores[id] = currentScore + amount;
-    return _scores[id]!;
   }
 }
