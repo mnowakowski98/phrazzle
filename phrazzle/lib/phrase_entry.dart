@@ -36,6 +36,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
                   decoration: InputDecoration(
                     hintText: widget.round.initialPhrase,
                   ),
+                  onChanged: (value) => setState(() => phrase = value),
                 ),
                 onKeyEvent: (node, event) {
                   if (event is KeyUpEvent || event.logicalKey != .enter) {
