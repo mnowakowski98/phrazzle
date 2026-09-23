@@ -88,7 +88,7 @@ class PhrazzleCentral {
   Future<Response> startGame(Request _, String phrase) async {
     final started = game.start();
     if (started) {
-      round = Round(phrase, game.players.keys.toList());
+      round = Round(Uri.decodeComponent(phrase), game.players.keys.toList());
 
       for (final channel in channels.values) {
         channel.sink.add(jsonEncode(round!.toJson()));
@@ -109,9 +109,12 @@ class PhrazzleCentral {
     String playerId,
     String phrase,
   ) async {
-    round?.addPlayerSubPhrase(playerId, phrase);
+    final decodedPhrase = Uri.decodeComponent(phrase);
+    round?.addPlayerSubPhrase(playerId, decodedPhrase);
 
-    print('Added player phrase: $phrase to ${game.players[playerId]?.name}');
+    print(
+      'Added player phrase: $decodedPhrase to ${game.players[playerId]?.name}',
+    );
     return Response.ok(null);
   }
 
