@@ -55,9 +55,7 @@ class PhrazzleCentral {
       });
 
       channel.sink.add(jsonEncode(game.toJson()));
-      game.getJsonUpdateStream().listen(
-        (data) => channel.sink.add(jsonEncode(data)),
-      );
+      game.stateStream.listen((data) => channel.sink.add(jsonEncode(data)));
 
       if (round != null) {
         channel.sink.add(jsonEncode(round!.toJson()));

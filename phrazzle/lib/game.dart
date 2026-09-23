@@ -100,7 +100,11 @@ class _GameState extends State<Game> {
       return PhraseEntry(round!, playerId!);
     }
     if (game?.isStarted == true && game?.isEnded == true) {
-      return Winners(game!.winners);
+      return Winners(
+        game!.players.entries
+            .where((player) => game!.winners.contains(player.key))
+            .map((player) => player.value),
+      );
     }
 
     return Placeholder();

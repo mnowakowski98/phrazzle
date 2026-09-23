@@ -10,5 +10,5 @@ Map<String, dynamic> _$GameToJson(Game instance) => <String, dynamic>{
   'players': instance.players.map((k, e) => MapEntry(k, e.toJson())),
   'isStarted': instance.isStarted,
   'isEnded': instance.isEnded,
-  'winners': instance.winners.map((k, e) => MapEntry(k, e.toJson())),
+  'winners': instance.winners.toList(),
 };

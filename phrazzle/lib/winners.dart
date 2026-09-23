@@ -4,7 +4,7 @@ import 'package:phrazzle/player_tile.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class Winners extends StatelessWidget {
-  final Map<String, Player> players;
+  final Iterable<Player> players;
 
   const Winners(this.players, {super.key});
 
@@ -16,7 +16,7 @@ class Winners extends StatelessWidget {
           title: Text(players.length > 1 ? 'Winners' : 'Winner'),
           titleTextStyle: TextStyle(fontWeight: .bold, color: Colors.blue),
         ),
-        for (final player in players.values) PlayerTile(player),
+        for (final player in players) PlayerTile(player),
       ],
     );
   }

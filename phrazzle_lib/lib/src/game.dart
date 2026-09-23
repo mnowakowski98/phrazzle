@@ -28,20 +28,30 @@ class Game {
   var _isEnded = false;
   bool get isEnded => _isEnded;
 
-  final _winners = <String, Player>{};
-  Map<String, Player> get winners => Map.unmodifiable(_winners);
+  Iterable<String> get winners {
+    final max = players.values.fold(0, (final currentMax, final value) {
+      if (value.score > currentMax) return value.score;
+      return currentMax;
+    });
+
+    return players.entries
+        .where((player) => player.value.score == max)
+        .map((player) => player.key);
+  }
 
   var _sendUpdates = false;
   StreamController<Map<String, dynamic>>? _updateController;
 
-  Stream<Map<String, dynamic>> getJsonUpdateStream() {
+  @JsonKey(includeToJson: false)
+  Stream<Map<String, dynamic>> get stateStream {
     _updateController ??= StreamController<Map<String, dynamic>>.broadcast(
       onListen: () => _sendUpdates = true,
       onCancel: () => _sendUpdates = false,
     );
-
     return _updateController!.stream;
   }
+
+  Game();
 
   Map<String, dynamic> toJson() {
     final json = _$GameToJson(this);
@@ -49,7 +59,6 @@ class Game {
     return json;
   }
 
-  Game();
   factory Game.fromJson(Map<String, dynamic> json) {
     final game = Game();
     game._isStarted = json['isStarted'];
@@ -57,10 +66,6 @@ class Game {
     final Map<String, dynamic> players = json['players'];
     for (final player in players.entries) {
       game._players[player.key] = Player.fromJson(player.value);
-    }
-    final Map<String, dynamic> winners = json['winners'];
-    for (final winner in winners.entries) {
-      game._winners[winner.key] = Player.fromJson(winner.value);
     }
     return game;
   }
@@ -107,14 +112,6 @@ class Game {
   void end() {
     if (isStarted == false) throw StateError('Game not started yet');
     _isEnded = true;
-
-    final max = _players.values.fold(0, (final currentMax, final value) {
-      if (value.score > currentMax) return value.score;
-      return currentMax;
-    });
-    _winners.addEntries(
-      players.entries.where((final player) => player.value.score == max),
-    );
 
     if (_sendUpdates) _updateController?.add(toJson());
     _sendUpdates = false;
