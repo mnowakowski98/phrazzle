@@ -73,7 +73,7 @@ class PhrazzleCentral {
   /// Create a player with a given name
   @Route.post('/game/<playerName>')
   Future<Response> addPlayer(Request _, String playerName) async {
-    final playerId = game.addPlayer(playerName);
+    final playerId = game.addPlayer(Uri.decodeComponent(playerName));
     print('Added player: $playerId - $playerName');
     return Response.ok(playerId);
   }
