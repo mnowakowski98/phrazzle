@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:phrazzle/phrase_entry.dart';
 import 'package:phrazzle/winners.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -17,8 +18,8 @@ class Game extends StatefulWidget {
 }
 
 class _GameState extends State<Game> {
-  var enableJoinButton = false;
-  final nameController = TextEditingController();
+  String playerName = '';
+  bool get allowJoin => playerName.isNotEmpty;
 
   WebSocketChannel? _channel;
   String? playerId;
@@ -27,7 +28,7 @@ class _GameState extends State<Game> {
   Round? round;
 
   // TODO: Remove hardcoded urls
-  void joinGame(String playerName) async {
+  void joinGame() async {
     if (playerName.isEmpty) return;
     final res = await http.post(
       Uri.parse('http://localhost:3000/game/$playerName'),
@@ -61,11 +62,9 @@ class _GameState extends State<Game> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    nameController.addListener(() {
-      setState(() => enableJoinButton = nameController.text.isNotEmpty);
-    });
+  void dispose() {
+    _channel?.sink.close();
+    super.dispose();
   }
 
   @override
@@ -74,17 +73,22 @@ class _GameState extends State<Game> {
       return Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: nameController,
-              decoration: InputDecoration(hintText: 'Enter a player name'),
+            child: Focus(
+              child: TextField(
+                decoration: InputDecoration(hintText: 'Enter a player name'),
+                onChanged: (value) => setState(() => playerName = value),
+              ),
+              onKeyEvent: (node, event) {
+                if (event is KeyUpEvent || event.logicalKey != .enter) {
+                  return .ignored;
+                }
+                if (allowJoin) joinGame();
+                return .handled;
+              },
             ),
           ),
           TextButton(
-            onPressed: enableJoinButton
-                ? () {
-                    joinGame(nameController.text);
-                  }
-                : null,
+            onPressed: allowJoin ? joinGame : null,
             child: Text('Join'),
           ),
         ],
@@ -100,12 +104,5 @@ class _GameState extends State<Game> {
     }
 
     return Placeholder();
-  }
-
-  @override
-  void dispose() {
-    nameController.dispose();
-    _channel?.sink.close();
-    super.dispose();
   }
 }

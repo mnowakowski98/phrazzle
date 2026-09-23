@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:phrazzle_lib/phrazzle.dart';
@@ -14,15 +15,13 @@ class PhraseEntry extends StatefulWidget {
 }
 
 class _PhraseEntryState extends State<PhraseEntry> {
-  final phraseController = TextEditingController();
-  var allowPhraseEntry = false;
+  String phrase = '';
+  bool get allowPhraseSubmission => phrase.isNotEmpty;
 
-  @override
-  void initState() {
-    super.initState();
-    phraseController.addListener(() {
-      setState(() => allowPhraseEntry = phraseController.text.isNotEmpty);
-    });
+  void submitPhrase() async {
+    await http.post(
+      Uri.parse('http://localhost:3000/game/phrase/${widget.playerId}/$phrase'),
+    );
   }
 
   @override
@@ -32,23 +31,23 @@ class _PhraseEntryState extends State<PhraseEntry> {
         Row(
           children: [
             Expanded(
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: widget.round.initialPhrase,
+              child: Focus(
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: widget.round.initialPhrase,
+                  ),
                 ),
-                controller: phraseController,
+                onKeyEvent: (node, event) {
+                  if (event is KeyUpEvent || event.logicalKey != .enter) {
+                    return .ignored;
+                  }
+                  if (allowPhraseSubmission) submitPhrase();
+                  return .handled;
+                },
               ),
             ),
             TextButton(
-              onPressed: allowPhraseEntry
-                  ? () async {
-                      await http.post(
-                        Uri.parse(
-                          'http://localhost:3000/game/phrase/${widget.playerId}/${phraseController.text}',
-                        ),
-                      );
-                    }
-                  : null,
+              onPressed: allowPhraseSubmission ? submitPhrase : null,
               child: Text('Enter'),
             ),
           ],
