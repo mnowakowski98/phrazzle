@@ -7,13 +7,7 @@ import 'package:shelf_router/shelf_router.dart';
 final app = Router();
 
 void main(List<String> arguments) async {
-  final cascade = Cascade()
-      // .add(
-      //   webSocketHandler((websocket, _) {
-      //     print('Got a websocket connection');
-      //   }),
-      // )
-      .add(PhrazzleCentral().router.call);
+  final cascade = Cascade().add(PhrazzleCentral().router.call);
 
   final pipeline = Pipeline()
       .addMiddleware(corsHeaders())
