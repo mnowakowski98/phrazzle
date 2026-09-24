@@ -9,7 +9,7 @@
             "type": "dart",
             "program": "lib/main.dart",
             "toolArgs": [
-                "--dart-define=baseUrl=http://localhost:3000"
+                "--dart-define=baseUrl=http://localhost:3000",
             ]
         },
         {
