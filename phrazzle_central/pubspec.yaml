@@ -1,5 +1,5 @@
 name: phrazzle_central
-description: A sample command-line application.
+description: Central coordinator for Phrazzle games used by the app.
 publish_to: 'none'
 repository: https://github.com/mnowakowski98/phrazzle
 
