@@ -8,6 +8,9 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define=baseUrl=http://localhost:3000"
+            ]
         },
         {
             "name": "phrazzle (profile mode)",

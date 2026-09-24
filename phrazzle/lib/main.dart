@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'game.dart';
 
 void main() {
+  const baseUrl = String.fromEnvironment('baseUrl', defaultValue: 'Goofed');
+  print(baseUrl);
   runApp(const MainApp());
 }
 
