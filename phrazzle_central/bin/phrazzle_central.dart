@@ -8,9 +8,10 @@ final app = Router();
 
 void main(List<String> arguments) async {
   final cascade = Cascade().add(PhrazzleCentral().router.call);
-
   final pipeline = Pipeline()
       .addMiddleware(corsHeaders())
       .addHandler(cascade.handler);
-  await serve(pipeline, 'localhost', 3000);
+
+  print('Starting Phrazzle Central');
+  await serve(pipeline, '0.0.0.0', 80);
 }

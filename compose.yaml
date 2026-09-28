@@ -1,0 +1,8 @@
+services:
+  central:
+    build:
+      context: .
+      dockerfile: ./phrazzle_central/dockerfile
+
+  web:
+    build: ./phrazzle
