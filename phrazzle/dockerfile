@@ -1,3 +1,4 @@
-FROM httpd:latest
-COPY /build/web/ /usr/local/apache2/htdocs/
+FROM nginx:latest
+COPY /nginx.conf /etc/nginx/nginx.conf
+COPY /build/web/ /usr/share/nginx/html
 EXPOSE 80

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:phrazzle/env.dart';
 
 import 'package:phrazzle/player_list.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
@@ -20,7 +21,7 @@ class _LobbyState extends State<Lobby> {
   bool get allowStart => startingPhrase.isNotEmpty;
 
   void startGame() async {
-    await http.put(Uri.parse('http://localhost:3000/game/$startingPhrase'));
+    await http.put(Uri.parse('${Env.apiUrl}/game/$startingPhrase'));
   }
 
   @override
