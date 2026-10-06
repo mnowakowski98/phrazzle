@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:phrazzle_central/phrazzle_central.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
@@ -12,13 +10,8 @@ void main(List<String> arguments) async {
   final cascade = Cascade().add(PhrazzleCentral().router.call);
   final pipeline = Pipeline()
       .addMiddleware(corsHeaders())
-      .addMiddleware(logRequests())
       .addHandler(cascade.handler);
 
-
-  const environmentPort = String.fromEnvironment('PORT');
-  final port = int.tryParse(environmentPort) ?? 80;
-
-  print('Starting Phrazzle Central on port $port');
-  await serve(pipeline, InternetAddress.anyIPv4, port);
+  print('Starting Phrazzle Central');
+  await serve(pipeline, '0.0.0.0', 80);
 }

@@ -1,5 +1,5 @@
 class Env {
-    static const _errorDefault = 'Goofed';
-    static const apiUrl = String.fromEnvironment('API_URL', defaultValue: _errorDefault);
+    static const centralUrl = String.fromEnvironment('CENTRAL_URL');
+    static const gameUrl = String.fromEnvironment('GAME_URL');
     Env._();
 }

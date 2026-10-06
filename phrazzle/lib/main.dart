@@ -26,7 +26,7 @@ class MainApp extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () async {
-                http.post(Uri.parse('${Env.apiUrl}/game'));
+                http.post(Uri.parse('${Env.centralUrl}/game'));
               },
               child: Text('Reset game'),
             ),

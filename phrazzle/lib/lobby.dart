@@ -21,7 +21,7 @@ class _LobbyState extends State<Lobby> {
   bool get allowStart => startingPhrase.isNotEmpty;
 
   void startGame() async {
-    await http.put(Uri.parse('${Env.apiUrl}/game/$startingPhrase'));
+    await http.put(Uri.parse('${Env.centralUrl}/game/$startingPhrase'));
   }
 
   @override

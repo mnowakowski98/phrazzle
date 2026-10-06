@@ -31,12 +31,12 @@ class _GameState extends State<Game> {
   void joinGame() async {
     if (playerName.isEmpty) return;
     final res = await http.post(
-      Uri.parse('${Env.apiUrl}/game/$playerName'),
+      Uri.parse('${Env.centralUrl}/game/$playerName'),
     );
     setState(() {
       playerId = res.body;
       _channel = WebSocketChannel.connect(
-        Uri.parse('${Env.apiUrl}/game/$playerId'),
+        Uri.parse('${Env.gameUrl}/game/$playerId'),
       );
 
       _channel?.sink.done.whenComplete(() {
