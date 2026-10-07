@@ -36,7 +36,8 @@
             "type": "dart",
             "program": "bin/phrazzle_central.dart",
             "toolArgs": [
-                "--define=PORT=3000"
+                "--define=PORT=3000",
+                "--define=FORCE_LOCAL=true"
             ]
         }
     ]
