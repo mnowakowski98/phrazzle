@@ -3,16 +3,11 @@ import 'package:phrazzle/player_tile.dart';
 
 import 'package:phrazzle_lib/phrazzle.dart';
 
-class PlayerList extends StatefulWidget {
+class PlayerList extends StatelessWidget {
   final List<Player> players;
 
   const PlayerList(this.players, {super.key});
 
-  @override
-  State<PlayerList> createState() => _PlayerListState();
-}
-
-class _PlayerListState extends State<PlayerList> {
   @override
   build(BuildContext context) {
     return Expanded(
@@ -25,7 +20,7 @@ class _PlayerListState extends State<PlayerList> {
               color: Colors.lightBlue,
             ),
           ),
-          for (final player in widget.players) PlayerTile(player),
+          for (final player in players) PlayerTile(player),
         ],
       ),
     );

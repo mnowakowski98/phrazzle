@@ -15,6 +15,8 @@ A game about finding subsets of words and phrases from words and phrases.
 - From the starting phrase create smaller phrases using the same letters.
 > Example: heck jog
 
+*(or) Remove letters from the original phrase*
+
 In derived phrases:  
 
 - Phrase doesn't necessarily have to make sense.

@@ -1,3 +1,3 @@
-# phrazzle
+# Phrazzle
 
-A new Flutter project.
+Mutli-platform frontend app for Phrazzle.

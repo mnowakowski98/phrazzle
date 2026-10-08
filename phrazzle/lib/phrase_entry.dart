@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:phrazzle/env.dart';
 
 import 'package:phrazzle_lib/phrazzle.dart';
 
@@ -20,7 +21,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
 
   void submitPhrase() async {
     await http.post(
-      Uri.parse('http://localhost:3000/game/phrase/${widget.playerId}/$phrase'),
+      Uri.parse('${Env.centralUrl}/game/phrase/${widget.playerId}/$phrase'),
     );
   }
 
@@ -63,7 +64,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
         ),
         TextButton(
           onPressed: () async {
-            await http.delete(Uri.parse('http://localhost:3000/game'));
+            await http.delete(Uri.parse('${Env.centralUrl}/game'));
           },
           child: Text('Done'),
         ),

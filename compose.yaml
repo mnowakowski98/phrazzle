@@ -1,0 +1,14 @@
+services:
+  central:
+    build:
+      context: .
+      dockerfile: ./phrazzle_central/dockerfile
+    ports:
+      - "${API_PORT}:80"
+
+  web:
+    build: ./phrazzle
+    depends_on:
+      - central
+    ports:
+      - "${WEB_PORT}:80"

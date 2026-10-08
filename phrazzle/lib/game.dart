@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phrazzle/env.dart';
 import 'package:phrazzle/phrase_entry.dart';
 import 'package:phrazzle/winners.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -27,16 +28,15 @@ class _GameState extends State<Game> {
   Phrazzle? game;
   Round? round;
 
-  // TODO: Remove hardcoded urls
   void joinGame() async {
     if (playerName.isEmpty) return;
     final res = await http.post(
-      Uri.parse('http://localhost:3000/game/$playerName'),
+      Uri.parse('${Env.centralUrl}/game/$playerName'),
     );
     setState(() {
       playerId = res.body;
       _channel = WebSocketChannel.connect(
-        Uri.parse('ws://localhost:3000/game/$playerId'),
+        Uri.parse('${Env.gameUrl}/game/$playerId'),
       );
 
       _channel?.sink.done.whenComplete(() {

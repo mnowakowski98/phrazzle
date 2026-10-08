@@ -20,18 +20,18 @@ class PhrazzleCentral {
   // TODO: Remove
   /// Game/Round output for testing
   @Route.get('/game')
-  Future<Response> getInfo(Request _) async {
+  Response getInfo(Request _) {
     return Response.ok(
       jsonEncode({
         'game': game.toJson(),
         'round': round != null ? round?.toJson() : 'No Round',
-      }),
+      }), headers: {'content-type': 'application/json'}
     );
   }
 
   /// Reset the game, close active connections
   @Route.post('/game')
-  Future<Response> createGame(Request _) async {
+  Response createGame(Request _) {
     game = Game();
     round = null;
     for (final channel in channels.values) {
@@ -49,14 +49,17 @@ class PhrazzleCentral {
     return webSocketHandler((channel, _) {
       channels[playerId] = channel;
 
+      // Unlink active channel from player (does not delete player)
       channel.sink.done.whenComplete(() {
         channels.remove(playerId);
         print('Player: $playerId left');
       });
 
+      // Send current game state and sync with updates
       channel.sink.add(jsonEncode(game.toJson()));
       game.stateStream.listen((data) => channel.sink.add(jsonEncode(data)));
 
+      // Send/sync round if exists
       if (round != null) {
         channel.sink.add(jsonEncode(round!.toJson()));
         round!.getUpdateStream().listen(
@@ -70,7 +73,7 @@ class PhrazzleCentral {
 
   /// Create a player with a given name
   @Route.post('/game/<playerName>')
-  Future<Response> addPlayer(Request _, String playerName) async {
+  Response addPlayer(Request _, String playerName) {
     final playerId = game.addPlayer(Uri.decodeComponent(playerName));
     print('Added player: $playerId - $playerName');
     return Response.ok(playerId);
@@ -78,17 +81,17 @@ class PhrazzleCentral {
 
   /// Remove an existing player by id
   @Route.delete('/game/<playerId>')
-  Future<Response> removePlayer(Request _, String playerId) async {
+  Response removePlayer(Request _, String playerId) {
     game.removePlayer(playerId);
     return Response.ok(null);
   }
 
   /// Start the game
   @Route.put('/game/<phrase>')
-  Future<Response> startGame(Request _, String phrase) async {
+  Response startGame(Request _, String phrase) {
     final started = game.start();
     if (started) {
-      round = Round(phrase, game.players.keys.toList());
+      round = Round(Uri.decodeComponent(phrase), game.players.keys.toList());
 
       for (final channel in channels.values) {
         channel.sink.add(jsonEncode(round!.toJson()));
@@ -104,20 +107,23 @@ class PhrazzleCentral {
 
   /// Add player sub phrase
   @Route.post('/game/phrase/<playerId>/<phrase>')
-  Future<Response> addSubPhrase(
+  Response addSubPhrase(
     Request _,
     String playerId,
     String phrase,
-  ) async {
-    round?.addPlayerSubPhrase(playerId, phrase);
+  ) {
+    final decodedPhrase = Uri.decodeComponent(phrase);
+    round?.addPlayerSubPhrase(playerId, decodedPhrase);
 
-    print('Added player phrase: $phrase to ${game.players[playerId]?.name}');
+    print(
+      'Added player phrase: $decodedPhrase to ${game.players[playerId]?.name}',
+    );
     return Response.ok(null);
   }
 
   /// End the game
   @Route.delete('/game')
-  Future<Response> endGame(Request _) async {
+  Response endGame(Request _) {
     if (game.isStarted == false) return Response.ok(false);
 
     final scores = round!.scoreRound();

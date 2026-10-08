@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:phrazzle/env.dart';
 
 import 'game.dart';
 
@@ -25,7 +26,7 @@ class MainApp extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () async {
-                http.post(Uri.parse('http://localhost:3000/game'));
+                http.post(Uri.parse('${Env.centralUrl}/game'));
               },
               child: Text('Reset game'),
             ),
