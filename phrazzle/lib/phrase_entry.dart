@@ -38,6 +38,12 @@ class _PhraseEntryState extends State<PhraseEntry> {
                     hintText: widget.round.initialPhrase,
                   ),
                   onChanged: (value) => setState(() => phrase = value),
+                  inputFormatters: [
+                    TextInputFormatter.withFunction((oldValue, newValue) {
+                      return PhrazzleBase.isValidSubPhrase(widget.round.initialPhrase, newValue.text) ? newValue : oldValue;
+                    })
+                  ],
+                  
                 ),
                 onKeyEvent: (node, event) {
                   if (event is KeyUpEvent || event.logicalKey != .enter) {
