@@ -25,6 +25,7 @@ abstract class PhrazzleBase {
         ? subPhrase
         : subPhrase.trim().toLowerCase().replaceAll(' ', '');
 
+    if (subPhraseTransform.isEmpty) return true;
     final currentChar = subPhraseTransform[0];
 
     // Check if current processing char is in the root phrase
