@@ -40,6 +40,13 @@ void main() {
       expect(PhrazzleBase.isValidSubPhrase(rootPhrase, subPhrase), false);
     });
 
+    test('Valid character is repeated incorrectly', () {
+      // Define incorrect?
+      final rootPhrase = 'qwerty';
+      final subPhrase = 'qq';
+      expect(PhrazzleBase.isValidSubPhrase(rootPhrase, subPhrase), false);
+    });
+
     test('Character not in root phrase', () {
       // test does not contain a d, r or p
       final rootPhrase = 'test';
