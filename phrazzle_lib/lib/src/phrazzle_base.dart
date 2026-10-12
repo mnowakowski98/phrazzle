@@ -1,45 +1,34 @@
 abstract class PhrazzleBase {
   /// Determines if a sub phrase is valid from a given root phrase
-  static bool isValidSubPhrase(
-    String rootPhrase,
-    String subPhrase, [
-    bool isFirstRecurse = true,
-  ]) {
+  static bool isValidSubPhrase(String rootPhrase, String subPhrase) {
     // Check if the sub phrase contains an uninterrupted word or phrase from the root phrase
-    if (isFirstRecurse == true) {
-      final wordsInRootPhrase = rootPhrase.split(' ');
-      final wordsInSubPhrase = subPhrase.split(' ');
+    final wordsInRootPhrase = rootPhrase.split(' ');
+    final wordsInSubPhrase = subPhrase.split(' ');
 
-      if (wordsInSubPhrase.any(
-        (final string) => wordsInRootPhrase.contains(string),
-      )) {
-        return false;
-      }
+    if (wordsInSubPhrase.any(
+      (final string) => wordsInRootPhrase.contains(string),
+    )) {
+      return false;
     }
 
     // Prep phrases
-    final rootPhraseTransform = !isFirstRecurse
-        ? rootPhrase
-        : rootPhrase.trim().toLowerCase().replaceAll(' ', '');
-    final subPhraseTransform = !isFirstRecurse
-        ? subPhrase
-        : subPhrase.trim().toLowerCase().replaceAll(' ', '');
+    final rootPhraseTransform = rootPhrase.trim().toLowerCase().replaceAll(' ', '');
+    final subPhraseTransform = subPhrase.trim().toLowerCase().replaceAll(' ', '');
 
-    if (subPhraseTransform.isEmpty) return true;
-    final currentChar = subPhraseTransform[0];
+    if (subPhraseTransform.isEmpty) return false;
 
-    // Check if current processing char is in the root phrase
-    if (rootPhraseTransform.contains(currentChar) == false) return false;
-
-    // No more chars to check, sub phrase is valid
-    if (subPhraseTransform.length == 1) return true;
-
-    // Check next char with truncated phrases
-    return isValidSubPhrase(
-      rootPhraseTransform.substring(rootPhraseTransform.indexOf(currentChar)),
-      subPhraseTransform.substring(1),
-      false,
-    );
+    var isValid = true;
+    var rootProcessingIndex = 0;
+    for (var index = 0; index < subPhraseTransform.length; index++) {
+      final subRoot = rootPhraseTransform.substring(rootProcessingIndex);
+      final matchedCharIndex = subRoot.indexOf(subPhraseTransform[index]);
+      if (matchedCharIndex >= 0) {
+        rootProcessingIndex = matchedCharIndex + 1;
+      } else {
+        isValid = false;
+      }
+    }
+    return isValid;
   }
 
   /// Scores a chain of sub phrases until invalid or done

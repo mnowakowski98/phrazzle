@@ -33,6 +33,10 @@ void main() {
   });
 
   group('Invalid sub phrases', () {
+    test('Sub phrase is empty', () {
+      expect(PhrazzleBase.isValidSubPhrase('test', ''), false);
+    });
+    
     test('Character occurs out of order', () {
       // p is used after c has truncated the available letters
       final rootPhrase = 'dip mcshit';
