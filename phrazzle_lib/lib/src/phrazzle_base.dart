@@ -23,7 +23,7 @@ abstract class PhrazzleBase {
       final subRoot = rootPhraseTransform.substring(rootProcessingIndex);
       final matchedCharIndex = subRoot.indexOf(subPhraseTransform[index]);
       if (matchedCharIndex >= 0) {
-        rootProcessingIndex = matchedCharIndex + 1;
+        rootProcessingIndex += matchedCharIndex + 1;
       } else {
         isValid = false;
       }

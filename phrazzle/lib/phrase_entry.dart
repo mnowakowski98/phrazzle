@@ -40,6 +40,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
                   onChanged: (value) => setState(() => phrase = value),
                   inputFormatters: [
                     TextInputFormatter.withFunction((oldValue, newValue) {
+                      if (newValue.text.isEmpty) return newValue;
                       return PhrazzleBase.isValidSubPhrase(widget.round.initialPhrase, newValue.text) ? newValue : oldValue;
                     })
                   ],

@@ -45,9 +45,14 @@ void main() {
     });
 
     test('Valid character is repeated incorrectly', () {
-      // Define incorrect?
       final rootPhrase = 'qwerty';
       final subPhrase = 'qq';
+      expect(PhrazzleBase.isValidSubPhrase(rootPhrase, subPhrase), false);
+    });
+
+    test('Valid character exceeds number of uses', () {
+      final rootPhrase = 'testing test';
+      final subPhrase = 'ttttt';
       expect(PhrazzleBase.isValidSubPhrase(rootPhrase, subPhrase), false);
     });
 
