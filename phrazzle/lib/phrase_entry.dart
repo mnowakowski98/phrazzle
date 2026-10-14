@@ -25,6 +25,12 @@ class _PhraseEntryState extends State<PhraseEntry> {
   final _phraseController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _phraseController.addListener(() => setState(() => phrase = _phraseController.text));
+  }
+
+  @override
   void dispose() {
     _phraseController.dispose();
     super.dispose();
@@ -35,18 +41,15 @@ class _PhraseEntryState extends State<PhraseEntry> {
     await http.post(
       Uri.parse('${Env.centralUrl}/game/phrase/${widget.playerId}/$phrase'),
     );
-    setState(() => _phraseController.clear());
+    _phraseController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     const lastPhraseTextStyle = TextStyle(color: Colors.teal);
 
-    Text lastPhraseText(String text) {
-      return Text.rich(style: TextStyle(fontSize: 24), TextSpan(children: [for (var index = 0; index < text.length; index++) TextSpan(text: text[index], style: (phraseInfo.matchIndices != null && phraseInfo.matchIndices!.contains(index)) ? lastPhraseTextStyle : null)]));
-
-    }
-    // RichText lastPhraseText(String text) => RichText(text: TextSpan(text: text, style: lastPhraseTextStyle));
+    final phrases = [for (final phrase in playerPhrases.reversed) phrase, widget.round.initialPhrase];
+    // final lastPhraseTextWidget = Text.rich(style: TextStyle(fontSize: 24), TextSpan(children: [for (var index = 0; index < text.length; index++) TextSpan(text: text[index], style: (phraseInfo.matchIndices != null && phraseInfo.matchIndices!.contains(index)) ? lastPhraseTextStyle : null)]));
 
     return Column(
       children: [
@@ -85,8 +88,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
         Expanded(
           child: ListView(
             children: [
-              for (final phrase in playerPhrases.reversed) phrase == currentRootPhrase ? lastPhraseText(phrase) : Text(phrase),
-              playerPhrases.isEmpty ? lastPhraseText(widget.round.initialPhrase) : Text(widget.round.initialPhrase),
+              for (final phrase in phrases) phrase == phrases.first ? Text.rich(TextSpan(style: TextStyle(fontSize: 24), children: [for (var phraseIndex = 0; phraseIndex < phrase.length; phraseIndex++) TextSpan(text: phrase[phraseIndex], style: (phraseInfo.matchIndices != null && phraseInfo.matchIndices!.contains(phraseIndex)) ? lastPhraseTextStyle : null)])) : Text(phrase),
             ],
           ),
         ),
@@ -99,7 +101,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
         Row(mainAxisAlignment: .center, children: [
           Column(
             children: [
-              Text(phraseInfo.matchIndices?.toString() ?? 'no match indices',),
+              Text(phraseInfo.matchIndices?.toString() ?? 'No match indices',),
               Text(phraseInfo.wholeWordMatch ?? 'No whole matches')
             ],
           ),
