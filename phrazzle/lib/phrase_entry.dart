@@ -20,7 +20,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
   
   List<String> get playerPhrases => widget.round.subPhrases[widget.playerId]!;
   String get currentRootPhrase => playerPhrases.isEmpty ? widget.round.initialPhrase : playerPhrases.last;
-  bool get isValidPhrase => PhrazzleBase.isValidSubPhrase(currentRootPhrase, phrase);
+  PhraseValidationInfo get phraseInfo => PhrazzleBase.getPhraseMatchingInformation(currentRootPhrase, phrase);
 
   final _phraseController = TextEditingController();
 
@@ -31,6 +31,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
   }
 
   void submitPhrase() async {
+    if (phraseInfo.isValid == false) return;
     await http.post(
       Uri.parse('${Env.centralUrl}/game/phrase/${widget.playerId}/$phrase'),
     );
@@ -39,7 +40,13 @@ class _PhraseEntryState extends State<PhraseEntry> {
 
   @override
   Widget build(BuildContext context) {
-    const lastPhraseTextStyle = TextStyle(fontSize: 40, color: Colors.teal);
+    const lastPhraseTextStyle = TextStyle(color: Colors.teal);
+
+    Text lastPhraseText(String text) {
+      return Text.rich(style: TextStyle(fontSize: 24), TextSpan(children: [for (var index = 0; index < text.length; index++) TextSpan(text: text[index], style: (phraseInfo.matchIndices != null && phraseInfo.matchIndices!.contains(index)) ? lastPhraseTextStyle : null)]));
+
+    }
+    // RichText lastPhraseText(String text) => RichText(text: TextSpan(text: text, style: lastPhraseTextStyle));
 
     return Column(
       children: [
@@ -49,29 +56,28 @@ class _PhraseEntryState extends State<PhraseEntry> {
               child: Focus(
                 child: TextField(
                   controller: _phraseController,
-                  style: TextStyle(color: isValidPhrase ? Colors.green : Colors.red),
+                  style: TextStyle(color: phraseInfo.isValid ? Colors.green : Colors.red),
                   decoration: InputDecoration(
                     labelText: 'Enter next phrase',
-                    hintText: currentRootPhrase,
+                    // hintText: currentRootPhrase,
                     hintStyle: TextStyle(color: Colors.teal)
                   ),
                   onChanged: (value) => setState(() => phrase = value),
                   inputFormatters: [
                     TextInputFormatter.withFunction((oldValue, newValue) => newValue.text.length <= currentRootPhrase.length ? newValue : oldValue)
                   ],
-                  
                 ),
                 onKeyEvent: (node, event) {
                   if (event is KeyUpEvent || event.logicalKey != .enter) {
                     return .ignored;
                   }
-                  if (isValidPhrase) submitPhrase();
+                  submitPhrase();
                   return .handled;
                 },
               ),
             ),
             TextButton(
-              onPressed: isValidPhrase ? submitPhrase : null,
+              onPressed: submitPhrase,
               child: Text('Enter'),
             ),
           ],
@@ -79,9 +85,8 @@ class _PhraseEntryState extends State<PhraseEntry> {
         Expanded(
           child: ListView(
             children: [
-              for (final phrase in playerPhrases.reversed)
-                ListTile(title: Text(phrase), titleTextStyle: phrase == playerPhrases.last ? lastPhraseTextStyle : null,),
-              ListTile(title: Text(widget.round.initialPhrase), titleTextStyle: playerPhrases.isEmpty ? lastPhraseTextStyle : null,),
+              for (final phrase in playerPhrases.reversed) phrase == currentRootPhrase ? lastPhraseText(phrase) : Text(phrase),
+              playerPhrases.isEmpty ? lastPhraseText(widget.round.initialPhrase) : Text(widget.round.initialPhrase),
             ],
           ),
         ),
@@ -91,6 +96,14 @@ class _PhraseEntryState extends State<PhraseEntry> {
           },
           child: Text('Done'),
         ),
+        Row(mainAxisAlignment: .center, children: [
+          Column(
+            children: [
+              Text(phraseInfo.matchIndices?.toString() ?? 'no match indices',),
+              Text(phraseInfo.wholeWordMatch ?? 'No whole matches')
+            ],
+          ),
+        ],),
       ],
     );
   }
