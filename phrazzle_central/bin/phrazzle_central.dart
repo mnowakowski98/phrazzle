@@ -14,11 +14,9 @@ import 'package:phrazzle_central/phrazzle_central.dart';
 final app = Router();
 
 void main(List<String> arguments) async {
-  final forceLocal = bool.tryParse(String.fromEnvironment('FORCE_LOCAL')) ?? false;
-
   String? projectId;
   try {
-    projectId = await computeProjectId();
+    projectId = await projectIdFromMetadataServer();
   } on MetadataServerException {
     print('Unable to determine cloud project');
   }
@@ -33,7 +31,7 @@ void main(List<String> arguments) async {
       .addMiddleware(createLoggingMiddleware(projectId: projectId))
       .addHandler(cascade.handler);
 
-  if (projectId != null && forceLocal == false) {
+  if (projectId != null) {
     await serveHandler(pipeline);
   } else {
     final port = int.tryParse(String.fromEnvironment('PORT')) ?? 80;

@@ -16,7 +16,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
+          seedColor: Colors.cyan,
           brightness: Brightness.light,
         ),
       ),
