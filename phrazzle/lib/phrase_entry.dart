@@ -46,10 +46,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
 
   @override
   Widget build(BuildContext context) {
-    const lastPhraseTextStyle = TextStyle(color: Colors.teal);
-
     final phrases = [for (final phrase in playerPhrases.reversed) phrase, widget.round.initialPhrase];
-    // final lastPhraseTextWidget = Text.rich(style: TextStyle(fontSize: 24), TextSpan(children: [for (var index = 0; index < text.length; index++) TextSpan(text: text[index], style: (phraseInfo.matchIndices != null && phraseInfo.matchIndices!.contains(index)) ? lastPhraseTextStyle : null)]));
 
     return Column(
       children: [
@@ -88,7 +85,13 @@ class _PhraseEntryState extends State<PhraseEntry> {
         Expanded(
           child: ListView(
             children: [
-              for (final phrase in phrases) phrase == phrases.first ? Text.rich(TextSpan(style: TextStyle(fontSize: 24), children: [for (var phraseIndex = 0; phraseIndex < phrase.length; phraseIndex++) TextSpan(text: phrase[phraseIndex], style: (phraseInfo.matchIndices != null && phraseInfo.matchIndices!.contains(phraseIndex)) ? lastPhraseTextStyle : null)])) : Text(phrase),
+              for (final phrase in phrases) phrase == phrases.first ?
+                Text.rich(TextSpan(style: TextStyle(fontSize: 24), children: [
+                  for (var phraseIndex = 0; phraseIndex < phrase.length; phraseIndex++) TextSpan(
+                    text: phrase[phraseIndex],
+                    style: (phraseInfo.matchIndices != null && phraseInfo.matchIndices!.contains(phraseIndex)) ? TextStyle(color: Colors.teal) : null,
+                  )
+                ])) : Text(phrase),
             ],
           ),
         ),
