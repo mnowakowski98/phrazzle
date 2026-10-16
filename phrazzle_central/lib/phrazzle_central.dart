@@ -19,6 +19,9 @@ class GameContainer {
   GameContainer(this.game);
 }
 
+// TODO: Abstract away the storage of games
+// The game(s) state needs to live past the lifetime of this service
+// Implementation can vary based on environment, this class doesn't need to know
 Map<String, GameContainer> games = {};
 
 /// Service for the creation, cordination and status of games

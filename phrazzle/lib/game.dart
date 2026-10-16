@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:phrazzle/env.dart';
 import 'package:phrazzle/phrase_entry.dart';
 import 'package:phrazzle/winners.dart';
@@ -19,35 +18,50 @@ class Game extends StatefulWidget {
 }
 
 class _GameState extends State<Game> {
-  String playerName = '';
-  bool get allowJoin => playerName.isNotEmpty;
+  var playerNameText = '';
+  var gameCodeText = '';
 
-  WebSocketChannel? _channel;
-  String? playerId;
+  WebSocketChannel? channel;
+  String? connectedGameId;
+  String? connectedPlayerId;
 
   Phrazzle? game;
   Round? round;
 
-  void joinGame() async {
-    if (playerName.isEmpty) return;
-    final res = await http.post(
-      Uri.parse('${Env.centralUrl}/game/$playerName'),
-    );
-    setState(() {
-      playerId = res.body;
-      _channel = WebSocketChannel.connect(
-        Uri.parse('${Env.gameUrl}/game/$playerId'),
-      );
+  final _nameController = TextEditingController();
+  final _gameIdController = TextEditingController();
 
-      _channel?.sink.done.whenComplete(() {
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(() => setState(() => playerNameText = _nameController.text));
+    _gameIdController.addListener(() => setState(() => gameCodeText = _gameIdController.text));
+  }
+
+  @override
+  void dispose() {
+    channel?.sink.close();
+    _nameController.dispose();
+    _gameIdController.dispose();
+    super.dispose();
+  }
+
+  void connect(String gameId, String playerId) {
+    setState(() {
+      connectedGameId = gameId;
+      connectedPlayerId = playerId;
+
+      channel = WebSocketChannel.connect(Uri.parse('${Env.gameUrl}/game/$gameId/$playerId'));
+      channel!.sink.done.whenComplete(() {
         setState(() {
-          playerId = null;
+          connectedGameId = null;
+          connectedPlayerId = null;
           game = null;
           round = null;
         });
       });
 
-      _channel?.stream.listen((data) {
+      channel?.stream.listen((data) {
         final json = jsonDecode(data);
         switch (json['typeKey']) {
           case 'game':
@@ -61,43 +75,45 @@ class _GameState extends State<Game> {
     });
   }
 
-  @override
-  void dispose() {
-    _channel?.sink.close();
-    super.dispose();
+  void createGame() async {
+    if (playerNameText.isEmpty) return;
+
+    final createResponse = await http.post(Uri.parse('${Env.centralUrl}/game'));
+    final newGameId = createResponse.body;
+    final addPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$newGameId/$playerNameText'));
+    final newPlayerId = addPlayerResponse.body;
+    connect(newGameId, newPlayerId);
+    setState(() => _gameIdController.clear());
+  }
+
+  void joinGame() async {
+    if (playerNameText.isEmpty || gameCodeText.isEmpty) return;
+
+    final res = await http.post(Uri.parse('${Env.centralUrl}/game/$gameCodeText/$playerNameText'));
+    connect(gameCodeText, res.body);
+    setState(() => _gameIdController.clear());
   }
 
   @override
   Widget build(BuildContext context) {
-    if (playerId == null) {
-      return Row(
+    if (connectedPlayerId == null) {
+      return Column(
         children: [
-          Expanded(
-            child: Focus(
-              child: TextField(
-                decoration: InputDecoration(hintText: 'Enter a player name'),
-                onChanged: (value) => setState(() => playerName = value),
-              ),
-              onKeyEvent: (node, event) {
-                if (event is KeyUpEvent || event.logicalKey != .enter) {
-                  return .ignored;
-                }
-                if (allowJoin) joinGame();
-                return .handled;
-              },
-            ),
-          ),
-          TextButton(
-            onPressed: allowJoin ? joinGame : null,
-            child: Text('Join'),
-          ),
+          TextField(controller: _nameController, decoration: InputDecoration(hintText: 'Display name')),
+          Divider(),
+          TextButton(onPressed: playerNameText.isNotEmpty ? createGame : null, child: Text('Start new game')),
+          Divider(),
+          Text('or'),
+          Divider(),
+          TextField(controller: _gameIdController, decoration: InputDecoration(hintText: 'Enter a game code'),),
+          TextButton(onPressed: (playerNameText.isNotEmpty && gameCodeText.isNotEmpty) ? joinGame : null, child: Text('Join game')),
         ],
       );
     }
 
-    if (game?.isStarted == false && game?.isEnded == false) return Lobby(game!);
+    if (game?.isStarted == false && game?.isEnded == false) return Lobby(game!, connectedGameId!);
     if (game?.isStarted == true && game?.isEnded == false && round != null) {
-      return PhraseEntry(round!, playerId!);
+      return PhraseEntry(round!, connectedGameId!, connectedPlayerId!);
     }
     if (game?.isStarted == true && game?.isEnded == true) {
       return Winners(

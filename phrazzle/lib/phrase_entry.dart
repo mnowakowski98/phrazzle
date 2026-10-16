@@ -7,9 +7,10 @@ import 'package:phrazzle_lib/phrazzle.dart';
 
 class PhraseEntry extends StatefulWidget {
   final Round round;
+  final String gameId;
   final String playerId;
 
-  const PhraseEntry(this.round, this.playerId, {super.key});
+  const PhraseEntry(this.round, this.gameId, this.playerId, {super.key});
 
   @override
   State<PhraseEntry> createState() => _PhraseEntryState();
@@ -39,7 +40,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
   void submitPhrase() async {
     if (phraseInfo.isValid == false) return;
     await http.post(
-      Uri.parse('${Env.centralUrl}/game/phrase/${widget.playerId}/$phrase'),
+      Uri.parse('${Env.centralUrl}/game/phrase/${widget.gameId}/${widget.playerId}/$phrase'),
     );
     _phraseController.clear();
   }
@@ -97,7 +98,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
         ),
         TextButton(
           onPressed: () async {
-            await http.delete(Uri.parse('${Env.centralUrl}/game'));
+            await http.delete(Uri.parse('${Env.centralUrl}/game/${widget.gameId}'));
           },
           child: Text('Done'),
         ),

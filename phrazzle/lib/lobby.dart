@@ -9,8 +9,9 @@ import 'package:phrazzle_lib/phrazzle.dart';
 
 class Lobby extends StatefulWidget {
   final Phrazzle game;
+  final String gameId;
 
-  const Lobby(this.game, {super.key});
+  const Lobby(this.game, this.gameId, {super.key});
 
   @override
   State<Lobby> createState() => _LobbyState();
@@ -21,7 +22,7 @@ class _LobbyState extends State<Lobby> {
   bool get allowStart => startingPhrase.isNotEmpty;
 
   void startGame() async {
-    await http.put(Uri.parse('${Env.centralUrl}/game/$startingPhrase'));
+    await http.put(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/$startingPhrase'));
   }
 
   @override

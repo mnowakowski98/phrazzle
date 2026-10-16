@@ -23,14 +23,6 @@ class MainApp extends StatelessWidget {
       home: Scaffold(
         appBar: AppBar(
           title: Text('Phrazzle'),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                http.post(Uri.parse('${Env.centralUrl}/game'));
-              },
-              child: Text('Reset game'),
-            ),
-          ],
         ),
         body: Padding(padding: EdgeInsets.all(8.0), child: Game()),
       ),
