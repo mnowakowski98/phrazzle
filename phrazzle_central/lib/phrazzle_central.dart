@@ -6,132 +6,157 @@ import 'package:shelf_router/shelf_router.dart';
 
 import 'package:phrazzle_lib/phrazzle.dart';
 import 'package:shelf_web_socket/shelf_web_socket.dart';
+import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 part 'phrazzle_central.g.dart';
 
-Game game = Game();
-Round? round;
+class GameContainer {
+  final Game game;
+  Round? round;
+  final channels = <String, WebSocketChannel>{};
 
-Map<String, WebSocketChannel> channels = {};
+  GameContainer(this.game);
+}
+
+Map<String, GameContainer> games = {};
 
 /// Service for the creation, cordination and status of games
 class PhrazzleCentral {
-  // TODO: Remove
-  /// Game/Round output for testing
-  @Route.get('/game')
-  Response getInfo(Request _) {
-    return Response.ok(
-      jsonEncode({
-        'game': game.toJson(),
-        'round': round != null ? round?.toJson() : 'No Round',
-      }), headers: {'content-type': 'application/json'}
-    );
-  }
-
-  /// Reset the game, close active connections
+  /// Create a new game
   @Route.post('/game')
   Response createGame(Request _) {
-    game = Game();
-    round = null;
-    for (final channel in channels.values) {
-      channel.sink.close();
+    final gameId = Uuid().v4();
+    games[gameId] = GameContainer(Game());
+
+    print('Created game $gameId');
+    return Response.ok(gameId);
+  }
+
+  /// Create a new player in an existing game
+  @Route.post('/game/<gameId>/<playerName>')
+  Response addPlayer(Request _, String gameId, String playerName) {
+    final game = games[gameId]?.game;
+    if (game == null) {
+      return Response.notFound(gameId);
     }
-    channels = {};
-    print('Started new game');
-    return Response.ok(null);
-  }
 
-  /// Join the game as an existing player
-  @Route.get('/game/<playerId>')
-  FutureOr<Response> joinGame(Request req, String playerId) {
-    if (channels[playerId] != null) return Response.badRequest();
-    return webSocketHandler((channel, _) {
-      channels[playerId] = channel;
-
-      // Unlink active channel from player (does not delete player)
-      channel.sink.done.whenComplete(() {
-        channels.remove(playerId);
-        print('Player: $playerId left');
-      });
-
-      // Send current game state and sync with updates
-      channel.sink.add(jsonEncode(game.toJson()));
-      game.stateStream.listen((data) => channel.sink.add(jsonEncode(data)));
-
-      // Send/sync round if exists
-      if (round != null) {
-        channel.sink.add(jsonEncode(round!.toJson()));
-        round!.getUpdateStream().listen(
-          (data) => channel.sink.add(jsonEncode(data)),
-        );
-      }
-
-      print('Player: $playerId joined');
-    })(req);
-  }
-
-  /// Create a player with a given name
-  @Route.post('/game/<playerName>')
-  Response addPlayer(Request _, String playerName) {
     final playerId = game.addPlayer(Uri.decodeComponent(playerName));
-    print('Added player: $playerId - $playerName');
+    print('Created player $playerName ($playerId) in $gameId');
     return Response.ok(playerId);
   }
 
-  /// Remove an existing player by id
-  @Route.delete('/game/<playerId>')
-  Response removePlayer(Request _, String playerId) {
-    game.removePlayer(playerId);
-    return Response.ok(null);
-  }
+  /// Join the game as an existing player
+  @Route.get('/game/<gameId>/<playerId>')
+  FutureOr<Response> joinGame(Request req, String gameId, String playerId) {
+    final gameContainer = games[gameId];
+    if (gameContainer == null) {
+      return Response.notFound(gameId);
+    }
 
-  /// Start the game
-  @Route.put('/game/<phrase>')
-  Response startGame(Request _, String phrase) {
-    final started = game.start();
-    if (started) {
-      round = Round(Uri.decodeComponent(phrase), game.players.keys.toList());
+    final player = gameContainer.game.players[playerId];
+    if (player == null) return Response.notFound(playerId);
+    if (gameContainer.channels[playerId] != null) {
+      return Response.badRequest(body: jsonEncode({'playerId': playerId, 'message': 'Player already connected'}));
+    }
 
-      for (final channel in channels.values) {
-        channel.sink.add(jsonEncode(round!.toJson()));
-        round!.getUpdateStream().listen(
+    return webSocketHandler((channel, _) {
+      gameContainer.channels[playerId] = channel;
+
+      // Unlink active channel from player (does not delete player)
+      channel.sink.done.whenComplete(() {
+        gameContainer.channels.remove(playerId);
+        print('${player.name} left game $gameId');
+      });
+
+      // Send current game state and sync with updates
+      channel.sink.add(jsonEncode(gameContainer.game.toJson()));
+      gameContainer.game.stateStream.listen(
+        (data) => channel.sink.add(jsonEncode(data)),
+      );
+
+      // Send/sync round if exists
+      if (gameContainer.round != null) {
+        channel.sink.add(jsonEncode(gameContainer.round?.toJson()));
+        gameContainer.round?.getUpdateStream().listen(
           (data) => channel.sink.add(jsonEncode(data)),
         );
       }
+
+      print('${player.name} joined game $gameId');
+    })(req);
+  }
+
+  /// Remove an existing player by id
+  @Route.delete('/game/<gameId>/<playerId>')
+  Response removePlayer(Request _, String gameId, String playerId) {
+    final game = games[gameId]?.game;
+    if (game == null) return Response.notFound(gameId);
+
+    final player = game.removePlayer(playerId);
+    if (player == null) return Response.notFound(playerId);
+
+    print('Removed ${player.name} from $gameId');
+    return Response.ok(playerId);
+  }
+
+  /// Start the game
+  @Route.put('/game/<gameId>/<phrase>')
+  Response startGame(Request _, String gameId, String phrase) {
+    final gameContainer = games[gameId];
+    if (gameContainer == null) return Response.notFound(gameId);
+
+    final started = gameContainer.game.start();
+    if (started == false) {
+      return Response.badRequest(body: jsonEncode({'gameId': gameId, 'message': 'Game already started'}));
     }
 
-    print('Started game');
-    return Response.ok('$started');
+    gameContainer.round = Round(
+      Uri.decodeComponent(phrase),
+      gameContainer.game.players.keys.toList(),
+    );
+
+    for (final channel in gameContainer.channels.values) {
+      channel.sink.add(jsonEncode(gameContainer.round?.toJson()));
+      gameContainer.round?.getUpdateStream().listen(
+        (data) => channel.sink.add(jsonEncode(data)),
+      );
+    }
+
+    print('Started game $gameId');
+    return Response.ok(gameId);
   }
 
   /// Add player sub phrase
-  @Route.post('/game/phrase/<playerId>/<phrase>')
-  Response addSubPhrase(
-    Request _,
-    String playerId,
-    String phrase,
-  ) {
+  @Route.post('/game/phrase/<gameId>/<playerId>/<phrase>')
+  Response addSubPhrase(Request _, String gameId, String playerId, String phrase) {
     final decodedPhrase = Uri.decodeComponent(phrase);
-    round?.addPlayerSubPhrase(playerId, decodedPhrase);
 
-    print(
-      'Added player phrase: $decodedPhrase to ${game.players[playerId]?.name}',
-    );
+    final gameContainer = games[gameId];
+    if (gameContainer == null) return Response.notFound(gameId);
+    final player = gameContainer.game.players[playerId];
+    if (player == null) return Response.notFound(gameId);
+
+    gameContainer.round?.addPlayerSubPhrase(playerId, decodedPhrase);
+
+    print('Added phrase "$decodedPhrase" to ${player.name} in $gameId');
     return Response.ok(null);
   }
 
   /// End the game
-  @Route.delete('/game')
-  Response endGame(Request _) {
-    if (game.isStarted == false) return Response.ok(false);
+  @Route.delete('/game/<gameId>')
+  Response endGame(Request _, String gameId) {
+    final gameContainer = games[gameId];
+    if (gameContainer == null) return Response.notFound(gameId);
 
-    final scores = round!.scoreRound();
-    game.incrementScores(scores);
-    game.end();
+    if (gameContainer.game.isStarted == false) return Response.ok(false);
 
-    print('Ended game');
-    return Response.ok(null);
+    final scores = gameContainer.round!.scoreRound();
+    gameContainer.game.incrementScores(scores);
+    gameContainer.game.end();
+
+    print('$gameId ended');
+    return Response.ok(gameId);
   }
 
   Router get router => _$PhrazzleCentralRouter(this);

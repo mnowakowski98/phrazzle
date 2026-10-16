@@ -8,13 +8,16 @@ part of 'phrazzle_central.dart';
 
 Router _$PhrazzleCentralRouter(PhrazzleCentral service) {
   final router = Router();
-  router.add('GET', r'/game', service.getInfo);
   router.add('POST', r'/game', service.createGame);
-  router.add('GET', r'/game/<playerId>', service.joinGame);
-  router.add('POST', r'/game/<playerName>', service.addPlayer);
-  router.add('DELETE', r'/game/<playerId>', service.removePlayer);
-  router.add('PUT', r'/game/<phrase>', service.startGame);
-  router.add('POST', r'/game/phrase/<playerId>/<phrase>', service.addSubPhrase);
-  router.add('DELETE', r'/game', service.endGame);
+  router.add('POST', r'/game/<gameId>/<playerName>', service.addPlayer);
+  router.add('GET', r'/game/<gameId>/<playerId>', service.joinGame);
+  router.add('DELETE', r'/game/<gameId>/<playerId>', service.removePlayer);
+  router.add('PUT', r'/game/<gameId>/<phrase>', service.startGame);
+  router.add(
+    'POST',
+    r'/game/phrase/<gameId>/<playerId>/<phrase>',
+    service.addSubPhrase,
+  );
+  router.add('DELETE', r'/game/<gameId>', service.endGame);
   return router;
 }
