@@ -8,6 +8,8 @@ part of 'phrazzle_central.dart';
 
 Router _$PhrazzleCentralRouter(PhrazzleCentral service) {
   final router = Router();
+  router.add('GET', r'/game/<gameCode>', service.getGameId);
+  router.add('GET', r'/game/code/<gameId>', service.getGameCode);
   router.add('POST', r'/game', service.createGame);
   router.add('POST', r'/game/<gameId>/<playerName>', service.addPlayer);
   router.add('GET', r'/game/<gameId>/<playerId>', service.joinGame);

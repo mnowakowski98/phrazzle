@@ -29,20 +29,20 @@ class _GameState extends State<Game> {
   Round? round;
 
   final _nameController = TextEditingController();
-  final _gameIdController = TextEditingController();
+  final _codeController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _nameController.addListener(() => setState(() => playerNameText = _nameController.text));
-    _gameIdController.addListener(() => setState(() => gameCodeText = _gameIdController.text));
+    _codeController.addListener(() => setState(() => gameCodeText = _codeController.text));
   }
 
   @override
   void dispose() {
     channel?.sink.close();
     _nameController.dispose();
-    _gameIdController.dispose();
+    _codeController.dispose();
     super.dispose();
   }
 
@@ -81,17 +81,18 @@ class _GameState extends State<Game> {
     final createResponse = await http.post(Uri.parse('${Env.centralUrl}/game'));
     final newGameId = createResponse.body;
     final addPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$newGameId/$playerNameText'));
-    final newPlayerId = addPlayerResponse.body;
-    connect(newGameId, newPlayerId);
-    setState(() => _gameIdController.clear());
+    connect(newGameId, addPlayerResponse.body);
+    setState(() => _codeController.clear());
   }
 
   void joinGame() async {
     if (playerNameText.isEmpty || gameCodeText.isEmpty) return;
 
-    final res = await http.post(Uri.parse('${Env.centralUrl}/game/$gameCodeText/$playerNameText'));
-    connect(gameCodeText, res.body);
-    setState(() => _gameIdController.clear());
+    final gameIdResponse = await http.get(Uri.parse('${Env.centralUrl}/game/$gameCodeText'));
+    final gameId = gameIdResponse.body;
+    final addPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/$playerNameText'));
+    connect(gameId, addPlayerResponse.body);
+    setState(() => _codeController.clear());
   }
 
   @override
@@ -105,7 +106,7 @@ class _GameState extends State<Game> {
           Divider(),
           Text('or'),
           Divider(),
-          TextField(controller: _gameIdController, decoration: InputDecoration(hintText: 'Enter a game code'),),
+          TextField(controller: _codeController, decoration: InputDecoration(hintText: 'Enter a game code'),),
           TextButton(onPressed: (playerNameText.isNotEmpty && gameCodeText.isNotEmpty) ? joinGame : null, child: Text('Join game')),
         ],
       );

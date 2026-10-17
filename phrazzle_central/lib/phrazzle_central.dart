@@ -14,6 +14,7 @@ part 'phrazzle_central.g.dart';
 class GameContainer {
   final Game game;
   Round? round;
+
   final channels = <String, WebSocketChannel>{};
 
   GameContainer(this.game);
@@ -26,6 +27,24 @@ Map<String, GameContainer> games = {};
 
 /// Service for the creation, cordination and status of games
 class PhrazzleCentral {
+  /// Get the game id from a game code
+  @Route.get('/game/<gameCode>')
+  Response getGameId(Request _, String gameCode) {
+    final codeIds = <String, String>{};
+    codeIds.addEntries(games.keys.map((id) => MapEntry(id.substring(0, 8), id)));
+    final gameId = codeIds[gameCode];
+    if (gameId == null) return Response.notFound(gameCode);
+    return Response.ok(gameId);
+  }
+
+  // Get the game code from a game id
+  @Route.get('/game/code/<gameId>')
+  Response getGameCode(Request _, String gameId) {
+    final game = games[gameId]?.game;
+    if (game == null) return Response.notFound(gameId);
+    return Response.ok(gameId.substring(0, 8));
+  }
+
   /// Create a new game
   @Route.post('/game')
   Response createGame(Request _) {

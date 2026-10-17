@@ -102,14 +102,6 @@ class _PhraseEntryState extends State<PhraseEntry> {
           },
           child: Text('Done'),
         ),
-        Row(mainAxisAlignment: .center, children: [
-          Column(
-            children: [
-              Text(phraseInfo.matchIndices?.toString() ?? 'No match indices',),
-              Text(phraseInfo.wholeWordMatch ?? 'No whole matches')
-            ],
-          ),
-        ],),
       ],
     );
   }

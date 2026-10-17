@@ -11,17 +11,20 @@ class PlayerList extends StatelessWidget {
   @override
   build(BuildContext context) {
     return Expanded(
-      child: ListView(
-        children: [
-          ListTile(
-            title: Text('Players'),
-            titleTextStyle: TextStyle(
-              fontWeight: .bold,
-              color: Colors.lightBlue,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ListView(
+          children: [
+            Center(
+              child: Text('Players', style: TextStyle(
+                fontSize: 20,
+                fontWeight: .bold,
+                color: Colors.lightBlue,
+              ),),
             ),
-          ),
-          for (final player in players) PlayerTile(player),
-        ],
+            for (final player in players) PlayerTile(player),
+          ],
+        ),
       ),
     );
   }

@@ -53,6 +53,7 @@ class _LobbyState extends State<Lobby> {
           ],
         ),
         PlayerList(widget.game.players.values.toList()),
+        Text('Game code: ${widget.gameId.substring(0, 8)}')
       ],
     );
   }

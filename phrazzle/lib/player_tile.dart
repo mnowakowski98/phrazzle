@@ -8,9 +8,6 @@ class PlayerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(player.name),
-      subtitle: Text(player.score.toString()),
-    );
+    return Text(player.name, style: TextStyle(fontSize: 18),);
   }
 }
