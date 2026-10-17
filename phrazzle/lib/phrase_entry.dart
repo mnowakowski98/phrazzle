@@ -18,6 +18,7 @@ class PhraseEntry extends StatefulWidget {
 
 class _PhraseEntryState extends State<PhraseEntry> {
   String phrase = '';
+  var isLocked = false;
   
   List<String> get playerPhrases => widget.round.subPhrases[widget.playerId]!;
   String get currentRootPhrase => playerPhrases.isEmpty ? widget.round.initialPhrase : playerPhrases.last;
@@ -43,6 +44,12 @@ class _PhraseEntryState extends State<PhraseEntry> {
       Uri.parse('${Env.centralUrl}/game/phrase/${widget.gameId}/${widget.playerId}/$phrase'),
     );
     _phraseController.clear();
+  }
+
+  void endEntry() async {
+    await http.put(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/${widget.playerId}/done'));
+    _phraseController.clear();
+    setState(() => isLocked = true);
   }
 
   @override
@@ -78,7 +85,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
               ),
             ),
             TextButton(
-              onPressed: submitPhrase,
+              onPressed: (isLocked == false && phraseInfo.isValid == true) ? submitPhrase : null,
               child: Text('Enter'),
             ),
           ],
@@ -96,12 +103,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
             ],
           ),
         ),
-        TextButton(
-          onPressed: () async {
-            await http.delete(Uri.parse('${Env.centralUrl}/game/${widget.gameId}'));
-          },
-          child: Text('Done'),
-        ),
+        TextButton(onPressed: phrase.isEmpty ? endEntry : null, child: Text('Done')),
       ],
     );
   }

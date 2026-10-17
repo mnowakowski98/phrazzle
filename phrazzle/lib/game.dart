@@ -112,7 +112,7 @@ class _GameState extends State<Game> {
       );
     }
 
-    if (game?.isStarted == false && game?.isEnded == false) return Lobby(game!, connectedGameId!);
+    if (game?.isStarted == false && game?.isEnded == false) return Lobby(game!, connectedGameId!, connectedPlayerId!);
     if (game?.isStarted == true && game?.isEnded == false && round != null) {
       return PhraseEntry(round!, connectedGameId!, connectedPlayerId!);
     }

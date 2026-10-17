@@ -10,8 +10,9 @@ import 'package:phrazzle_lib/phrazzle.dart';
 class Lobby extends StatefulWidget {
   final Phrazzle game;
   final String gameId;
+  final String playerId;
 
-  const Lobby(this.game, this.gameId, {super.key});
+  const Lobby(this.game, this.gameId, this.playerId, {super.key});
 
   @override
   State<Lobby> createState() => _LobbyState();
@@ -23,6 +24,10 @@ class _LobbyState extends State<Lobby> {
 
   void startGame() async {
     await http.put(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/$startingPhrase'));
+  }
+
+  void leaveGame() async {
+    await http.delete(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/${widget.playerId}'));
   }
 
   @override
@@ -52,8 +57,13 @@ class _LobbyState extends State<Lobby> {
             ),
           ],
         ),
+        Divider(),
         PlayerList(widget.game.players.values.toList()),
-        Text('Game code: ${widget.gameId.substring(0, 8)}')
+        Divider(),
+        Text('Game code'),
+        Text(widget.gameId.substring(0, 5).toUpperCase(), style: TextStyle(fontSize: 18, color: Colors.cyan)),
+        Divider(),
+        TextButton(onPressed: leaveGame, child: Text('Leave', style: TextStyle(color: Colors.red),)),
       ],
     );
   }

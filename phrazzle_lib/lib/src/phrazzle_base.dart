@@ -1,9 +1,17 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'phrazzle_base.g.dart';
+
+@JsonSerializable()
 class PhraseValidationInfo {
   final bool isValid;
   final Iterable<int>? matchIndices;
   final String? wholeWordMatch;
 
   PhraseValidationInfo(this.isValid, {this.matchIndices, this.wholeWordMatch});
+
+  Map<String, dynamic> toJson() => _$PhraseValidationInfoToJson(this);
+  factory PhraseValidationInfo.fromJson(json) => _$PhraseValidationInfoFromJson(json);
 }
 
 class PhrazzleBase {

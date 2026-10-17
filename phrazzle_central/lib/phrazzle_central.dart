@@ -16,6 +16,7 @@ class GameContainer {
   Round? round;
 
   final channels = <String, WebSocketChannel>{};
+  final roundLocks = <String, bool>{};
 
   GameContainer(this.game);
 }
@@ -30,8 +31,9 @@ class PhrazzleCentral {
   /// Get the game id from a game code
   @Route.get('/game/<gameCode>')
   Response getGameId(Request _, String gameCode) {
+    gameCode = gameCode.toLowerCase();
     final codeIds = <String, String>{};
-    codeIds.addEntries(games.keys.map((id) => MapEntry(id.substring(0, 8), id)));
+    codeIds.addEntries(games.keys.map((id) => MapEntry(id.substring(0, 5), id)));
     final gameId = codeIds[gameCode];
     if (gameId == null) return Response.notFound(gameCode);
     return Response.ok(gameId);
@@ -42,7 +44,7 @@ class PhrazzleCentral {
   Response getGameCode(Request _, String gameId) {
     final game = games[gameId]?.game;
     if (game == null) return Response.notFound(gameId);
-    return Response.ok(gameId.substring(0, 8));
+    return Response.ok(gameId.substring(0, 5));
   }
 
   /// Create a new game
@@ -58,12 +60,14 @@ class PhrazzleCentral {
   /// Create a new player in an existing game
   @Route.post('/game/<gameId>/<playerName>')
   Response addPlayer(Request _, String gameId, String playerName) {
-    final game = games[gameId]?.game;
-    if (game == null) {
+    final gameContainer = games[gameId];
+    if (gameContainer == null) {
       return Response.notFound(gameId);
     }
 
-    final playerId = game.addPlayer(Uri.decodeComponent(playerName));
+    final playerId = gameContainer.game.addPlayer(Uri.decodeComponent(playerName));
+    gameContainer.roundLocks[playerId] = false;
+
     print('Created player $playerName ($playerId) in $gameId');
     return Response.ok(playerId);
   }
@@ -79,9 +83,13 @@ class PhrazzleCentral {
     final player = gameContainer.game.players[playerId];
     if (player == null) return Response.notFound(playerId);
     if (gameContainer.channels[playerId] != null) {
-      return Response.badRequest(body: jsonEncode({'playerId': playerId, 'message': 'Player already connected'}));
+      return Response.badRequest(
+        body: jsonEncode({'playerId': playerId, 'message': 'Player already connected'}),
+        headers: {'content-type': 'application/json'},
+      );
     }
 
+    // Upgrade the connection to a websocket
     return webSocketHandler((channel, _) {
       gameContainer.channels[playerId] = channel;
 
@@ -94,14 +102,17 @@ class PhrazzleCentral {
       // Send current game state and sync with updates
       channel.sink.add(jsonEncode(gameContainer.game.toJson()));
       gameContainer.game.stateStream.listen(
-        (data) => channel.sink.add(jsonEncode(data)),
+        // Get the channel from the map again in case it's been removed
+        // Otherwise would call add on a closed sink
+        (data) => gameContainer.channels[playerId]?.sink.add(jsonEncode(data)),
       );
 
       // Send/sync round if exists
       if (gameContainer.round != null) {
         channel.sink.add(jsonEncode(gameContainer.round?.toJson()));
         gameContainer.round?.getUpdateStream().listen(
-          (data) => channel.sink.add(jsonEncode(data)),
+          // Same reason as above
+          (data) => gameContainer.channels[playerId]?.sink.add(jsonEncode(data)),
         );
       }
 
@@ -112,11 +123,19 @@ class PhrazzleCentral {
   /// Remove an existing player by id
   @Route.delete('/game/<gameId>/<playerId>')
   Response removePlayer(Request _, String gameId, String playerId) {
-    final game = games[gameId]?.game;
-    if (game == null) return Response.notFound(gameId);
+    final gameContainer = games[gameId];
+    if (gameContainer == null) return Response.notFound(gameId);
 
-    final player = game.removePlayer(playerId);
+    final player = gameContainer.game.players[playerId];
     if (player == null) return Response.notFound(playerId);
+
+    // Close channel if it's still active
+    final channel = gameContainer.channels[playerId];
+    channel?.sink.close(1000);
+    gameContainer.channels.remove(playerId);
+
+    gameContainer.game.removePlayer(playerId);
+    gameContainer.roundLocks.remove(playerId);
 
     print('Removed ${player.name} from $gameId');
     return Response.ok(playerId);
@@ -130,14 +149,19 @@ class PhrazzleCentral {
 
     final started = gameContainer.game.start();
     if (started == false) {
-      return Response.badRequest(body: jsonEncode({'gameId': gameId, 'message': 'Game already started'}));
+      return Response.badRequest(
+        body: jsonEncode({'gameId': gameId, 'message': 'Game already started'}),
+        headers: {'content-type': 'application/json'},
+      );
     }
 
+    // Create the round
     gameContainer.round = Round(
       Uri.decodeComponent(phrase),
       gameContainer.game.players.keys.toList(),
     );
 
+    // Notify clients and subscribe to round updates
     for (final channel in gameContainer.channels.values) {
       channel.sink.add(jsonEncode(gameContainer.round?.toJson()));
       gameContainer.round?.getUpdateStream().listen(
@@ -149,36 +173,76 @@ class PhrazzleCentral {
     return Response.ok(gameId);
   }
 
-  /// Add player sub phrase
+  /// Add player phrase
   @Route.post('/game/phrase/<gameId>/<playerId>/<phrase>')
   Response addSubPhrase(Request _, String gameId, String playerId, String phrase) {
     final decodedPhrase = Uri.decodeComponent(phrase);
 
     final gameContainer = games[gameId];
     if (gameContainer == null) return Response.notFound(gameId);
+
     final player = gameContainer.game.players[playerId];
     if (player == null) return Response.notFound(gameId);
+    
+    final round = gameContainer.round;
+    if (round == null) {
+      return Response.badRequest(
+        body: {'gameId': gameId, 'message': 'Game not started yet'},
+      );
+    }
 
-    gameContainer.round?.addPlayerSubPhrase(playerId, decodedPhrase);
+    if (gameContainer.roundLocks[playerId] == true) {
+      return Response.badRequest(
+        body: {'playerId': 'Player has already locked in'},
+        headers: {'content-type': 'application/json'}
+      );
+    }
+
+    final existingPhrases = round.subPhrases[playerId]!;
+    final rootPhrase = existingPhrases.isNotEmpty ? existingPhrases.last : round.initialPhrase;
+    final matchInfo = PhrazzleBase.getPhraseMatchingInformation(rootPhrase, phrase);
+    if (matchInfo.isValid == true) round.addPlayerSubPhrase(playerId, decodedPhrase);
 
     print('Added phrase "$decodedPhrase" to ${player.name} in $gameId');
-    return Response.ok(null);
+    return Response.ok(jsonEncode(matchInfo.toJson()));
   }
 
-  /// End the game
-  @Route.delete('/game/<gameId>')
-  Response endGame(Request _, String gameId) {
+  /// Prevent player from entering more phrases
+  /// End the game if all players are done
+  @Route.put('/game/<gameId>/<playerId>/done')
+  Response endEntry(Request _, String gameId, String playerId) {
     final gameContainer = games[gameId];
     if (gameContainer == null) return Response.notFound(gameId);
 
-    if (gameContainer.game.isStarted == false) return Response.ok(false);
+    if (gameContainer.game.isStarted == false) {
+      return Response.badRequest(
+        body: jsonEncode({'gameId': gameId, 'message': 'Game isn\'t started yet'}),
+        headers: {'content-type': 'application/json'}
+      );
+    }
 
-    final scores = gameContainer.round!.scoreRound();
-    gameContainer.game.incrementScores(scores);
-    gameContainer.game.end();
+    final player = gameContainer.game.players[playerId];
+    if (player == null) return Response.notFound(playerId);
 
-    print('$gameId ended');
-    return Response.ok(gameId);
+    gameContainer.roundLocks[playerId] = true;
+
+    if (gameContainer.roundLocks.values.every((isLocked) => isLocked == true)) {
+      final scores = gameContainer.round!.scoreRound();
+      gameContainer.game.incrementScores(scores);
+      gameContainer.game.end();
+
+      // Close leftover connections after a bit
+      Timer(const Duration(seconds: 10), () {
+        for (final channel in gameContainer.channels.values) {
+          channel.sink.close(1000);
+        }
+      });
+
+      print('$gameId ended');
+    }
+
+    print('${player.name} finished entering phrases');
+    return Response.ok(playerId);
   }
 
   Router get router => _$PhrazzleCentralRouter(this);

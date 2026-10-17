@@ -20,6 +20,6 @@ Router _$PhrazzleCentralRouter(PhrazzleCentral service) {
     r'/game/phrase/<gameId>/<playerId>/<phrase>',
     service.addSubPhrase,
   );
-  router.add('DELETE', r'/game/<gameId>', service.endGame);
+  router.add('PUT', r'/game/<gameId>/<playerId>/done', service.endEntry);
   return router;
 }
