@@ -34,11 +34,11 @@ void main() {
     });
   });
 
-  // TODO: Add tests for extended validation information
-
   // TODO: Add test to check for the weird space case
   // Example: qwerty uiop : i o
   // 'i' is after a space, using a space in the subphrase after this should not prevent matching in the remaining string
+
+  // TODO: Add tests for extended validation information
 
   group('Invalid sub phrases', () {
     test('Sub phrase is empty', () {
@@ -77,6 +77,8 @@ void main() {
       final subPhrase = 'dip';
       expect(PhrazzleBase.getPhraseMatchingInformation(rootPhrase, subPhrase), false);
     });
+
+    // TODO: Add test to ensure capital variations don't affect whole word matches
 
     test('Used multiple whole words in root phrase in order', () {
       // Same as above

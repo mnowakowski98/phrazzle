@@ -9,9 +9,15 @@ class PhraseValidationInfo {
 class PhrazzleBase {
   /// Determines if a sub phrase is valid from a given root phrase
   static PhraseValidationInfo getPhraseMatchingInformation(String rootPhrase, String subPhrase) {
+    if (subPhrase.isEmpty) return PhraseValidationInfo(false);
+
+    // Prep phrases
+    final rootPhraseTransform = rootPhrase.trim().toLowerCase();
+    final subPhraseTransform = subPhrase.trim().toLowerCase();
+
     // Check if the sub phrase contains an uninterrupted word or phrase from the root phrase
-    final wordsInRootPhrase = rootPhrase.split(' ');
-    final wordsInSubPhrase = subPhrase.split(' ');
+    final wordsInRootPhrase = rootPhraseTransform.split(' ');
+    final wordsInSubPhrase = subPhraseTransform.split(' ');
 
     String lastProcessedWord = '';
     if (wordsInSubPhrase.any(
@@ -22,12 +28,6 @@ class PhrazzleBase {
     )) {
       return PhraseValidationInfo(false, wholeWordMatch: lastProcessedWord);
     }
-
-    // Prep phrases
-    final rootPhraseTransform = rootPhrase.trim().toLowerCase();
-    final subPhraseTransform = subPhrase.trim().toLowerCase();
-
-    if (subPhraseTransform.isEmpty) return PhraseValidationInfo(false);
 
     var isValid = true;
     var rootProcessingIndex = 0;
