@@ -2,17 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:phrazzle/connected_game.dart';
 import 'package:phrazzle/env.dart';
 
 import 'package:phrazzle/player_list.dart';
-import 'package:phrazzle_lib/phrazzle.dart';
 
 class Lobby extends StatefulWidget {
-  final Phrazzle game;
-  final String gameId;
-  final String playerId;
+  final ConnectedGame connectedGame;
 
-  const Lobby(this.game, this.gameId, this.playerId, {super.key});
+  const Lobby(this.connectedGame, {super.key});
 
   @override
   State<Lobby> createState() => _LobbyState();
@@ -23,11 +21,11 @@ class _LobbyState extends State<Lobby> {
   bool get allowStart => startingPhrase.isNotEmpty;
 
   void startGame() async {
-    await http.put(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/$startingPhrase'));
+    await http.put(Uri.parse('${Env.centralUrl}/game/${widget.connectedGame.gameId}/$startingPhrase'));
   }
 
   void leaveGame() async {
-    await http.delete(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/${widget.playerId}'));
+    await http.delete(Uri.parse('${Env.centralUrl}/game/${widget.connectedGame.gameId}/${widget.connectedGame.playerId}'));
   }
 
   @override
@@ -58,10 +56,10 @@ class _LobbyState extends State<Lobby> {
           ],
         ),
         Divider(),
-        PlayerList(widget.game.players.values.toList()),
+        PlayerList(widget.connectedGame, 'Lobby', false),
         Divider(),
         Text('Game code'),
-        Text(widget.gameId.substring(0, 5).toUpperCase(), style: TextStyle(fontSize: 18, color: Colors.cyan)),
+        Text(widget.connectedGame.gameId.substring(0, 5).toUpperCase(), style: TextStyle(fontSize: 18, color: Colors.cyan)),
         Divider(),
         TextButton(onPressed: leaveGame, child: Text('Leave', style: TextStyle(color: Colors.red),)),
       ],

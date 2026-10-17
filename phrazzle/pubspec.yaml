@@ -12,6 +12,7 @@ dependencies:
   http: ^1.6.0
   phrazzle_lib:
     path: ../phrazzle_lib/
+  shared_preferences: ^2.5.6
   web_socket_channel: ^3.0.3
 
 dev_dependencies:

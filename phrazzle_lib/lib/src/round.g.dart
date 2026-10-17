@@ -8,7 +8,8 @@ part of 'round.dart';
 
 Map<String, dynamic> _$RoundToJson(Round instance) => <String, dynamic>{
   'initialPhrase': instance.initialPhrase,
-  'subPhrases': instance.subPhrases,
+  'phrases': instance.phrases,
+  'phraseLocks': instance.phraseLocks,
   'scores': instance.scores,
   'isScored': instance.isScored,
 };

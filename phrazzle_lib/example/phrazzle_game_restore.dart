@@ -27,7 +27,7 @@ void main() {
 
   final round = Round.fromJson(roundMap);
   print(round.initialPhrase);
-  print(round.subPhrases.toString());
+  print(round.phrases.toString());
   print(round.scores.toString());
   print(round.isScored);
 }

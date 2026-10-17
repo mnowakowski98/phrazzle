@@ -1,9 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:phrazzle/connected_game.dart';
 import 'package:phrazzle/env.dart';
 import 'package:phrazzle/phrase_entry.dart';
-import 'package:phrazzle/winners.dart';
+import 'package:phrazzle/scores.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 
@@ -101,27 +103,32 @@ class _GameState extends State<Game> {
       return Column(
         children: [
           TextField(controller: _nameController, decoration: InputDecoration(hintText: 'Display name')),
-          Divider(),
-          TextButton(onPressed: playerNameText.isNotEmpty ? createGame : null, child: Text('Start new game')),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(onPressed: playerNameText.isNotEmpty ? createGame : null, child: Text('Start new game')),
+          ),
           Divider(),
           Text('or'),
           Divider(),
-          TextField(controller: _codeController, decoration: InputDecoration(hintText: 'Enter a game code'),),
-          TextButton(onPressed: (playerNameText.isNotEmpty && gameCodeText.isNotEmpty) ? joinGame : null, child: Text('Join game')),
+          TextField(
+            controller: _codeController,
+            decoration: InputDecoration(hintText: 'Enter a game code'),
+            inputFormatters: [TextInputFormatter.withFunction((_, newValue) => newValue.copyWith(text: newValue.text.toUpperCase()))],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(onPressed: (playerNameText.isNotEmpty && gameCodeText.isNotEmpty) ? joinGame : null, child: Text('Join game')),
+          ),
         ],
       );
     }
 
-    if (game?.isStarted == false && game?.isEnded == false) return Lobby(game!, connectedGameId!, connectedPlayerId!);
+    if (game?.isStarted == false && game?.isEnded == false) return Lobby(ConnectedGame(connectedGameId!, connectedPlayerId!, game!));
     if (game?.isStarted == true && game?.isEnded == false && round != null) {
-      return PhraseEntry(round!, connectedGameId!, connectedPlayerId!);
+      return PhraseEntry(ConnectedGame(connectedGameId!, connectedPlayerId!, game!, round!));
     }
     if (game?.isStarted == true && game?.isEnded == true) {
-      return Winners(
-        game!.players.entries
-            .where((player) => game!.winners.contains(player.key))
-            .map((player) => player.value),
-      );
+      return Scores(ConnectedGame(connectedGameId!, connectedPlayerId!, game!, round!));
     }
 
     return Placeholder();

@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:phrazzle/connected_game.dart';
 import 'package:phrazzle/env.dart';
-
 import 'package:phrazzle_lib/phrazzle.dart';
 
-class PhraseEntry extends StatefulWidget {
-  final Round round;
-  final String gameId;
-  final String playerId;
 
-  const PhraseEntry(this.round, this.gameId, this.playerId, {super.key});
+class PhraseEntry extends StatefulWidget {
+  final ConnectedGame connectedGame;
+
+  const PhraseEntry(this.connectedGame, {super.key});
 
   @override
   State<PhraseEntry> createState() => _PhraseEntryState();
@@ -18,10 +17,9 @@ class PhraseEntry extends StatefulWidget {
 
 class _PhraseEntryState extends State<PhraseEntry> {
   String phrase = '';
-  var isLocked = false;
-  
-  List<String> get playerPhrases => widget.round.subPhrases[widget.playerId]!;
-  String get currentRootPhrase => playerPhrases.isEmpty ? widget.round.initialPhrase : playerPhrases.last;
+
+  List<String> get playerPhrases => widget.connectedGame.round!.phrases[widget.connectedGame.playerId]!;
+  String get currentRootPhrase => playerPhrases.isEmpty ? widget.connectedGame.round!.initialPhrase : playerPhrases.last;
   PhraseValidationInfo get phraseInfo => PhrazzleBase.getPhraseMatchingInformation(currentRootPhrase, phrase);
 
   final _phraseController = TextEditingController();
@@ -41,20 +39,19 @@ class _PhraseEntryState extends State<PhraseEntry> {
   void submitPhrase() async {
     if (phraseInfo.isValid == false) return;
     await http.post(
-      Uri.parse('${Env.centralUrl}/game/phrase/${widget.gameId}/${widget.playerId}/$phrase'),
+      Uri.parse('${Env.centralUrl}/game/phrase/${widget.connectedGame.gameId}/${widget.connectedGame.playerId}/$phrase'),
     );
     _phraseController.clear();
   }
 
   void endEntry() async {
-    await http.put(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/${widget.playerId}/done'));
+    await http.put(Uri.parse('${Env.centralUrl}/game/${widget.connectedGame.gameId}/${widget.connectedGame.playerId}/done'));
     _phraseController.clear();
-    setState(() => isLocked = true);
   }
 
   @override
   Widget build(BuildContext context) {
-    final phrases = [for (final phrase in playerPhrases.reversed) phrase, widget.round.initialPhrase];
+    final phrases = [for (final phrase in playerPhrases.reversed) phrase, widget.connectedGame.round!.initialPhrase];
 
     return Column(
       children: [
@@ -85,7 +82,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
               ),
             ),
             TextButton(
-              onPressed: (isLocked == false && phraseInfo.isValid == true) ? submitPhrase : null,
+              onPressed: (widget.connectedGame.round!.phraseLocks[widget.connectedGame.playerId] == false && phraseInfo.isValid == true) ? submitPhrase : null,
               child: Text('Enter'),
             ),
           ],
@@ -103,7 +100,19 @@ class _PhraseEntryState extends State<PhraseEntry> {
             ],
           ),
         ),
-        TextButton(onPressed: phrase.isEmpty ? endEntry : null, child: Text('Done')),
+        if (widget.connectedGame.round!.phraseLocks[widget.connectedGame.playerId] == false) TextButton(onPressed: phrase.isEmpty ? endEntry : null, child: Text('Done')),
+        Divider(),
+        Text(widget.connectedGame.round!.unlockedPhrases > 1 ? 'Waiting on players' : 'Waiting on player', style: TextStyle(fontSize: 16),),
+        if (widget.connectedGame.round!.unlockedPhrases <= 2) Row(
+          mainAxisAlignment: .center,
+          spacing: 10,
+          children: [
+            for (final playerName in widget.connectedGame.round!.unlockedPhraseIds.map((id) => widget.connectedGame.game.players[id]!.name))
+              Text(playerName, style: TextStyle(fontSize: 18, color: Colors.cyan))
+          ]
+        ),
+        if (widget.connectedGame.round!.unlockedPhrases >= 3) Text(widget.connectedGame.round!.unlockedPhrases.toString(), style: TextStyle(fontSize: 18, color: Colors.teal),),
+        Divider(),
       ],
     );
   }

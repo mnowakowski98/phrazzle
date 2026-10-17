@@ -10,8 +10,18 @@ part 'round.g.dart';
 class Round {
   final String initialPhrase;
 
-  final Map<String, List<String>> _subPhrases;
-  Map<String, List<String>> get subPhrases => Map.unmodifiable(_subPhrases);
+  final Map<String, List<String>> _phrases;
+  Map<String, List<String>> get phrases => Map.unmodifiable(_phrases);
+
+  final Map<String, bool> _phraseLocks;
+  Map<String, bool> get phraseLocks => Map.unmodifiable(_phraseLocks);
+  int get lockedPhrases => _phraseLocks.values.fold(
+    0,
+    (accumulator, value) => value == true ? accumulator + 1 : accumulator
+  );
+  Iterable<String> get lockedPhraseIds => _phraseLocks.keys.where((key) => _phraseLocks[key] == true);
+  int get unlockedPhrases => _phraseLocks.length - lockedPhrases;
+  Iterable<String> get unlockedPhraseIds => _phraseLocks.keys.where((key) => _phraseLocks[key] == false);
 
   final Map<String, int> _scores;
   Map<String, int> get scores => Map.unmodifiable(_scores);
@@ -31,7 +41,7 @@ class Round {
     return _updateController!.stream;
   }
 
-  Round._internal(this.initialPhrase, this._subPhrases, this._scores);
+  Round._internal(this.initialPhrase, this._phrases, this._scores, this._phraseLocks);
 
   /// Create sub phrase map from a list of players
   factory Round(String initialPhrase, List<String> playerIds) {
@@ -39,11 +49,12 @@ class Round {
       initialPhrase,
       Map.fromEntries(playerIds.map((id) => MapEntry(id, <String>[]))),
       Map.fromEntries(playerIds.map((id) => MapEntry(id, 0))),
+      Map.fromEntries(playerIds.map((id) => MapEntry(id, false)))
     );
   }
 
   factory Round.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic> phrasesRaw = json['subPhrases'];
+    final Map<String, dynamic> phrasesRaw = json['phrases'];
     final phrases = phrasesRaw.map(
       (key, value) => MapEntry(key, List<String>.from(value)),
     );
@@ -51,7 +62,9 @@ class Round {
     final scores = scoresRaw.map(
       (key, value) => MapEntry<String, int>(key, value),
     );
-    final round = Round._internal(json['initialPhrase'], phrases, scores);
+    final Map<String, dynamic> phraseLocksRaw = json['phraseLocks'];
+    final phraseLocks = phraseLocksRaw.map((key, value) => MapEntry<String, bool>(key, value));
+    final round = Round._internal(json['initialPhrase'], phrases, scores, phraseLocks);
     round._isScored = json['isScored'];
     return round;
   }
@@ -65,14 +78,22 @@ class Round {
   /// Add a sub phrase for a player
   void addPlayerSubPhrase(String playerId, String subPhrase) {
     if (_isScored) throw Exception('Round has already been scored');
-    _subPhrases[playerId]?.add(subPhrase);
+    if (phraseLocks[playerId] == true) throw Exception('Player has already locked');
+
+    _phrases[playerId]?.add(subPhrase);
+    if (_sendUpdates) _updateController?.sink.add(toJson());
+  }
+
+  void lockPhrases(String playerId) {
+    if (phraseLocks[playerId] == null) throw Exception('Player does not exist');
+    _phraseLocks[playerId] = true;
     if (_sendUpdates) _updateController?.sink.add(toJson());
   }
 
   /// Set player scores from their sub phrases
   Map<String, int> scoreRound() {
     if (isScored) throw Exception('Round has already been scored');
-    for (final entry in _subPhrases.entries) {
+    for (final entry in _phrases.entries) {
       final score = PhrazzleBase.getNumberOfValidPhrases(
         initialPhrase,
         entry.value,

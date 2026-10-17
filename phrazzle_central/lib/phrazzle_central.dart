@@ -11,12 +11,16 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 part 'phrazzle_central.g.dart';
 
+class ClientStateInfo {
+  final bool isLocked;
+
+  ClientStateInfo(this.isLocked);
+}
+
 class GameContainer {
   final Game game;
   Round? round;
-
   final channels = <String, WebSocketChannel>{};
-  final roundLocks = <String, bool>{};
 
   GameContainer(this.game);
 }
@@ -66,7 +70,6 @@ class PhrazzleCentral {
     }
 
     final playerId = gameContainer.game.addPlayer(Uri.decodeComponent(playerName));
-    gameContainer.roundLocks[playerId] = false;
 
     print('Created player $playerName ($playerId) in $gameId');
     return Response.ok(playerId);
@@ -135,7 +138,6 @@ class PhrazzleCentral {
     gameContainer.channels.remove(playerId);
 
     gameContainer.game.removePlayer(playerId);
-    gameContainer.roundLocks.remove(playerId);
 
     print('Removed ${player.name} from $gameId');
     return Response.ok(playerId);
@@ -191,14 +193,14 @@ class PhrazzleCentral {
       );
     }
 
-    if (gameContainer.roundLocks[playerId] == true) {
+    if (round.phraseLocks[playerId] == true) {
       return Response.badRequest(
         body: {'playerId': 'Player has already locked in'},
         headers: {'content-type': 'application/json'}
       );
     }
 
-    final existingPhrases = round.subPhrases[playerId]!;
+    final existingPhrases = round.phrases[playerId]!;
     final rootPhrase = existingPhrases.isNotEmpty ? existingPhrases.last : round.initialPhrase;
     final matchInfo = PhrazzleBase.getPhraseMatchingInformation(rootPhrase, phrase);
     if (matchInfo.isValid == true) round.addPlayerSubPhrase(playerId, decodedPhrase);
@@ -214,7 +216,8 @@ class PhrazzleCentral {
     final gameContainer = games[gameId];
     if (gameContainer == null) return Response.notFound(gameId);
 
-    if (gameContainer.game.isStarted == false) {
+    final round = gameContainer.round;
+    if (round == null) {
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game isn\'t started yet'}),
         headers: {'content-type': 'application/json'}
@@ -224,15 +227,15 @@ class PhrazzleCentral {
     final player = gameContainer.game.players[playerId];
     if (player == null) return Response.notFound(playerId);
 
-    gameContainer.roundLocks[playerId] = true;
+    round.lockPhrases(playerId);
 
-    if (gameContainer.roundLocks.values.every((isLocked) => isLocked == true)) {
+    if (round.phraseLocks.values.every((isLocked) => isLocked == true)) {
       final scores = gameContainer.round!.scoreRound();
       gameContainer.game.incrementScores(scores);
       gameContainer.game.end();
 
       // Close leftover connections after a bit
-      Timer(const Duration(seconds: 10), () {
+      Timer(const Duration(minutes: 5), () {
         for (final channel in gameContainer.channels.values) {
           channel.sink.close(1000);
         }
