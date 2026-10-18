@@ -243,6 +243,7 @@ class PhrazzleCentral {
         for (final channel in gameContainer.channels.values) {
           channel.sink.close(1000);
         }
+        games.remove(gameId);
       });
 
       print('$gameId ended');
