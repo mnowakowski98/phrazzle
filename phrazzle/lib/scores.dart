@@ -1,20 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:phrazzle/connected_game.dart';
-import 'package:phrazzle/env.dart';
 
 class Scores extends StatelessWidget {
   final ConnectedGame connectedGame;
+  final void Function() onLeaveGame;
 
-  const Scores(this.connectedGame, {super.key});
-
-  void leaveGame() async {
-    await http.delete(
-      Uri.parse(
-        '${Env.centralUrl}/game/${connectedGame.gameId}/${connectedGame.playerId}',
-      ),
-    );
-  }
+  const Scores(this.connectedGame, this.onLeaveGame, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +85,7 @@ class Scores extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: TextButton(onPressed: leaveGame, child: Text('Leave game')),
+            child: TextButton(onPressed: onLeaveGame, child: Text('Leave game')),
           )
         ],
       ),

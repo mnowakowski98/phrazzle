@@ -79,6 +79,17 @@ class _GameState extends State<Game> {
     });
   }
 
+  void disconnect() async {
+    channel?.sink.close(1000);
+    channel = null;
+    setState(() {
+      connectedGameId = null;
+      connectedPlayerId = null;
+      game = null;
+      round = null;
+    });
+  }
+
   void createGame() async {
     if (playerNameText.isEmpty) return;
 
@@ -136,7 +147,7 @@ class _GameState extends State<Game> {
       return PhraseEntry(ConnectedGame(connectedGameId!, connectedPlayerId!, game!, round!));
     }
     if (game?.isStarted == true && game?.isEnded == true) {
-      return Scores(ConnectedGame(connectedGameId!, connectedPlayerId!, game!, round!));
+      return Scores(ConnectedGame(connectedGameId!, connectedPlayerId!, game!, round!), disconnect);
     }
 
     return Placeholder();
