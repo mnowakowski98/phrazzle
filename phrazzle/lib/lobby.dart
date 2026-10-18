@@ -32,36 +32,38 @@ class _LobbyState extends State<Lobby> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Focus(
-                child: TextField(
-                  decoration: InputDecoration(hintText: 'Starting phrase'),
-                  onChanged: (value) => setState(() => startingPhrase = value),
-                ),
-                onKeyEvent: (node, event) {
-                  if (event is KeyUpEvent || event.logicalKey != .enter) {
-                    return .ignored;
-                  }
-                  if (allowStart) startGame();
-                  return .handled;
-                },
-              ),
-            ),
-            TextButton(
-              onPressed: allowStart ? startGame : null,
-              child: Text('Start'),
-            ),
-          ],
-        ),
-        Divider(),
         PlayerList(widget.connectedGame, 'Lobby', false),
         Divider(),
         Text('Game code'),
         Text(widget.connectedGame.gameId.substring(0, 5).toUpperCase(), style: TextStyle(fontSize: 18, color: Colors.cyan)),
         Divider(),
-        TextButton(onPressed: leaveGame, child: Text('Leave', style: TextStyle(color: Colors.red),)),
+        Focus(
+          child: TextField(
+            decoration: InputDecoration(hintText: 'Starting phrase'),
+            onChanged: (value) => setState(() => startingPhrase = value),
+          ),
+          onKeyEvent: (node, event) {
+            if (event is KeyUpEvent || event.logicalKey != .enter) {
+              return .ignored;
+            }
+            if (allowStart) startGame();
+            return .handled;
+          },
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            spacing: 40,
+            mainAxisAlignment: .center,
+            children: [
+              TextButton(onPressed: leaveGame, child: Text('Leave', style: TextStyle(color: Colors.red),)),
+              ElevatedButton(
+                onPressed: allowStart ? startGame : null,
+                child: Text('Start'),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

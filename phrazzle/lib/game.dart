@@ -55,12 +55,14 @@ class _GameState extends State<Game> {
 
       channel = WebSocketChannel.connect(Uri.parse('${Env.gameUrl}/game/$gameId/$playerId'));
       channel!.sink.done.whenComplete(() {
-        setState(() {
-          connectedGameId = null;
-          connectedPlayerId = null;
-          game = null;
-          round = null;
-        });
+        if (channel?.closeCode == 1000) {
+          setState(() {
+            connectedGameId = null;
+            connectedPlayerId = null;
+            game = null;
+            round = null;
+          });
+        }
       });
 
       channel?.stream.listen((data) {
@@ -100,6 +102,9 @@ class _GameState extends State<Game> {
   @override
   Widget build(BuildContext context) {
     if (connectedPlayerId == null) {
+      final canJoinGame = playerNameText.isNotEmpty && gameCodeText.isNotEmpty;
+      final canRejoinGame = connectedGameId != null;
+      
       return Column(
         children: [
           TextField(controller: _nameController, decoration: InputDecoration(hintText: 'Display name')),
@@ -117,7 +122,10 @@ class _GameState extends State<Game> {
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton(onPressed: (playerNameText.isNotEmpty && gameCodeText.isNotEmpty) ? joinGame : null, child: Text('Join game')),
+            child: ElevatedButton(
+              onPressed: canRejoinGame ? () => connect(connectedGameId!, connectedPlayerId!) : canJoinGame ? joinGame : null,
+              child: Text('Join game')
+            ),
           ),
         ],
       );
