@@ -64,14 +64,15 @@ class PhrazzleCentral {
   /// Create a new player in an existing game
   @Route.post('/game/<gameId>/<playerName>')
   Response addPlayer(Request _, String gameId, String playerName) {
+    final decodedName = Uri.decodeComponent(playerName);
     final gameContainer = games[gameId];
     if (gameContainer == null) {
       return Response.notFound(gameId);
     }
 
-    final playerId = gameContainer.game.addPlayer(Uri.decodeComponent(playerName));
+    final playerId = gameContainer.game.addPlayer(decodedName);
 
-    print('Created player $playerName ($playerId) in $gameId');
+    print('Created player $decodedName ($playerId) in $gameId');
     return Response.ok(playerId);
   }
 
@@ -146,6 +147,8 @@ class PhrazzleCentral {
   /// Start the game
   @Route.put('/game/<gameId>/<phrase>')
   Response startGame(Request _, String gameId, String phrase) {
+    final decodedPhrase = Uri.decodeComponent(phrase);
+
     final gameContainer = games[gameId];
     if (gameContainer == null) return Response.notFound(gameId);
 
@@ -159,7 +162,7 @@ class PhrazzleCentral {
 
     // Create the round
     gameContainer.round = Round(
-      Uri.decodeComponent(phrase),
+      decodedPhrase,
       gameContainer.game.players.keys.toList(),
     );
 
@@ -171,7 +174,7 @@ class PhrazzleCentral {
       );
     }
 
-    print('Started game $gameId');
+    print('Started $gameId with phrase "$decodedPhrase"');
     return Response.ok(gameId);
   }
 
@@ -189,20 +192,21 @@ class PhrazzleCentral {
     final round = gameContainer.round;
     if (round == null) {
       return Response.badRequest(
-        body: {'gameId': gameId, 'message': 'Game not started yet'},
+        body: jsonEncode({'gameId': gameId, 'message': 'Game not started yet'}),
+        headers: {'content-type': 'application/json'}
       );
     }
 
     if (round.phraseLocks[playerId] == true) {
       return Response.badRequest(
-        body: {'playerId': 'Player has already locked in'},
+        body: jsonEncode({'playerId': 'Player has already locked in'}),
         headers: {'content-type': 'application/json'}
       );
     }
 
     final existingPhrases = round.phrases[playerId]!;
     final rootPhrase = existingPhrases.isNotEmpty ? existingPhrases.last : round.initialPhrase;
-    final matchInfo = PhrazzleBase.getPhraseMatchingInformation(rootPhrase, phrase);
+    final matchInfo = PhrazzleBase.getPhraseMatchingInformation(rootPhrase, decodedPhrase);
     if (matchInfo.isValid == true) round.addPlayerSubPhrase(playerId, decodedPhrase);
 
     print('Added phrase "$decodedPhrase" to ${player.name} in $gameId');
