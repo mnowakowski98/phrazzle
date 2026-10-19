@@ -13,7 +13,10 @@ import 'package:phrazzle/lobby.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class Game extends StatefulWidget {
-  const Game({super.key});
+  final String deviceId;
+  final String instanceId;
+
+  const Game(this.deviceId, this.instanceId, {super.key});
 
   @override
   State<Game> createState() => _GameState();
@@ -114,7 +117,6 @@ class _GameState extends State<Game> {
   Widget build(BuildContext context) {
     if (connectedPlayerId == null) {
       final canJoinGame = playerNameText.isNotEmpty && gameCodeText.isNotEmpty;
-      final canRejoinGame = connectedGameId != null;
       
       return Column(
         children: [
@@ -134,10 +136,12 @@ class _GameState extends State<Game> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
-              onPressed: canRejoinGame ? () => connect(connectedGameId!, connectedPlayerId!) : canJoinGame ? joinGame : null,
+              onPressed: canJoinGame ? joinGame : null,
               child: Text('Join game')
             ),
           ),
+          Text(widget.deviceId),
+          Text(widget.instanceId),
         ],
       );
     }

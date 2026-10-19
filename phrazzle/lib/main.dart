@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 import 'game.dart';
 
-void main() {
-  runApp(const MainApp());
+void main() async {
+  final prefs = await SharedPreferencesWithCache.create(cacheOptions: SharedPreferencesWithCacheOptions());
+  final deviceId = prefs.getString('DEVICE_ID') ?? Uuid().v4();
+  runApp(MainApp(deviceId, Uuid().v4()));
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  final String deviceId;
+  final String instanceId;
+
+  const MainApp(this.deviceId, this.instanceId, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +29,7 @@ class MainApp extends StatelessWidget {
         appBar: AppBar(
           title: Text('Phrazzle'),
         ),
-        body: Padding(padding: EdgeInsets.all(8.0), child: Game()),
+        body: Padding(padding: EdgeInsets.all(8.0), child: Game(deviceId, instanceId)),
       ),
     );
   }
