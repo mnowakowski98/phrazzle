@@ -11,16 +11,20 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 part 'phrazzle_central.g.dart';
 
-class ClientStateInfo {
-  final bool isLocked;
+class Client {
+  final WebSocketChannel channel;
+  final String deviceId;
+  final String instanceId;
 
-  ClientStateInfo(this.isLocked);
+  Client(this.channel, this.deviceId, this.instanceId);
+  factory Client.pending(WebSocketChannel channel) => Client(channel, '', '');
 }
+
+final clients = <String, Client>{};
 
 class GameContainer {
   final Game game;
   Round? round;
-  final channels = <String, WebSocketChannel>{};
 
   GameContainer(this.game);
 }
@@ -86,7 +90,7 @@ class PhrazzleCentral {
 
     final player = gameContainer.game.players[playerId];
     if (player == null) return Response.notFound(playerId);
-    if (gameContainer.channels[playerId] != null) {
+    if (clients[playerId] != null) {
       return Response.badRequest(
         body: jsonEncode({'playerId': playerId, 'message': 'Player already connected'}),
         headers: {'content-type': 'application/json'},
@@ -95,11 +99,21 @@ class PhrazzleCentral {
 
     // Upgrade the connection to a websocket
     return webSocketHandler((channel, _) {
-      gameContainer.channels[playerId] = channel;
+      clients[playerId] = Client.pending(channel);
+
+      // Get device and instance id from the client
+      channel.stream.listen((data) {
+        final decoded = jsonDecode(data) as Map<String, dynamic>;
+        final deviceId = decoded['deviceId'];
+        final instanceId = decoded['instanceId'];
+        if (deviceId == null || instanceId == null) throw Exception('Received invalid message trying to connect ${player.name}');
+        clients[playerId] = Client(channel, deviceId, instanceId);
+        print('Got client ids for ${player.name}: $deviceId - $instanceId');
+      });
 
       // Unlink active channel from player (does not delete player)
       channel.sink.done.whenComplete(() {
-        gameContainer.channels.remove(playerId);
+        clients.remove(playerId);
         print('${player.name} left game $gameId');
       });
 
@@ -108,7 +122,7 @@ class PhrazzleCentral {
       gameContainer.game.stateStream.listen(
         // Get the channel from the map again in case it's been removed
         // Otherwise would call add on a closed sink
-        (data) => gameContainer.channels[playerId]?.sink.add(jsonEncode(data)),
+        (data) => clients[playerId]?.channel.sink.add(jsonEncode(data)),
       );
 
       // Send/sync round if exists
@@ -116,11 +130,11 @@ class PhrazzleCentral {
         channel.sink.add(jsonEncode(gameContainer.round?.toJson()));
         gameContainer.round?.getUpdateStream().listen(
           // Same reason as above
-          (data) => gameContainer.channels[playerId]?.sink.add(jsonEncode(data)),
+          (data) => clients[playerId]?.channel.sink.add(jsonEncode(data)),
         );
       }
 
-      print('${player.name} joined game $gameId');
+      print('${player.name} joined game $gameId (pending)');
     })(req);
   }
 
@@ -134,14 +148,15 @@ class PhrazzleCentral {
     if (player == null) return Response.notFound(playerId);
 
     // Close channel if it's still active
-    final channel = gameContainer.channels[playerId];
-    channel?.sink.close(1000);
-    gameContainer.channels.remove(playerId);
+    final client = clients[playerId];
+    client?.channel.sink.close(1000);
+    clients.remove(playerId);
 
     gameContainer.game.removePlayer(playerId);
 
     if (gameContainer.game.players.isEmpty) {
       games.remove(gameId);
+      print('Removed $gameId due to lack of players');
     }
 
     print('Removed ${player.name} from $gameId');
@@ -171,10 +186,11 @@ class PhrazzleCentral {
     );
 
     // Notify clients and subscribe to round updates
-    for (final channel in gameContainer.channels.values) {
-      channel.sink.add(jsonEncode(gameContainer.round?.toJson()));
+    for (final playerId in gameContainer.game.playerIds) {
+      final client = clients[playerId];
+      client?.channel.sink.add(jsonEncode(gameContainer.round?.toJson()));
       gameContainer.round?.getUpdateStream().listen(
-        (data) => channel.sink.add(jsonEncode(data)),
+        (data) => client?.channel.sink.add(jsonEncode(data)),
       );
     }
 
@@ -244,8 +260,9 @@ class PhrazzleCentral {
 
       // Close leftover connections after a bit
       Timer(const Duration(minutes: 5), () {
-        for (final channel in gameContainer.channels.values) {
-          channel.sink.close(1000);
+        for (final playerId in gameContainer.game.playerIds) {
+          final client = clients[playerId];
+          client?.channel.sink.close(1000);
         }
         games.remove(gameId);
       });

@@ -1,11 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:phrazzle/connected_game.dart';
 import 'package:phrazzle/env.dart';
+import 'package:phrazzle/main_menu.dart';
 import 'package:phrazzle/phrase_entry.dart';
 import 'package:phrazzle/scores.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 
@@ -13,19 +15,17 @@ import 'package:phrazzle/lobby.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class Game extends StatefulWidget {
+  final SharedPreferencesWithCache deviceCache;
   final String deviceId;
   final String instanceId;
 
-  const Game(this.deviceId, this.instanceId, {super.key});
+  const Game(this.deviceCache, this.deviceId, this.instanceId, {super.key});
 
   @override
   State<Game> createState() => _GameState();
 }
 
 class _GameState extends State<Game> {
-  var playerNameText = '';
-  var gameCodeText = '';
-
   WebSocketChannel? channel;
   String? connectedGameId;
   String? connectedPlayerId;
@@ -33,52 +33,69 @@ class _GameState extends State<Game> {
   Phrazzle? game;
   Round? round;
 
-  final _nameController = TextEditingController();
-  final _codeController = TextEditingController();
+  static const lastGameIdKey = 'LAST_GAME_ID';
+  static const lastPlayerIdKey = 'LAST_PLAYER_ID';
 
-  @override
-  void initState() {
-    super.initState();
-    _nameController.addListener(() => setState(() => playerNameText = _nameController.text));
-    _codeController.addListener(() => setState(() => gameCodeText = _codeController.text));
-  }
+  String? get lastGameId => widget.deviceCache.getString(lastGameIdKey);
+  String? get lastPlayerId => widget.deviceCache.getString(lastPlayerIdKey);
 
-  @override
-  void dispose() {
-    channel?.sink.close();
-    _nameController.dispose();
-    _codeController.dispose();
-    super.dispose();
-  }
+  var displayName = '';
 
-  void connect(String gameId, String playerId) {
-    setState(() {
-      connectedGameId = gameId;
-      connectedPlayerId = playerId;
+  void connect(String gameId, String playerId) async {
+    connectedGameId = gameId;
+    connectedPlayerId = playerId;
 
-      channel = WebSocketChannel.connect(Uri.parse('${Env.gameUrl}/game/$gameId/$playerId'));
-      channel!.sink.done.whenComplete(() {
-        if (channel?.closeCode == 1000) {
-          setState(() {
-            connectedGameId = null;
-            connectedPlayerId = null;
-            game = null;
-            round = null;
-          });
-        }
+    widget.deviceCache.setString(lastGameIdKey, gameId);
+    widget.deviceCache.setString(lastPlayerIdKey, playerId);
+
+    channel = WebSocketChannel.connect(Uri.parse('${Env.gameUrl}/game/$gameId/$playerId'));
+
+    try {
+      await channel!.ready;
+    }
+    catch (error) {
+      widget.deviceCache.remove(lastGameIdKey);
+      widget.deviceCache.remove(lastPlayerIdKey);
+
+      setState(() {
+        connectedGameId = null;
+        connectedPlayerId = null;
+        game = null;
+        round = null;
+        channel = null;
       });
+      return;
+    }
 
-      channel?.stream.listen((data) {
-        final json = jsonDecode(data);
-        switch (json['typeKey']) {
-          case 'game':
-            setState(() => game = Phrazzle.fromJson(json));
-            break;
-          case 'round':
-            setState(() => round = Round.fromJson(json));
-            break;
-        }
-      });
+    channel!.sink.done.whenComplete(() {
+      if (channel?.closeCode == 1000) {
+        widget.deviceCache.remove(lastGameIdKey);
+        widget.deviceCache.remove(lastPlayerIdKey);
+
+        setState(() {
+          connectedGameId = null;
+          connectedPlayerId = null;
+          game = null;
+          round = null;
+          channel = null;
+        });
+      } else {
+        Timer(const Duration(seconds: 2), () => connect(gameId, playerId));
+      }
+    });
+
+    channel!.sink.add(jsonEncode({'deviceId': widget.deviceId, 'instanceId': widget.instanceId}));
+
+    channel!.stream.listen((data) {
+      final json = jsonDecode(data);
+      switch (json['typeKey']) {
+        case 'game':
+          setState(() => game = Phrazzle.fromJson(json));
+          break;
+        case 'round':
+          setState(() => round = Round.fromJson(json));
+          break;
+      }
     });
   }
 
@@ -93,64 +110,50 @@ class _GameState extends State<Game> {
     });
   }
 
-  void createGame() async {
-    if (playerNameText.isEmpty) return;
+  void createGame(String playerName) async {
+    if (playerName.isEmpty) return;
+    setState(() => displayName = playerName);
 
     final createResponse = await http.post(Uri.parse('${Env.centralUrl}/game'));
     final newGameId = createResponse.body;
-    final addPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$newGameId/$playerNameText'));
+    final addPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$newGameId/$playerName'));
     connect(newGameId, addPlayerResponse.body);
-    setState(() => _codeController.clear());
   }
 
-  void joinGame() async {
-    if (playerNameText.isEmpty || gameCodeText.isEmpty) return;
+  void joinGame(String playerName, String gameCode) async {
+    if (playerName.isEmpty || gameCode.isEmpty) return;
+    setState(() => displayName = playerName);
 
-    final gameIdResponse = await http.get(Uri.parse('${Env.centralUrl}/game/$gameCodeText'));
+    final gameIdResponse = await http.get(Uri.parse('${Env.centralUrl}/game/$gameCode'));
     final gameId = gameIdResponse.body;
-    final addPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/$playerNameText'));
+    final addPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/$playerName'));
     connect(gameId, addPlayerResponse.body);
-    setState(() => _codeController.clear());
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (lastGameId != null && lastPlayerId != null) connect(lastGameId!, lastPlayerId!);
+  }
+
+  @override
+  void dispose() {
+    channel?.sink.close(1000);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     if (connectedPlayerId == null) {
-      final canJoinGame = playerNameText.isNotEmpty && gameCodeText.isNotEmpty;
-      
-      return Column(
-        children: [
-          TextField(controller: _nameController, decoration: InputDecoration(hintText: 'Display name')),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton(onPressed: playerNameText.isNotEmpty ? createGame : null, child: Text('Start new game')),
-          ),
-          Divider(),
-          Text('or'),
-          Divider(),
-          TextField(
-            controller: _codeController,
-            decoration: InputDecoration(hintText: 'Enter a game code'),
-            inputFormatters: [TextInputFormatter.withFunction((_, newValue) => newValue.copyWith(text: newValue.text.toUpperCase()))],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton(
-              onPressed: canJoinGame ? joinGame : null,
-              child: Text('Join game')
-            ),
-          ),
-          Text(widget.deviceId),
-          Text(widget.instanceId),
-        ],
-      );
+      return MainMenu(displayName, createGame: createGame, joinGame: joinGame);
     }
-
-    if (game?.isStarted == false && game?.isEnded == false) return Lobby(ConnectedGame(connectedGameId!, connectedPlayerId!, game!));
-    if (game?.isStarted == true && game?.isEnded == false && round != null) {
+    else if (game?.isStarted == false && game?.isEnded == false) {
+      return Lobby(ConnectedGame(connectedGameId!, connectedPlayerId!, game!));
+    }
+    else if (game?.isStarted == true && game?.isEnded == false && round != null) {
       return PhraseEntry(ConnectedGame(connectedGameId!, connectedPlayerId!, game!, round!));
     }
-    if (game?.isStarted == true && game?.isEnded == true) {
+    else if (game?.isStarted == true && game?.isEnded == true) {
       return Scores(ConnectedGame(connectedGameId!, connectedPlayerId!, game!, round!), disconnect);
     }
 

@@ -6,15 +6,21 @@ import 'game.dart';
 
 void main() async {
   final prefs = await SharedPreferencesWithCache.create(cacheOptions: SharedPreferencesWithCacheOptions());
-  final deviceId = prefs.getString('DEVICE_ID') ?? Uuid().v4();
-  runApp(MainApp(deviceId, Uuid().v4()));
+  var deviceId = prefs.getString('DEVICE_ID');
+  if (deviceId == null) {
+    deviceId = Uuid().v4();
+    prefs.setString('DEVICE_ID', deviceId);
+  }
+  
+  runApp(MainApp(prefs, deviceId, Uuid().v4()));
 }
 
 class MainApp extends StatelessWidget {
+  final SharedPreferencesWithCache deviceCache;
   final String deviceId;
   final String instanceId;
 
-  const MainApp(this.deviceId, this.instanceId, {super.key});
+  const MainApp(this.deviceCache, this.deviceId, this.instanceId, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +35,7 @@ class MainApp extends StatelessWidget {
         appBar: AppBar(
           title: Text('Phrazzle'),
         ),
-        body: Padding(padding: EdgeInsets.all(8.0), child: Game(deviceId, instanceId)),
+        body: Padding(padding: EdgeInsets.all(8.0), child: Game(deviceCache, deviceId, instanceId)),
       ),
     );
   }
