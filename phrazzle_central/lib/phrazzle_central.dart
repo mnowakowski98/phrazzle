@@ -140,6 +140,10 @@ class PhrazzleCentral {
 
     gameContainer.game.removePlayer(playerId);
 
+    if (gameContainer.game.players.isEmpty) {
+      games.remove(gameId);
+    }
+
     print('Removed ${player.name} from $gameId');
     return Response.ok(playerId);
   }

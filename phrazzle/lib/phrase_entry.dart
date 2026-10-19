@@ -52,10 +52,13 @@ class _PhraseEntryState extends State<PhraseEntry> {
   @override
   Widget build(BuildContext context) {
     final phrases = [for (final phrase in playerPhrases.reversed) phrase, widget.connectedGame.round!.initialPhrase];
+    final round = widget.connectedGame.round;
+    final isPhraseLocked = round?.phraseLocks[widget.connectedGame.playerId] == true;
+    final showDoneButton = isPhraseLocked == false && currentRootPhrase != round?.initialPhrase;
 
     return Column(
       children: [
-        Row(
+        if (isPhraseLocked == false) Row(
           children: [
             Expanded(
               child: Focus(
@@ -64,7 +67,6 @@ class _PhraseEntryState extends State<PhraseEntry> {
                   style: TextStyle(color: phraseInfo.isValid ? Colors.green : Colors.red),
                   decoration: InputDecoration(
                     labelText: 'Enter next phrase',
-                    // hintText: currentRootPhrase,
                     hintStyle: TextStyle(color: Colors.teal)
                   ),
                   onChanged: (value) => setState(() => phrase = value),
@@ -82,11 +84,12 @@ class _PhraseEntryState extends State<PhraseEntry> {
               ),
             ),
             TextButton(
-              onPressed: (widget.connectedGame.round!.phraseLocks[widget.connectedGame.playerId] == false && phraseInfo.isValid == true) ? submitPhrase : null,
+              onPressed: submitPhrase,
               child: Text('Enter'),
             ),
           ],
         ),
+        if (isPhraseLocked) Text(round!.initialPhrase, style: TextStyle(color: Colors.cyan, fontSize: 24)),
         Expanded(
           child: ListView(
             children: [
@@ -100,19 +103,22 @@ class _PhraseEntryState extends State<PhraseEntry> {
             ],
           ),
         ),
-        if (widget.connectedGame.round!.phraseLocks[widget.connectedGame.playerId] == false) TextButton(onPressed: phrase.isEmpty ? endEntry : null, child: Text('Done')),
-        Divider(),
-        Text(widget.connectedGame.round!.unlockedPhrases > 1 ? 'Waiting on players' : 'Waiting on player', style: TextStyle(fontSize: 16),),
-        if (widget.connectedGame.round!.unlockedPhrases <= 2) Row(
-          mainAxisAlignment: .center,
-          spacing: 10,
+        if (showDoneButton) TextButton(onPressed: phrase.isEmpty ? endEntry : null, child: Text('Done')),
+        if (isPhraseLocked) Column(
           children: [
-            for (final playerName in widget.connectedGame.round!.unlockedPhraseIds.map((id) => widget.connectedGame.game.players[id]!.name))
-              Text(playerName, style: TextStyle(fontSize: 18, color: Colors.cyan))
-          ]
+            Divider(),
+            Text(widget.connectedGame.round!.unlockedPhrases > 1 ? 'Waiting on players' : 'Waiting on player', style: TextStyle(fontSize: 16),),
+            if (widget.connectedGame.round!.unlockedPhrases <= 2) Row(
+              mainAxisAlignment: .spaceAround,
+              children: [
+                for (final playerName in widget.connectedGame.round!.unlockedPhraseIds.map((id) => widget.connectedGame.game.players[id]!.name))
+                  Text(playerName, style: TextStyle(fontSize: 18, color: Colors.cyan))
+              ]
+            ),
+            if (widget.connectedGame.round!.unlockedPhrases >= 3) Text(widget.connectedGame.round!.unlockedPhrases.toString(), style: TextStyle(fontSize: 18, color: Colors.teal),),
+            Divider(),
+          ],
         ),
-        if (widget.connectedGame.round!.unlockedPhrases >= 3) Text(widget.connectedGame.round!.unlockedPhrases.toString(), style: TextStyle(fontSize: 18, color: Colors.teal),),
-        Divider(),
       ],
     );
   }

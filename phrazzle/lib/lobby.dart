@@ -53,8 +53,7 @@ class _LobbyState extends State<Lobby> {
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Row(
-            spacing: 40,
-            mainAxisAlignment: .center,
+            mainAxisAlignment: .spaceEvenly,
             children: [
               TextButton(onPressed: leaveGame, child: Text('Leave', style: TextStyle(color: Colors.red),)),
               ElevatedButton(
