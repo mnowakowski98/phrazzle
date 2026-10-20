@@ -60,7 +60,7 @@ class Scores extends StatelessWidget {
 
                       Divider(),
                       Text(
-                        'Phrases',
+                        connectedGame.round!.initialPhrase,
                         style: TextStyle(color: Colors.cyan, fontSize: 24),
                       ),
                       Expanded(
