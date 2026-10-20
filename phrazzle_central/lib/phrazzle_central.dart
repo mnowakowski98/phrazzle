@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:phrazzle_central/game_store.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import 'package:phrazzle_lib/phrazzle.dart';
 import 'package:shelf_web_socket/shelf_web_socket.dart';
-import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 part 'phrazzle_central.g.dart';
@@ -22,26 +22,18 @@ class Client {
 
 final clients = <String, Client>{};
 
-class GameContainer {
-  final Game game;
-  Round? round;
-
-  GameContainer(this.game);
-}
-
-// TODO: Abstract away the storage of games
-// The game(s) state needs to live past the lifetime of this service
-// Implementation can vary based on environment, this class doesn't need to know
-Map<String, GameContainer> games = {};
-
 /// Service for the creation, cordination and status of games
 class PhrazzleCentral {
+  final GameStore gameStore;
+
+  PhrazzleCentral(this.gameStore);
+
   /// Get the game id from a game code
   @Route.get('/game/<gameCode>')
   Response getGameId(Request _, String gameCode) {
     gameCode = gameCode.toLowerCase();
     final codeIds = <String, String>{};
-    codeIds.addEntries(games.keys.map((id) => MapEntry(id.substring(0, 5), id)));
+    codeIds.addEntries(gameStore.gameIds.map((id) => MapEntry(id.substring(0, 5), id)));
     final gameId = codeIds[gameCode];
     if (gameId == null) return Response.notFound(gameCode);
     return Response.ok(gameId);
@@ -50,7 +42,7 @@ class PhrazzleCentral {
   // Get the game code from a game id
   @Route.get('/game/code/<gameId>')
   Response getGameCode(Request _, String gameId) {
-    final game = games[gameId]?.game;
+    final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
     return Response.ok(gameId.substring(0, 5));
   }
@@ -58,8 +50,7 @@ class PhrazzleCentral {
   /// Create a new game
   @Route.post('/game')
   Response createGame(Request _) {
-    final gameId = Uuid().v4();
-    games[gameId] = GameContainer(Game());
+    final gameId = gameStore.createGame(Game());
 
     print('Created game $gameId');
     return Response.ok(gameId);
@@ -69,12 +60,12 @@ class PhrazzleCentral {
   @Route.post('/game/<gameId>/<playerName>')
   Response addPlayer(Request _, String gameId, String playerName) {
     final decodedName = Uri.decodeComponent(playerName);
-    final gameContainer = games[gameId];
-    if (gameContainer == null) {
+    final game = gameStore.getGame(gameId);
+    if (game == null) {
       return Response.notFound(gameId);
     }
 
-    final playerId = gameContainer.game.addPlayer(decodedName);
+    final playerId = game.addPlayer(decodedName);
 
     print('Created player $decodedName ($playerId) in $gameId');
     return Response.ok(playerId);
@@ -83,12 +74,12 @@ class PhrazzleCentral {
   /// Join the game as an existing player
   @Route.get('/game/<gameId>/<playerId>')
   FutureOr<Response> joinGame(Request req, String gameId, String playerId) {
-    final gameContainer = games[gameId];
-    if (gameContainer == null) {
+    final game = gameStore.getGame(gameId);
+    if (game == null) {
       return Response.notFound(gameId);
     }
 
-    final player = gameContainer.game.players[playerId];
+    final player = game.players[playerId];
     if (player == null) return Response.notFound(playerId);
     if (clients[playerId] != null) {
       return Response.badRequest(
@@ -118,17 +109,18 @@ class PhrazzleCentral {
       });
 
       // Send current game state and sync with updates
-      channel.sink.add(jsonEncode(gameContainer.game.toJson()));
-      gameContainer.game.stateStream.listen(
+      channel.sink.add(jsonEncode(game.toJson()));
+      game.stateStream.listen(
         // Get the channel from the map again in case it's been removed
         // Otherwise would call add on a closed sink
         (data) => clients[playerId]?.channel.sink.add(jsonEncode(data)),
       );
 
+      final round = gameStore.getRound(gameId);
       // Send/sync round if exists
-      if (gameContainer.round != null) {
-        channel.sink.add(jsonEncode(gameContainer.round?.toJson()));
-        gameContainer.round?.getUpdateStream().listen(
+      if (round != null) {
+        channel.sink.add(jsonEncode(round.toJson()));
+        round.getUpdateStream().listen(
           // Same reason as above
           (data) => clients[playerId]?.channel.sink.add(jsonEncode(data)),
         );
@@ -141,10 +133,10 @@ class PhrazzleCentral {
   /// Remove an existing player by id
   @Route.delete('/game/<gameId>/<playerId>')
   Response removePlayer(Request _, String gameId, String playerId) {
-    final gameContainer = games[gameId];
-    if (gameContainer == null) return Response.notFound(gameId);
+    final game = gameStore.getGame(gameId);
+    if (game == null) return Response.notFound(gameId);
 
-    final player = gameContainer.game.players[playerId];
+    final player = game.players[playerId];
     if (player == null) return Response.notFound(playerId);
 
     // Close channel if it's still active
@@ -152,10 +144,10 @@ class PhrazzleCentral {
     client?.channel.sink.close(1000);
     clients.remove(playerId);
 
-    gameContainer.game.removePlayer(playerId);
+    game.removePlayer(playerId);
 
-    if (gameContainer.game.players.isEmpty) {
-      games.remove(gameId);
+    if (game.players.isEmpty) {
+      gameStore.removeGame(gameId);
       print('Removed $gameId due to lack of players');
     }
 
@@ -168,10 +160,10 @@ class PhrazzleCentral {
   Response startGame(Request _, String gameId, String phrase) {
     final decodedPhrase = Uri.decodeComponent(phrase);
 
-    final gameContainer = games[gameId];
-    if (gameContainer == null) return Response.notFound(gameId);
+    final game = gameStore.getGame(gameId);
+    if (game == null) return Response.notFound(gameId);
 
-    final started = gameContainer.game.start();
+    final started = game.start();
     if (started == false) {
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game already started'}),
@@ -180,16 +172,18 @@ class PhrazzleCentral {
     }
 
     // Create the round
-    gameContainer.round = Round(
+    final round = Round(
       decodedPhrase,
-      gameContainer.game.players.keys.toList(),
+      game.players.keys.toList(),
     );
 
+    gameStore.saveRound(gameId, round);
+    
     // Notify clients and subscribe to round updates
-    for (final playerId in gameContainer.game.playerIds) {
+    for (final playerId in game.playerIds) {
       final client = clients[playerId];
-      client?.channel.sink.add(jsonEncode(gameContainer.round?.toJson()));
-      gameContainer.round?.getUpdateStream().listen(
+      client?.channel.sink.add(jsonEncode(round.toJson()));
+      round.getUpdateStream().listen(
         (data) => client?.channel.sink.add(jsonEncode(data)),
       );
     }
@@ -203,13 +197,13 @@ class PhrazzleCentral {
   Response addSubPhrase(Request _, String gameId, String playerId, String phrase) {
     final decodedPhrase = Uri.decodeComponent(phrase);
 
-    final gameContainer = games[gameId];
-    if (gameContainer == null) return Response.notFound(gameId);
+    final game = gameStore.getGame(gameId);
+    if (game == null) return Response.notFound(gameId);
 
-    final player = gameContainer.game.players[playerId];
+    final player = game.players[playerId];
     if (player == null) return Response.notFound(gameId);
     
-    final round = gameContainer.round;
+    final round = gameStore.getRound(gameId);
     if (round == null) {
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game not started yet'}),
@@ -227,7 +221,14 @@ class PhrazzleCentral {
     final existingPhrases = round.phrases[playerId]!;
     final rootPhrase = existingPhrases.isNotEmpty ? existingPhrases.last : round.initialPhrase;
     final matchInfo = PhrazzleBase.getPhraseMatchingInformation(rootPhrase, decodedPhrase);
-    if (matchInfo.isValid == true) round.addPlayerSubPhrase(playerId, decodedPhrase);
+    if (matchInfo.isValid == true) {
+      round.addPlayerSubPhrase(playerId, decodedPhrase);
+    } else {
+      return Response.badRequest(
+        body: jsonEncode({'phrase': decodedPhrase, 'message': 'Phrase failed validation'}),
+        headers: {'content-type': 'application/json'},
+      );
+    }
 
     print('Added phrase "$decodedPhrase" to ${player.name} in $gameId');
     return Response.ok(jsonEncode(matchInfo.toJson()));
@@ -237,10 +238,10 @@ class PhrazzleCentral {
   /// End the game if all players are done
   @Route.put('/game/<gameId>/<playerId>/done')
   Response endEntry(Request _, String gameId, String playerId) {
-    final gameContainer = games[gameId];
-    if (gameContainer == null) return Response.notFound(gameId);
+    final game = gameStore.getGame(gameId);
+    if (game == null) return Response.notFound(gameId);
 
-    final round = gameContainer.round;
+    final round = gameStore.getRound(gameId);
     if (round == null) {
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game isn\'t started yet'}),
@@ -248,23 +249,23 @@ class PhrazzleCentral {
       );
     }
 
-    final player = gameContainer.game.players[playerId];
+    final player = game.players[playerId];
     if (player == null) return Response.notFound(playerId);
 
     round.lockPhrases(playerId);
 
     if (round.phraseLocks.values.every((isLocked) => isLocked == true)) {
-      final scores = gameContainer.round!.scoreRound();
-      gameContainer.game.incrementScores(scores);
-      gameContainer.game.end();
+      final scores = round.scoreRound();
+      game.incrementScores(scores);
+      game.end();
 
       // Close leftover connections after a bit
       Timer(const Duration(minutes: 5), () {
-        for (final playerId in gameContainer.game.playerIds) {
+        for (final playerId in game.playerIds) {
           final client = clients[playerId];
           client?.channel.sink.close(1000);
         }
-        games.remove(gameId);
+        gameStore.removeGame(gameId);
       });
 
       print('$gameId ended');
