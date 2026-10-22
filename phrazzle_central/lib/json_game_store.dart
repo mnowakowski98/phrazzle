@@ -112,9 +112,7 @@ class JsonGameStore extends GameStore {
   }
 
   @override
-  Iterable<Round>? getRounds(String gameId) {
-    final roundIds = jsonDecode(_gameRoundsFile.readAsStringSync()) as List<dynamic>;
-    
+  Iterable<Round>? getRounds(String gameId) {    
     return [];
   }
 }
