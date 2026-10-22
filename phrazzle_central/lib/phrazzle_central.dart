@@ -171,14 +171,15 @@ class PhrazzleCentral {
       );
     }
 
+
     // Create the round
     final round = Round(
       decodedPhrase,
       game.players.keys.toList(),
     );
 
-    gameStore.saveRound(gameId, round);
-    
+    final roundId = gameStore.createRound(gameId, round);
+
     // Notify clients and subscribe to round updates
     for (final playerId in game.playerIds) {
       final client = clients[playerId];
@@ -188,7 +189,7 @@ class PhrazzleCentral {
       );
     }
 
-    print('Started $gameId with phrase "$decodedPhrase"');
+    print('Started $gameId : $roundId with phrase "$decodedPhrase"');
     return Response.ok(gameId);
   }
 

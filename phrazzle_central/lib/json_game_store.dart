@@ -8,11 +8,12 @@ import 'package:uuid/uuid.dart';
 
 class JsonGameStore extends GameStore {
   final Directory _storeDirectory;
+  File get _gameRoundsFile => File(normalize(join(_storeDirectory.path, './gameRounds.json')));
   Directory get _gamesDirectory => Directory(normalize(join(_storeDirectory.path, 'games/')));
   Directory get _roundsDirectory => Directory(normalize(join(_storeDirectory.path, 'rounds/')));
 
-  final _gamesCache = <String, Game>{};
-  final _roundsCache = <String, Round>{};
+  // final _gamesCache = <String, Game>{};
+  // final _roundsCache = <String, Round>{};
 
   JsonGameStore._internal(this._storeDirectory);
 
@@ -20,9 +21,15 @@ class JsonGameStore extends GameStore {
     final storeDirectory = Directory(normalize(storePath));
     if (storeDirectory.existsSync() == false) storeDirectory.createSync();
 
+    final gameRoundsFile = File(normalize(join(storeDirectory.path, './gameRounds.json')));
+    if (gameRoundsFile.existsSync() == false) {
+       gameRoundsFile.createSync();
+       gameRoundsFile.writeAsStringSync('[]');
+    }
+
     final gamesDirectory = Directory(normalize(join(storeDirectory.path, './games/')));
     if (gamesDirectory.existsSync() == false) gamesDirectory.createSync();
-    final roundsDirectory = Directory(normalize(join(storeDirectory.path, 'rounds/')));
+    final roundsDirectory = Directory(normalize(join(storeDirectory.path, './rounds/')));
     if (roundsDirectory.existsSync() == false) roundsDirectory.createSync();
 
     return JsonGameStore._internal(Directory(normalize(storePath))); 
@@ -33,7 +40,6 @@ class JsonGameStore extends GameStore {
   @override
   // TODO: implement gameIds
   Iterable<String> get gameIds {
-    if (_gamesCache.length == _gamesDirectory.listSync().length) return _gamesCache.keys;
     return _gamesDirectory.listSync().map((file) => basenameWithoutExtension(file.path));
   }
 
@@ -45,86 +51,70 @@ class JsonGameStore extends GameStore {
     if (file.existsSync() == false) file.createSync();
     file.writeAsStringSync(jsonEncode(game.toJson()));
 
-    _gamesCache[gameId] = game;
     return gameId;
   }
 
   @override
-  void saveGame(String gameId, Game game) {
-    _gamesCache[gameId] = game;
-    final file = _getStoreFile(_gamesDirectory, gameId);
-    if (file.existsSync() == false) file.createSync();
-    file.writeAsStringSync(jsonEncode(game.toJson()));
-  }
-
-  @override
   Game? getGame(String gameId) {
-    var game = _gamesCache[gameId];
-    if (game == null) {
-      final file = _getStoreFile(_gamesDirectory, gameId);
-      if (file.existsSync() == false) return null;
+    final file = _getStoreFile(_gamesDirectory, gameId);
+    if (file.existsSync() == false) return null;
 
-      final fileText = file.readAsStringSync();
-      final json = jsonDecode(fileText);
-      game = Game.fromJson(json);
-    }
+    final fileText = file.readAsStringSync();
+    final json = jsonDecode(fileText);
+
+    final game = Game.fromJson(json);
+    game.stateStream.listen((data) {
+      if (file.existsSync() == false) file.createSync();
+      file.writeAsStringSync(jsonEncode(data));
+    });
+
     return game;
   }
 
   @override
   void removeGame(String gameId) {
-    _gamesCache.remove(gameId);
-
     final file = _getStoreFile(_gamesDirectory, gameId);
     if (file.existsSync() == false) return;
     file.delete();
   }
 
   @override
-  String createRound(Round round) {
+  String createRound(String gameId, Round round) {
     final roundId = Uuid().v4();
 
     final file = _getStoreFile(_roundsDirectory, roundId);
     if (file.existsSync() == false) file.createSync();
     file.writeAsStringSync(jsonEncode(round.toJson()));
 
-    _roundsCache[roundId] = round;
+    final gameRoundsFileText = _gameRoundsFile.readAsStringSync();
+    final gameRounds = jsonDecode(gameRoundsFileText) as List<dynamic>;
+    gameRounds.add({gameId: roundId});
+
+    _gameRoundsFile.writeAsStringSync(jsonEncode(gameRounds));
     return roundId;
   }
 
   @override
-  void saveRound(String roundId, Round round) {
-    _roundsCache[roundId] = round;
-    final file = _getStoreFile(_roundsDirectory, roundId);
-    if (file.existsSync() == false) file.createSync();
-    file.writeAsStringSync(jsonEncode(round.toJson()));
-  }
-
-  @override
   Round? getRound(String roundId) {
-    var round = _roundsCache[roundId];
-    if (round == null) {
-      final file = _getStoreFile(_roundsDirectory, roundId);
-      if (file.existsSync() == false) return null;
+    final file = _getStoreFile(_roundsDirectory, roundId);
+    if (file.existsSync() == false) return null;
 
-      final fileText = file.readAsStringSync();
-      final json = jsonDecode(fileText);
-      round = Round.fromJson(json);
-    }
+    final fileText = file.readAsStringSync();
+    final json = jsonDecode(fileText);
+
+    final round = Round.fromJson(json);
+    round.getUpdateStream().listen((data) {
+      if (file.existsSync() == false) file.createSync();
+      file.writeAsStringSync(jsonEncode(data));
+    });
+
     return round;
   }
 
   @override
   Iterable<Round>? getRounds(String gameId) {
-    // TODO: Return more than just one round per game
-    var round = _roundsCache[gameId];
-    if (round == null) {
-      final file = _getStoreFile(_roundsDirectory, gameId);
-      if (file.existsSync() == false) return null;
-      
-      final fileText = file.readAsStringSync();
-      round = Round.fromJson(jsonDecode(fileText));
-    }
-    return [round];
+    final roundIds = jsonDecode(_gameRoundsFile.readAsStringSync()) as List<dynamic>;
+    
+    return [];
   }
 }
