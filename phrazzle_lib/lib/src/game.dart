@@ -28,17 +28,6 @@ class Game {
   var _isEnded = false;
   bool get isEnded => _isEnded;
 
-  Iterable<String> get winners {
-    final max = players.values.fold(0, (final currentMax, final value) {
-      if (value.score > currentMax) return value.score;
-      return currentMax;
-    });
-
-    return players.entries
-        .where((player) => player.value.score == max)
-        .map((player) => player.key);
-  }
-
   var _sendUpdates = false;
   StreamController<Map<String, dynamic>>? _updateController;
 
