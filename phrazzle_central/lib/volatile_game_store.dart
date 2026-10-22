@@ -2,12 +2,13 @@ import 'package:phrazzle_central/game_store.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 import 'package:uuid/uuid.dart';
 
-class MapgameStore extends GameStore {
+/// Game store that forgets when the instance stops existing
+class VolatileGameStore extends GameStore {
   final _games = <String, Game>{};
   final _rounds = <String, Round>{};
   final _gameRounds = <String, String>{};
 
-  MapgameStore();
+  VolatileGameStore();
 
   @override
   Iterable<String> get gameIds => _games.keys;
