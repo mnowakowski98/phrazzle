@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:google_cloud/google_cloud.dart';
 import 'package:google_cloud_shelf/google_cloud_shelf.dart';
 import 'package:phrazzle_central/json_game_store.dart';
+import 'package:phrazzle_central/map_game_store.dart';
 
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
@@ -22,7 +23,7 @@ void main(List<String> arguments) async {
     print('Unable to determine cloud project');
   }
 
-  final cascade = Cascade().add(PhrazzleCentral(JsonGameStore('./store/')).router.call).add((Request req) {
+  final cascade = Cascade().add(PhrazzleCentral(MapgameStore()).router.call).add((Request req) {
     if (req.url.toString() != 'healthz') return Response.notFound(null);
     return Response.ok(jsonEncode({'status': 'healthy'}), headers: {'content-type': 'application/json'});
   });

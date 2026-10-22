@@ -82,6 +82,7 @@ class PhrazzleCentral {
     final player = game.players[playerId];
     if (player == null) return Response.notFound(playerId);
     if (clients[playerId] != null) {
+      print('$playerId already connected');
       return Response.badRequest(
         body: jsonEncode({'playerId': playerId, 'message': 'Player already connected'}),
         headers: {'content-type': 'application/json'},
@@ -165,6 +166,7 @@ class PhrazzleCentral {
 
     final started = game.start();
     if (started == false) {
+      print('$gameId already started');
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game already started'}),
         headers: {'content-type': 'application/json'},
@@ -204,8 +206,9 @@ class PhrazzleCentral {
     final player = game.players[playerId];
     if (player == null) return Response.notFound(gameId);
     
-    final round = gameStore.getRound(gameId);
+    final round = gameStore.getRounds(gameId)?.first;
     if (round == null) {
+      print('$gameId not started yet');
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game not started yet'}),
         headers: {'content-type': 'application/json'}
@@ -213,6 +216,7 @@ class PhrazzleCentral {
     }
 
     if (round.phraseLocks[playerId] == true) {
+      print('$playerId has already locked in');
       return Response.badRequest(
         body: jsonEncode({'playerId': 'Player has already locked in'}),
         headers: {'content-type': 'application/json'}
@@ -225,6 +229,7 @@ class PhrazzleCentral {
     if (matchInfo.isValid == true) {
       round.addPlayerSubPhrase(playerId, decodedPhrase);
     } else {
+      print('$decodedPhrase failed validation');
       return Response.badRequest(
         body: jsonEncode({'phrase': decodedPhrase, 'message': 'Phrase failed validation'}),
         headers: {'content-type': 'application/json'},
@@ -244,6 +249,7 @@ class PhrazzleCentral {
 
     final round = gameStore.getRound(gameId);
     if (round == null) {
+      print('$gameId isn\'t started yet');
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game isn\'t started yet'}),
         headers: {'content-type': 'application/json'}
