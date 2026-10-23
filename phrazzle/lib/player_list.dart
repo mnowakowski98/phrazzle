@@ -21,7 +21,7 @@ class PlayerList extends StatelessWidget {
               fontWeight: .bold,
               color: Colors.lightBlue,
             ),),
-            for (final player in connectedGame.game.players.values) PlayerTile(player.name, score: showScores ? player.score : null,),
+            // for (final player in connectedGame.game.players.values) PlayerTile(player.name, score: showScores ? player.score : null,),
           ],
         ),
       ),

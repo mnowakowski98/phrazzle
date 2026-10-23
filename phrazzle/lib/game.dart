@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:phrazzle/connected_game.dart';
+import 'package:phrazzle/device_store.dart';
 import 'package:phrazzle/env.dart';
 import 'package:phrazzle/main_menu.dart';
 import 'package:phrazzle/phrase_entry.dart';
@@ -15,11 +16,9 @@ import 'package:phrazzle/lobby.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class Game extends StatefulWidget {
-  final SharedPreferencesWithCache deviceCache;
-  final String deviceId;
-  final String instanceId;
+  final DeviceStore deviceStore;
 
-  const Game(this.deviceCache, this.deviceId, this.instanceId, {super.key});
+  const Game(this.deviceStore, {super.key});
 
   @override
   State<Game> createState() => _GameState();
@@ -31,13 +30,12 @@ class _GameState extends State<Game> {
   String? connectedPlayerId;
 
   Phrazzle? game;
-  Round? round;
 
   static const lastGameIdKey = 'LAST_GAME_ID';
   static const lastPlayerIdKey = 'LAST_PLAYER_ID';
 
-  String? get lastGameId => widget.deviceCache.getString(lastGameIdKey);
-  String? get lastPlayerId => widget.deviceCache.getString(lastPlayerIdKey);
+  // String? get lastGameId => widget.deviceStore.getString(lastGameIdKey);
+  // String? get lastPlayerId => widget.deviceCache.getString(lastPlayerIdKey);
 
   var displayName = '';
 
@@ -45,8 +43,8 @@ class _GameState extends State<Game> {
     connectedGameId = gameId;
     connectedPlayerId = playerId;
 
-    widget.deviceCache.setString(lastGameIdKey, gameId);
-    widget.deviceCache.setString(lastPlayerIdKey, playerId);
+    // widget.deviceCache.setString(lastGameIdKey, gameId);
+    // widget.deviceCache.setString(lastPlayerIdKey, playerId);
 
     channel = WebSocketChannel.connect(Uri.parse('${Env.gameUrl}/game/$gameId/$playerId'));
 
@@ -54,14 +52,13 @@ class _GameState extends State<Game> {
       await channel!.ready;
     }
     catch (error) {
-      widget.deviceCache.remove(lastGameIdKey);
-      widget.deviceCache.remove(lastPlayerIdKey);
+      // widget.deviceCache.remove(lastGameIdKey);
+      // widget.deviceCache.remove(lastPlayerIdKey);
 
       setState(() {
         connectedGameId = null;
         connectedPlayerId = null;
         game = null;
-        round = null;
         channel = null;
       });
       return;
@@ -69,14 +66,13 @@ class _GameState extends State<Game> {
 
     channel!.sink.done.whenComplete(() {
       if (channel?.closeCode == 1000) {
-        widget.deviceCache.remove(lastGameIdKey);
-        widget.deviceCache.remove(lastPlayerIdKey);
+        // widget.deviceCache.remove(lastGameIdKey);
+        // widget.deviceCache.remove(lastPlayerIdKey);
 
         setState(() {
           connectedGameId = null;
           connectedPlayerId = null;
           game = null;
-          round = null;
           channel = null;
         });
       } else {
@@ -85,16 +81,13 @@ class _GameState extends State<Game> {
       }
     });
 
-    channel!.sink.add(jsonEncode({'deviceId': widget.deviceId, 'instanceId': widget.instanceId}));
+    channel!.sink.add(jsonEncode({'deviceId': widget.deviceStore.deviceId, 'instanceId': widget.deviceStore.instanceId}));
 
     channel!.stream.listen((data) {
       final json = jsonDecode(data);
       switch (json['typeKey']) {
         case 'game':
-          setState(() => game = Phrazzle.fromJson(json));
-          break;
-        case 'round':
-          setState(() => round = Round.fromJson(json));
+          setState(() => game = Phrazzle.fromJsonString(json));
           break;
       }
     });
@@ -102,14 +95,13 @@ class _GameState extends State<Game> {
 
   void disconnect() async {
     channel?.sink.close(1000);
-    widget.deviceCache.remove(lastGameIdKey);
-    widget.deviceCache.remove(lastPlayerIdKey);
+    // widget.deviceCache.remove(lastGameIdKey);
+    // widget.deviceCache.remove(lastPlayerIdKey);
 
     setState(() {
       connectedGameId = null;
       connectedPlayerId = null;
       game = null;
-      round = null;
       channel = null;
     });
   }
@@ -137,7 +129,7 @@ class _GameState extends State<Game> {
   @override
   void initState() {
     super.initState();
-    if (lastGameId != null && lastPlayerId != null) connect(lastGameId!, lastPlayerId!);
+    // if (lastGameId != null && lastPlayerId != null) connect(lastGameId!, lastPlayerId!);
   }
 
   @override
@@ -154,11 +146,11 @@ class _GameState extends State<Game> {
     else if (game?.isStarted == false && game?.isEnded == false) {
       return Lobby(ConnectedGame(connectedGameId!, connectedPlayerId!, game!));
     }
-    else if (game?.isStarted == true && game?.isEnded == false && round != null) {
-      return PhraseEntry(ConnectedGame(connectedGameId!, connectedPlayerId!, game!, round!));
-    }
+    // else if (game?.isStarted == true && game?.isEnded == false) {
+    //   return PhraseEntry(ConnectedGame(connectedGameId!, connectedPlayerId!, game!));
+    // }
     else if (game?.isStarted == true && game?.isEnded == true) {
-      return Scores(ConnectedGame(connectedGameId!, connectedPlayerId!, game!, round!), disconnect);
+      return Scores(ConnectedGame(connectedGameId!, connectedPlayerId!, game!), disconnect);
     }
 
     return Placeholder();

@@ -1,26 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:phrazzle/device_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import 'game.dart';
 
 void main() async {
-  final prefs = await SharedPreferencesWithCache.create(cacheOptions: SharedPreferencesWithCacheOptions());
-  var deviceId = prefs.getString('DEVICE_ID');
-  if (deviceId == null) {
-    deviceId = Uuid().v4();
-    prefs.setString('DEVICE_ID', deviceId);
-  }
-  
-  runApp(MainApp(prefs, deviceId, Uuid().v4()));
+  final preferences = await SharedPreferencesWithCache.create(cacheOptions: SharedPreferencesWithCacheOptions());
+  final deviceStore = DeviceStore(preferences);
+  runApp(MainApp(deviceStore));
 }
 
 class MainApp extends StatelessWidget {
-  final SharedPreferencesWithCache deviceCache;
-  final String deviceId;
-  final String instanceId;
+  final DeviceStore deviceStore;
 
-  const MainApp(this.deviceCache, this.deviceId, this.instanceId, {super.key});
+  const MainApp(this.deviceStore, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +29,7 @@ class MainApp extends StatelessWidget {
         appBar: AppBar(
           title: Text('Phrazzle'),
         ),
-        body: Padding(padding: EdgeInsets.all(8.0), child: Game(deviceCache, deviceId, instanceId)),
+        body: Padding(padding: EdgeInsets.all(8.0), child: Game(deviceStore)),
       ),
     );
   }

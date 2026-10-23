@@ -16,7 +16,7 @@ class Scores extends StatelessWidget {
           Expanded(
             child: TabBarView(
               children: [
-                for (final playerId in connectedGame.game.playerIds)
+                for (final playerId in connectedGame.game.players)
                   Column(
                     crossAxisAlignment: .start,
                     children: [
@@ -33,10 +33,10 @@ class Scores extends StatelessWidget {
                                   fontSize: 20,
                                 ),
                               ),
-                              Text(
-                                connectedGame.game.players[playerId]!.name,
-                                style: TextStyle(fontSize: 20),
-                              ),
+                              // Text(
+                              //   connectedGame.game.players[playerId]!.name,
+                              //   style: TextStyle(fontSize: 20),
+                              // ),
                             ],
                           ),
                           Column(
@@ -48,27 +48,27 @@ class Scores extends StatelessWidget {
                                   fontSize: 18,
                                 ),
                               ),
-                              Text(
-                                connectedGame.game.players[playerId]!.score
-                                    .toString(),
-                                style: TextStyle(fontSize: 20),
-                              ),
+                              // Text(
+                              //   connectedGame.game.players[playerId]!.score
+                              //       .toString(),
+                              //   style: TextStyle(fontSize: 20),
+                              // ),
                             ],
                           ),
                         ],
                       ),
 
                       Divider(),
-                      Text(
-                        connectedGame.round!.initialPhrase,
-                        style: TextStyle(color: Colors.cyan, fontSize: 24),
-                      ),
+                      // Text(
+                      //   connectedGame.round!.initialPhrase,
+                      //   style: TextStyle(color: Colors.cyan, fontSize: 24),
+                      // ),
                       Expanded(
                         child: ListView(
                           children: [
-                            for (final phrase
-                                in connectedGame.round!.phrases[playerId]!)
-                              Text(phrase, style: TextStyle(fontSize: 20),),
+                            // for (final phrase
+                            //     in connectedGame.round!.phrases[playerId]!)
+                            //   Text(phrase, style: TextStyle(fontSize: 20),),
                           ],
                         ),
                       ),
@@ -77,12 +77,12 @@ class Scores extends StatelessWidget {
               ],
             ),
           ),
-          TabBar(
-            tabs: [
-              for (final player in connectedGame.game.players.values)
-                Tab(text: player.name),
-            ],
-          ),
+          // TabBar(
+          //   tabs: [
+          //     for (final player in connectedGame.game.players.values)
+          //       Tab(text: player.name),
+          //   ],
+          // ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextButton(onPressed: onLeaveGame, child: Text('Leave game')),

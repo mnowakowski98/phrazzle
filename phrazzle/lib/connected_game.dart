@@ -5,7 +5,6 @@ class ConnectedGame {
   final String playerId;
 
   final Game game;
-  final Round? round;
 
-  ConnectedGame(this.gameId, this.playerId, this.game, [this.round]);
+  ConnectedGame(this.gameId, this.playerId, this.game);
 }
