@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:json_annotation/json_annotation.dart';
 
@@ -30,15 +31,15 @@ class Round {
   bool get isScored => _isScored;
 
   var _sendUpdates = false;
-  StreamController<Map<String, dynamic>>? _updateController;
+  StreamController<String>? _updateJsonStringController;
 
-  Stream<Map<String, dynamic>> getUpdateStream() {
-    _updateController ??= StreamController<Map<String, dynamic>>.broadcast(
+  @JsonKey(includeToJson: false)
+  Stream<String> get jsonStringStream {
+    _updateJsonStringController ??= StreamController<String>.broadcast(
       onListen: () => _sendUpdates = true,
-      onCancel: () => _sendUpdates = false,
+      onCancel: () => _sendUpdates = false
     );
-
-    return _updateController!.stream;
+    return _updateJsonStringController!.stream;
   }
 
   Round._internal(this.initialPhrase, this._phrases, this._scores, this._phraseLocks);
@@ -81,13 +82,13 @@ class Round {
     if (phraseLocks[playerId] == true) throw Exception('Player has already locked');
 
     _phrases[playerId]?.add(subPhrase);
-    if (_sendUpdates) _updateController?.sink.add(toJson());
+    if (_sendUpdates) _updateJsonStringController?.sink.add(jsonEncode(toJson()));
   }
 
   void lockPhrases(String playerId) {
     if (phraseLocks[playerId] == null) throw Exception('Player does not exist');
     _phraseLocks[playerId] = true;
-    if (_sendUpdates) _updateController?.sink.add(toJson());
+    if (_sendUpdates) _updateJsonStringController?.sink.add(jsonEncode(toJson()));
   }
 
   /// Set player scores from their sub phrases
@@ -101,9 +102,9 @@ class Round {
       _scores[entry.key] = score;
     }
     _isScored = true;
-    if (_sendUpdates) _updateController?.sink.add(toJson());
+    if (_sendUpdates) _updateJsonStringController?.sink.add(jsonEncode(toJson()));
     _sendUpdates = false;
-    _updateController?.close();
+    _updateJsonStringController?.close();
     return scores;
   }
 }

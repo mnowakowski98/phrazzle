@@ -101,12 +101,15 @@ class _GameState extends State<Game> {
 
   void disconnect() async {
     channel?.sink.close(1000);
-    channel = null;
+    widget.deviceCache.remove(lastGameIdKey);
+    widget.deviceCache.remove(lastPlayerIdKey);
+
     setState(() {
       connectedGameId = null;
       connectedPlayerId = null;
       game = null;
       round = null;
+      channel = null;
     });
   }
 

@@ -111,19 +111,19 @@ class PhrazzleCentral {
 
       // Send current game state and sync with updates
       channel.sink.add(jsonEncode(game.toJson()));
-      game.stateStream.listen(
+      game.jsonStringStream.listen(
         // Get the channel from the map again in case it's been removed
         // Otherwise would call add on a closed sink
-        (data) => clients[playerId]?.channel.sink.add(jsonEncode(data)),
+        (data) => clients[playerId]?.channel.sink.add(data),
       );
 
-      final round = gameStore.getRound(gameId);
+      final round = gameStore.getRounds(gameId)?.first;
       // Send/sync round if exists
       if (round != null) {
         channel.sink.add(jsonEncode(round.toJson()));
-        round.getUpdateStream().listen(
+        round.jsonStringStream.listen(
           // Same reason as above
-          (data) => clients[playerId]?.channel.sink.add(jsonEncode(data)),
+          (data) => clients[playerId]?.channel.sink.add(data),
         );
       }
 
@@ -186,8 +186,8 @@ class PhrazzleCentral {
     for (final playerId in game.playerIds) {
       final client = clients[playerId];
       client?.channel.sink.add(jsonEncode(round.toJson()));
-      round.getUpdateStream().listen(
-        (data) => client?.channel.sink.add(jsonEncode(data)),
+      round.jsonStringStream.listen(
+        (data) => client?.channel.sink.add(data),
       );
     }
 
@@ -202,18 +202,19 @@ class PhrazzleCentral {
 
     final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
-
-    final player = game.players[playerId];
-    if (player == null) return Response.notFound(gameId);
-    
-    final round = gameStore.getRounds(gameId)?.first;
-    if (round == null) {
-      print('$gameId not started yet');
+    if (game.isStarted == false) {
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game not started yet'}),
         headers: {'content-type': 'application/json'}
       );
     }
+
+    final player = game.players[playerId];
+    if (player == null) return Response.notFound(gameId);
+    
+    final rounds = gameStore.getRounds(gameId);
+    final round = rounds?.first;
+    if (round == null) throw Exception('$gameId is started but has no round');
 
     if (round.phraseLocks[playerId] == true) {
       print('$playerId has already locked in');
@@ -247,7 +248,7 @@ class PhrazzleCentral {
     final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
 
-    final round = gameStore.getRound(gameId);
+    final round = gameStore.getRounds(gameId)?.first;
     if (round == null) {
       print('$gameId isn\'t started yet');
       return Response.badRequest(
@@ -267,7 +268,7 @@ class PhrazzleCentral {
       game.end();
 
       // Close leftover connections after a bit
-      Timer(const Duration(minutes: 5), () {
+      Timer(const Duration(seconds: 2), () {
         for (final playerId in game.playerIds) {
           final client = clients[playerId];
           client?.channel.sink.close(1000);

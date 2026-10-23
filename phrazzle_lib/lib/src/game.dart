@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:json_annotation/json_annotation.dart';
 
@@ -29,15 +30,15 @@ class Game {
   bool get isEnded => _isEnded;
 
   var _sendUpdates = false;
-  StreamController<Map<String, dynamic>>? _updateController;
+  StreamController<String>? _updateJsonStringController;
 
   @JsonKey(includeToJson: false)
-  Stream<Map<String, dynamic>> get stateStream {
-    _updateController ??= StreamController<Map<String, dynamic>>.broadcast(
+  Stream<String> get jsonStringStream {
+    _updateJsonStringController ??= StreamController<String>.broadcast(
       onListen: () => _sendUpdates = true,
-      onCancel: () => _sendUpdates = false,
+      onCancel: () => _sendUpdates = false
     );
-    return _updateController!.stream;
+    return _updateJsonStringController!.stream;
   }
 
   Game();
@@ -66,7 +67,7 @@ class Game {
     final id = Uuid().v4();
     _players[id] = Player(name);
 
-    if (_sendUpdates) _updateController?.add(toJson());
+    if (_sendUpdates) _updateJsonStringController?.add(jsonEncode(toJson()));
     return id;
   }
 
@@ -75,7 +76,7 @@ class Game {
     if (isStarted) throw StateError(gameStartedMessage);
 
     final player = _players.remove(id);
-    if (_sendUpdates) _updateController?.add(toJson());
+    if (_sendUpdates) _updateJsonStringController?.add(jsonEncode(toJson()));
     return player;
   }
 
@@ -84,7 +85,7 @@ class Game {
     for (final entry in scores.entries) {
       _players[entry.key]!.score += entry.value;
     }
-    if (_sendUpdates) _updateController?.add(toJson());
+    if (_sendUpdates) _updateJsonStringController?.add(jsonEncode(toJson()));
   }
 
   /// Start the game, prevent player map modification
@@ -93,7 +94,7 @@ class Game {
     if (_players.isEmpty) return false;
 
     _isStarted = true;
-    if (_sendUpdates) _updateController?.add(toJson());
+    if (_sendUpdates) _updateJsonStringController?.add(jsonEncode(toJson()));
     return true;
   }
 
@@ -102,8 +103,8 @@ class Game {
     if (isStarted == false) throw StateError('Game not started yet');
     _isEnded = true;
 
-    if (_sendUpdates) _updateController?.add(toJson());
+    if (_sendUpdates) _updateJsonStringController?.add(jsonEncode(toJson()));
     _sendUpdates = false;
-    _updateController?.close();
+    _updateJsonStringController?.close();
   }
 }
