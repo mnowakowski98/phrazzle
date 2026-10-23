@@ -141,7 +141,7 @@ class _GameState extends State<Game> {
   @override
   Widget build(BuildContext context) {
     if (connectedPlayerId == null) {
-      return MainMenu(displayName, createGame: createGame, joinGame: joinGame);
+      // return MainMenu(displayName, createGame: createGame, joinGame: joinGame);
     }
     else if (game?.isStarted == false && game?.isEnded == false) {
       return Lobby(ConnectedGame(connectedGameId!, connectedPlayerId!, game!));

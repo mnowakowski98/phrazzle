@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:phrazzle/device_store.dart';
+import 'package:phrazzle/main_menu.dart';
 
 class App extends StatefulWidget {
-  final SharedPreferencesWithCache deviceCache;
+  final DeviceStore deviceStore;
 
-  const App(this.deviceCache, {super.key});
+  const App(this.deviceStore, {super.key});
 
   @override
   State<App> createState() => _AppState();
@@ -13,7 +14,6 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
+    return MainMenu('');
   }
 }
