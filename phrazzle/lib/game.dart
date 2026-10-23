@@ -80,7 +80,8 @@ class _GameState extends State<Game> {
           channel = null;
         });
       } else {
-        Timer(const Duration(seconds: 2), () => connect(gameId, playerId));
+        if (connectedGameId == null || connectedPlayerId == null) return;
+        Timer(const Duration(seconds: 2), () => connect(connectedGameId!, connectedPlayerId!));
       }
     });
 

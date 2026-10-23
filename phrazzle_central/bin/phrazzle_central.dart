@@ -23,7 +23,7 @@ void main(List<String> arguments) async {
     print('Unable to determine cloud project');
   }
 
-  final cascade = Cascade().add(PhrazzleCentral(JsonGameStore('./store/')).router.call).add((Request req) {
+  final cascade = Cascade().add(PhrazzleCentral(VolatileGameStore()).router.call).add((Request req) {
     if (req.url.toString() != 'healthz') return Response.notFound(null);
     return Response.ok(jsonEncode({'status': 'healthy'}), headers: {'content-type': 'application/json'});
   });

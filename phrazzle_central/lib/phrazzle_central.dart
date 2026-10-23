@@ -268,7 +268,7 @@ class PhrazzleCentral {
       game.end();
 
       // Close leftover connections after a bit
-      Timer(const Duration(seconds: 2), () {
+      Timer(const Duration(minutes: 5), () {
         for (final playerId in game.playerIds) {
           final client = clients[playerId];
           client?.channel.sink.close(1000);
