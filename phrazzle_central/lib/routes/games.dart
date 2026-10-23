@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:phrazzle_central/game_store.dart';
+import 'package:phrazzle_central/stores/game_store.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
@@ -9,7 +9,7 @@ import 'package:phrazzle_lib/phrazzle.dart';
 import 'package:shelf_web_socket/shelf_web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-part 'phrazzle_central.g.dart';
+part 'games.g.dart';
 
 class Client {
   final WebSocketChannel channel;
@@ -23,10 +23,10 @@ class Client {
 final clients = <String, Client>{};
 
 /// Service for the creation, cordination and status of games
-class PhrazzleCentral {
+class Games {
   final GameStore gameStore;
 
-  PhrazzleCentral(this.gameStore);
+  Games(this.gameStore);
 
   /// Get the game id from a game code
   @Route.get('/game/<gameCode>')
@@ -283,5 +283,5 @@ class PhrazzleCentral {
     return Response.ok(playerId);
   }
 
-  Router get router => _$PhrazzleCentralRouter(this);
+  Router get router => _$GamesRouter(this);
 }

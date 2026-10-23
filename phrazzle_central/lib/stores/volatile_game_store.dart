@@ -1,4 +1,4 @@
-import 'package:phrazzle_central/game_store.dart';
+import 'package:phrazzle_central/stores/game_store.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 import 'package:uuid/uuid.dart';
 

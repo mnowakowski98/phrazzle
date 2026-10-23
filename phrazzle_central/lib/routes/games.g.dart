@@ -1,12 +1,12 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'phrazzle_central.dart';
+part of 'games.dart';
 
 // **************************************************************************
 // ShelfRouterGenerator
 // **************************************************************************
 
-Router _$PhrazzleCentralRouter(PhrazzleCentral service) {
+Router _$GamesRouter(Games service) {
   final router = Router();
   router.add('GET', r'/game/<gameCode>', service.getGameId);
   router.add('GET', r'/game/code/<gameId>', service.getGameCode);
