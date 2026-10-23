@@ -7,7 +7,7 @@ part of 'game.dart';
 // **************************************************************************
 
 Map<String, dynamic> _$GameToJson(Game instance) => <String, dynamic>{
-  'players': instance.players.map((k, e) => MapEntry(k, e.toJson())),
+  'players': instance.players.toList(),
   'isStarted': instance.isStarted,
   'isEnded': instance.isEnded,
 };

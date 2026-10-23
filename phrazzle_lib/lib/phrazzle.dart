@@ -4,7 +4,6 @@ import 'package:phrazzle_lib/phrazzle.dart';
 
 export 'src/phrase_validator.dart';
 export 'src/game.dart';
-export 'src/player.dart';
-export 'src/round.dart';
+export 'src/phrase_group.dart';
 
 typedef Phrazzle = Game;

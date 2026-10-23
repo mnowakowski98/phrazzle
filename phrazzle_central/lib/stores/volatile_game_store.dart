@@ -5,8 +5,6 @@ import 'package:uuid/uuid.dart';
 /// Game store that forgets when the instance stops existing
 class VolatileGameStore extends GameStore {
   final _games = <String, Game>{};
-  final _rounds = <String, Round>{};
-  final _gameRounds = <String, String>{};
 
   VolatileGameStore();
 
@@ -25,22 +23,4 @@ class VolatileGameStore extends GameStore {
 
   @override
   void removeGame(String gameId) => _games.remove(gameId);
-
-  @override
-  String createRound(String gameId, Round round) {
-    final roundId = Uuid().v4();
-    _rounds[roundId] = round;
-    _gameRounds[gameId] = roundId;
-    return roundId;
-  }
-
-  @override
-  Round? getRound(String roundId) => _rounds[roundId];
-
-  @override
-  Iterable<Round>? getRounds(String gameId) {
-    final roundIds = _gameRounds[gameId];
-    if (roundIds == null) return null;
-    return _rounds.entries.where((round) => roundIds.contains(round.key)).map((entry) => entry.value);
-  }
 }

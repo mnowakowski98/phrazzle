@@ -16,12 +16,12 @@ class PhraseValidationInfo {
 
 class PhraseValidator {
   /// Determines if a sub phrase is valid from a given root phrase
-  static PhraseValidationInfo getPhraseMatchingInformation(String rootPhrase, String subPhrase) {
-    if (subPhrase.isEmpty) return PhraseValidationInfo(false);
+  static PhraseValidationInfo getPhraseMatchingInformation(String root, String phrase) {
+    if (phrase.isEmpty) return PhraseValidationInfo(false);
 
     // Prep phrases
-    final rootPhraseTransform = rootPhrase.trim().toLowerCase();
-    final subPhraseTransform = subPhrase.trim().toLowerCase();
+    final rootPhraseTransform = root.trim().toLowerCase();
+    final subPhraseTransform = phrase.trim().toLowerCase();
 
     // Check if the sub phrase contains an uninterrupted word or phrase from the root phrase
     final wordsInRootPhrase = rootPhraseTransform.split(' ');
@@ -52,5 +52,10 @@ class PhraseValidator {
       }
     }
     return PhraseValidationInfo(isValid, matchIndices: rootMatchIndices);
+  }
+
+  static Iterable<PhraseValidationInfo> getChainValidationInfo(String root, Iterable<String> chain) {
+    var lastPhrase = root;
+    return chain.map((phrase) => getPhraseMatchingInformation(lastPhrase, phrase));
   }
 }

@@ -6,8 +6,4 @@ abstract class GameStore {
   String createGame(Game game);
   Game? getGame(String gameId);
   void removeGame(String gameId);
-
-  String createRound(String gameId, Round round);
-  Round? getRound(String roundId);
-  Iterable<Round>? getRounds(String gameId);
 }

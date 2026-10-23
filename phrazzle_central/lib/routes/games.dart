@@ -40,7 +40,7 @@ class Games {
   }
 
   // Get the game code from a game id
-  @Route.get('/game/code/<gameId>')
+  @Route.get('/game/<gameId>/code')
   Response getGameCode(Request _, String gameId) {
     final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
@@ -57,17 +57,16 @@ class Games {
   }
 
   /// Create a new player in an existing game
-  @Route.post('/game/<gameId>/<playerName>')
-  Response addPlayer(Request _, String gameId, String playerName) {
-    final decodedName = Uri.decodeComponent(playerName);
+  @Route.post('/game/<gameId>/player')
+  Response addPlayer(Request _, String gameId) {
     final game = gameStore.getGame(gameId);
     if (game == null) {
       return Response.notFound(gameId);
     }
 
-    final playerId = game.addPlayer(decodedName);
+    final playerId = game.addPlayer();
 
-    print('Created player $decodedName ($playerId) in $gameId');
+    print('Created player $playerId in $gameId');
     return Response.ok(playerId);
   }
 
@@ -79,8 +78,7 @@ class Games {
       return Response.notFound(gameId);
     }
 
-    final player = game.players[playerId];
-    if (player == null) return Response.notFound(playerId);
+    if (game.players.contains(playerId) == false) return Response.notFound(playerId);
     if (clients[playerId] != null) {
       print('$playerId already connected');
       return Response.badRequest(
@@ -98,36 +96,18 @@ class Games {
         final decoded = jsonDecode(data) as Map<String, dynamic>;
         final deviceId = decoded['deviceId'];
         final instanceId = decoded['instanceId'];
-        if (deviceId == null || instanceId == null) throw Exception('Received invalid message trying to connect ${player.name}');
+        if (deviceId == null || instanceId == null) throw Exception('Received invalid message trying to connect $playerId');
         clients[playerId] = Client(channel, deviceId, instanceId);
-        print('Got client ids for ${player.name}: $deviceId - $instanceId');
+        print('Got client ids for $playerId: $deviceId - $instanceId');
       });
 
       // Unlink active channel from player (does not delete player)
       channel.sink.done.whenComplete(() {
         clients.remove(playerId);
-        print('${player.name} left game $gameId');
+        print('$playerId left game $gameId');
       });
 
-      // Send current game state and sync with updates
-      channel.sink.add(jsonEncode(game.toJson()));
-      game.jsonStringStream.listen(
-        // Get the channel from the map again in case it's been removed
-        // Otherwise would call add on a closed sink
-        (data) => clients[playerId]?.channel.sink.add(data),
-      );
-
-      final round = gameStore.getRounds(gameId)?.first;
-      // Send/sync round if exists
-      if (round != null) {
-        channel.sink.add(jsonEncode(round.toJson()));
-        round.jsonStringStream.listen(
-          // Same reason as above
-          (data) => clients[playerId]?.channel.sink.add(data),
-        );
-      }
-
-      print('${player.name} joined game $gameId (pending)');
+      print('$playerId joined game $gameId (pending)');
     })(req);
   }
 
@@ -137,8 +117,7 @@ class Games {
     final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
 
-    final player = game.players[playerId];
-    if (player == null) return Response.notFound(playerId);
+    if (game.players.contains(playerId) == false) return Response.notFound(playerId);
 
     // Close channel if it's still active
     final client = clients[playerId];
@@ -152,7 +131,7 @@ class Games {
       print('Removed $gameId due to lack of players');
     }
 
-    print('Removed ${player.name} from $gameId');
+    print('Removed $playerId from $gameId');
     return Response.ok(playerId);
   }
 
@@ -173,25 +152,7 @@ class Games {
       );
     }
 
-
-    // Create the round
-    final round = Round(
-      decodedPhrase,
-      game.players.keys.toList(),
-    );
-
-    final roundId = gameStore.createRound(gameId, round);
-
-    // Notify clients and subscribe to round updates
-    for (final playerId in game.playerIds) {
-      final client = clients[playerId];
-      client?.channel.sink.add(jsonEncode(round.toJson()));
-      round.jsonStringStream.listen(
-        (data) => client?.channel.sink.add(data),
-      );
-    }
-
-    print('Started $gameId : $roundId with phrase "$decodedPhrase"');
+    print('Started $gameId with phrase "$decodedPhrase"');
     return Response.ok(gameId);
   }
 
@@ -209,78 +170,16 @@ class Games {
       );
     }
 
-    final player = game.players[playerId];
-    if (player == null) return Response.notFound(gameId);
-    
-    final rounds = gameStore.getRounds(gameId);
-    final round = rounds?.first;
-    if (round == null) throw Exception('$gameId is started but has no round');
+    if (game.players.contains(playerId) == false) return Response.notFound(gameId);
 
-    if (round.phraseLocks[playerId] == true) {
-      print('$playerId has already locked in');
-      return Response.badRequest(
-        body: jsonEncode({'playerId': 'Player has already locked in'}),
-        headers: {'content-type': 'application/json'}
-      );
-    }
-
-    final existingPhrases = round.phrases[playerId]!;
-    final rootPhrase = existingPhrases.isNotEmpty ? existingPhrases.last : round.initialPhrase;
-    final matchInfo = PhraseValidator.getPhraseMatchingInformation(rootPhrase, decodedPhrase);
-    if (matchInfo.isValid == true) {
-      round.addPlayerSubPhrase(playerId, decodedPhrase);
-    } else {
-      print('$decodedPhrase failed validation');
-      return Response.badRequest(
-        body: jsonEncode({'phrase': decodedPhrase, 'message': 'Phrase failed validation'}),
-        headers: {'content-type': 'application/json'},
-      );
-    }
-
-    print('Added phrase "$decodedPhrase" to ${player.name} in $gameId');
-    return Response.ok(jsonEncode(matchInfo.toJson()));
+    throw UnimplementedError();
   }
 
   /// Prevent player from entering more phrases
   /// End the game if all players are done
   @Route.put('/game/<gameId>/<playerId>/done')
   Response endEntry(Request _, String gameId, String playerId) {
-    final game = gameStore.getGame(gameId);
-    if (game == null) return Response.notFound(gameId);
-
-    final round = gameStore.getRounds(gameId)?.first;
-    if (round == null) {
-      print('$gameId isn\'t started yet');
-      return Response.badRequest(
-        body: jsonEncode({'gameId': gameId, 'message': 'Game isn\'t started yet'}),
-        headers: {'content-type': 'application/json'}
-      );
-    }
-
-    final player = game.players[playerId];
-    if (player == null) return Response.notFound(playerId);
-
-    round.lockPhrases(playerId);
-
-    if (round.phraseLocks.values.every((isLocked) => isLocked == true)) {
-      // final scores = round.scoreRound();
-      // game.incrementScores(scores);
-      game.end();
-
-      // Close leftover connections after a bit
-      Timer(const Duration(minutes: 5), () {
-        for (final playerId in game.playerIds) {
-          final client = clients[playerId];
-          client?.channel.sink.close(1000);
-        }
-        gameStore.removeGame(gameId);
-      });
-
-      print('$gameId ended');
-    }
-
-    print('${player.name} finished entering phrases');
-    return Response.ok(playerId);
+    throw UnimplementedError();
   }
 
   Router get router => _$GamesRouter(this);

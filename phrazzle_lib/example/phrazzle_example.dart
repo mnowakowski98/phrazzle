@@ -5,6 +5,8 @@ void main(List<String> arguments) {
   final game = Phrazzle();
   String? input;
 
+  final playerNames = <String, String>{};
+
   // Register players
   var playerIndex = 1;
   print('Enter player names (leave empty to finish)\n---');
@@ -12,13 +14,14 @@ void main(List<String> arguments) {
     print('Player $playerIndex:');
     input = stdin.readLineSync();
     if (input!.isNotEmpty) {
-      game.addPlayer(input);
+      final id = game.addPlayer();
+      playerNames[id] = input;
       playerIndex++;
     }
   } while (input.isNotEmpty);
 
   print('Players\n---');
-  print('${game.playerNames}\n');
+  print('${playerNames.values}\n');
 
   // Get starting phrase
   late final String startingPhrase;
@@ -30,38 +33,29 @@ void main(List<String> arguments) {
 
   // Start game and create a round
   game.start();
-  final round = Round(startingPhrase, game.playerIds);
 
   // Player turn loop
-  for (final playerEntry in game.players.entries) {
+  final phraseGroups = <String, PhraseGroup>{};
+  for (final playerId in game.players) {
+    final phraseGroup = PhraseGroup(startingPhrase);
+    phraseGroups[playerId] = phraseGroup;
     var phraseIndex = 1;
 
     // Get player phrase entries
-    print('Player: ${playerEntry.value.name}\n---');
+    print('Player: ${playerNames[playerId]}\n---');
     do {
       print('Entry: $phraseIndex');
       input = stdin.readLineSync();
       if (input!.isNotEmpty) {
-        round.addPlayerSubPhrase(playerEntry.key, input);
+        phraseGroup.addPhrase(input);
         phraseIndex++;
       }
     } while (input.isNotEmpty);
+
+    if (PhraseValidator.getChainValidationInfo(startingPhrase, phraseGroup.phrases).every((info) => info.isValid)) {
+      print('Score: ${phraseGroup.phrases.length}');
+    } else {
+      print('Invalid phrase in chain');
+    }
   }
-
-  // Score round
-  // final scores = round.scoreRound();
-  // game.incrementScores(scores);
-
-  // Display winning player(s)
-  // final winnerIds = game.end();
-  // final winningPlayers = game.players.entries
-  //     .where((final playerEntry) => winnerIds.contains(playerEntry.key))
-  //     .map((player) => player.value);
-
-  // print('Winner(s):');
-  // for (final player in winningPlayers) {
-  //   print('Player: ${player.name}');
-  //   print('Score: ${player.score}');
-  //   print('\n');
-  // }
 }

@@ -1,9 +1,7 @@
-import 'package:phrazzle_lib/src/phrase_validator.dart';
+import 'package:phrazzle_lib/phrazzle.dart';
 import 'package:test/test.dart';
 
 void main() {
-  // TODO: Fix all tests after validation function return change
-
   group('Valid sub phrases', () {
     test('General', () {
       // All letters in sub phrase occur in the root phrase

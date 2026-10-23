@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:json_annotation/json_annotation.dart';
 
-import 'player.dart';
 import 'package:uuid/uuid.dart';
 
 part 'game.g.dart';
@@ -14,14 +13,8 @@ class Game {
   @JsonKey(includeFromJson: false, includeToJson: false)
   static const gameStartedMessage = 'Game already started';
 
-  final _players = <String, Player>{};
-  Map<String, Player> get players => Map.unmodifiable(_players);
-
-  @JsonKey(includeToJson: false)
-  List<String> get playerIds => List.unmodifiable(players.keys.toList());
-  @JsonKey(includeToJson: false)
-  List<String> get playerNames =>
-      List.unmodifiable(players.values.map((player) => player.name));
+  final _players = <String>{};
+  Set<String> get players => Set.unmodifiable(_players);
 
   var _isStarted = false;
   bool get isStarted => _isStarted;
@@ -43,58 +36,43 @@ class Game {
 
   Game();
 
-  Map<String, dynamic> toJson() {
-    final json = _$GameToJson(this);
-    json['typeKey'] = 'game';
-    return json;
-  }
+  String get jsonString => jsonEncode(_$GameToJson(this));
 
-  factory Game.fromJson(Map<String, dynamic> json) {
+  factory Game.fromJsonString(String jsonString) {
+    final json = jsonDecode(jsonString);
     final game = Game();
     game._isStarted = json['isStarted'];
     game._isEnded = json['isEnded'];
-    final Map<String, dynamic> players = json['players'];
-    for (final player in players.entries) {
-      game._players[player.key] = Player.fromJson(player.value);
-    }
+    game._players.addAll((json['players'] as Set).cast<String>());
     return game;
   }
 
   /// Add a player to the game and get id
-  String addPlayer(String name) {
+  String addPlayer() {
     if (isStarted) throw StateError(gameStartedMessage);
 
     final id = Uuid().v4();
-    _players[id] = Player(name);
+    _players.add(id);
 
-    if (_sendUpdates) _updateJsonStringController?.add(jsonEncode(toJson()));
+    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
     return id;
   }
 
   /// Remove a player by id
-  Player? removePlayer(String id) {
+  void removePlayer(String id) {
     if (isStarted) throw StateError(gameStartedMessage);
 
-    final player = _players.remove(id);
-    if (_sendUpdates) _updateJsonStringController?.add(jsonEncode(toJson()));
-    return player;
+    _players.remove(id);
+    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
   }
 
-  /// Increment scores for players given players
-  void incrementScores(Map<String, int> scores) {
-    for (final entry in scores.entries) {
-      _players[entry.key]!.score += entry.value;
-    }
-    if (_sendUpdates) _updateJsonStringController?.add(jsonEncode(toJson()));
-  }
-
-  /// Start the game, prevent player map modification
+  /// Start the game, prevent player set modification
   bool start() {
     if (isStarted) throw StateError(gameStartedMessage);
     if (_players.isEmpty) return false;
 
     _isStarted = true;
-    if (_sendUpdates) _updateJsonStringController?.add(jsonEncode(toJson()));
+    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
     return true;
   }
 
@@ -103,7 +81,7 @@ class Game {
     if (isStarted == false) throw StateError('Game not started yet');
     _isEnded = true;
 
-    if (_sendUpdates) _updateJsonStringController?.add(jsonEncode(toJson()));
+    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
     _sendUpdates = false;
     _updateJsonStringController?.close();
   }
