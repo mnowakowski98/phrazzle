@@ -20,8 +20,14 @@ class Round {
     0,
     (accumulator, value) => value == true ? accumulator + 1 : accumulator
   );
+
+  @JsonKey(includeToJson: false)
   Iterable<String> get lockedPhraseIds => _phraseLocks.keys.where((key) => _phraseLocks[key] == true);
+
+  @JsonKey(includeToJson: false)
   int get unlockedPhrases => _phraseLocks.length - lockedPhrases;
+
+  @JsonKey(includeToJson: false)
   Iterable<String> get unlockedPhraseIds => _phraseLocks.keys.where((key) => _phraseLocks[key] == false);
 
   final Map<String, int> _scores;
