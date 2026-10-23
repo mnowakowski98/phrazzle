@@ -20,7 +20,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
 
   List<String> get playerPhrases => widget.connectedGame.round!.phrases[widget.connectedGame.playerId]!;
   String get currentRootPhrase => playerPhrases.isEmpty ? widget.connectedGame.round!.initialPhrase : playerPhrases.last;
-  PhraseValidationInfo get phraseInfo => PhrazzleBase.getPhraseMatchingInformation(currentRootPhrase, phrase);
+  PhraseValidationInfo get phraseInfo => PhraseValidator.getPhraseMatchingInformation(currentRootPhrase, phrase);
 
   final _phraseController = TextEditingController();
 

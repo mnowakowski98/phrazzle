@@ -226,7 +226,7 @@ class Games {
 
     final existingPhrases = round.phrases[playerId]!;
     final rootPhrase = existingPhrases.isNotEmpty ? existingPhrases.last : round.initialPhrase;
-    final matchInfo = PhrazzleBase.getPhraseMatchingInformation(rootPhrase, decodedPhrase);
+    final matchInfo = PhraseValidator.getPhraseMatchingInformation(rootPhrase, decodedPhrase);
     if (matchInfo.isValid == true) {
       round.addPlayerSubPhrase(playerId, decodedPhrase);
     } else {
@@ -263,8 +263,8 @@ class Games {
     round.lockPhrases(playerId);
 
     if (round.phraseLocks.values.every((isLocked) => isLocked == true)) {
-      final scores = round.scoreRound();
-      game.incrementScores(scores);
+      // final scores = round.scoreRound();
+      // game.incrementScores(scores);
       game.end();
 
       // Close leftover connections after a bit

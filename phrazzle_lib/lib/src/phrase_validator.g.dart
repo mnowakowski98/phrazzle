@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'phrazzle_base.dart';
+part of 'phrase_validator.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

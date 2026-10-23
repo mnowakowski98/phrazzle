@@ -3,8 +3,6 @@ import 'dart:convert';
 
 import 'package:json_annotation/json_annotation.dart';
 
-import 'phrazzle_base.dart';
-
 part 'round.g.dart';
 
 @JsonSerializable(explicitToJson: true, createFactory: false)
@@ -95,22 +93,5 @@ class Round {
     if (phraseLocks[playerId] == null) throw Exception('Player does not exist');
     _phraseLocks[playerId] = true;
     if (_sendUpdates) _updateJsonStringController?.sink.add(jsonEncode(toJson()));
-  }
-
-  /// Set player scores from their sub phrases
-  Map<String, int> scoreRound() {
-    if (isScored) throw Exception('Round has already been scored');
-    for (final entry in _phrases.entries) {
-      final score = PhrazzleBase.getNumberOfValidPhrases(
-        initialPhrase,
-        entry.value,
-      );
-      _scores[entry.key] = score;
-    }
-    _isScored = true;
-    if (_sendUpdates) _updateJsonStringController?.sink.add(jsonEncode(toJson()));
-    _sendUpdates = false;
-    _updateJsonStringController?.close();
-    return scores;
   }
 }

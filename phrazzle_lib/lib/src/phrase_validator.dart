@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'phrazzle_base.g.dart';
+part 'phrase_validator.g.dart';
 
 @JsonSerializable()
 class PhraseValidationInfo {
@@ -14,7 +14,7 @@ class PhraseValidationInfo {
   factory PhraseValidationInfo.fromJson(json) => _$PhraseValidationInfoFromJson(json);
 }
 
-class PhrazzleBase {
+class PhraseValidator {
   /// Determines if a sub phrase is valid from a given root phrase
   static PhraseValidationInfo getPhraseMatchingInformation(String rootPhrase, String subPhrase) {
     if (subPhrase.isEmpty) return PhraseValidationInfo(false);
@@ -52,20 +52,5 @@ class PhrazzleBase {
       }
     }
     return PhraseValidationInfo(isValid, matchIndices: rootMatchIndices);
-  }
-
-  // TODO: Remove or move to somewhere(tm)
-  /// Scores a chain of sub phrases until invalid or done
-  static int getNumberOfValidPhrases(String phrase, List<String> subPhrases) {
-    var invalidSubPhrase = false;
-    return subPhrases.fold(0, (final score, final subPhrase) {
-      if (invalidSubPhrase) return score;
-      final isValid = getPhraseMatchingInformation(phrase, subPhrase).isValid;
-      if (isValid == false) {
-        invalidSubPhrase = true;
-        return score;
-      }
-      return score + 1;
-    });
   }
 }
