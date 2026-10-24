@@ -3,7 +3,9 @@ import 'dart:io';
 
 import 'package:google_cloud/google_cloud.dart';
 import 'package:google_cloud_shelf/google_cloud_shelf.dart';
+import 'package:phrazzle_central/routes/users.dart';
 import 'package:phrazzle_central/stores/volatile_game_store.dart';
+import 'package:phrazzle_central/stores/volatile_user_store.dart';
 
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
@@ -22,10 +24,13 @@ void main(List<String> arguments) async {
     print('Unable to determine cloud project');
   }
 
-  final cascade = Cascade().add(Games(VolatileGameStore()).router.call).add((Request req) {
-    if (req.url.toString() != 'healthz') return Response.notFound(null);
-    return Response.ok(jsonEncode({'status': 'healthy'}), headers: {'content-type': 'application/json'});
-  });
+  final cascade = Cascade()
+    .add(Games(VolatileGameStore()).router.call)
+    .add(Users(VolatileUserStore()).router.call)
+    .add((Request req) {
+      if (req.url.toString() != 'healthz') return Response.notFound(null);
+      return Response.ok(jsonEncode({'status': 'healthy'}), headers: {'content-type': 'application/json'});
+    });
 
   final pipeline = Pipeline()
       .addMiddleware(corsHeaders())

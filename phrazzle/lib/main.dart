@@ -5,12 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   final preferences = await SharedPreferencesWithCache.create(cacheOptions: SharedPreferencesWithCacheOptions());
-  final deviceStore = DeviceStore(preferences);
+  final deviceStore = DeviceStorage(preferences);
   runApp(MainApp(deviceStore));
 }
 
 class MainApp extends StatelessWidget {
-  final DeviceStore deviceStore;
+  final DeviceStorage deviceStore;
 
   const MainApp(this.deviceStore, {super.key});
 

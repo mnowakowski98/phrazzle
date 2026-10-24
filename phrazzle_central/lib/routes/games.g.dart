@@ -9,9 +9,9 @@ part of 'games.dart';
 Router _$GamesRouter(Games service) {
   final router = Router();
   router.add('GET', r'/game/<gameCode>', service.getGameId);
-  router.add('GET', r'/game/code/<gameId>', service.getGameCode);
+  router.add('GET', r'/game/<gameId>/code', service.getGameCode);
   router.add('POST', r'/game', service.createGame);
-  router.add('POST', r'/game/<gameId>/<playerName>', service.addPlayer);
+  router.add('POST', r'/game/<gameId>/player', service.addPlayer);
   router.add('GET', r'/game/<gameId>/<playerId>', service.joinGame);
   router.add('DELETE', r'/game/<gameId>/<playerId>', service.removePlayer);
   router.add('PUT', r'/game/<gameId>/<phrase>', service.startGame);

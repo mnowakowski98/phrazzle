@@ -10,4 +10,5 @@ Map<String, dynamic> _$GameToJson(Game instance) => <String, dynamic>{
   'players': instance.players.toList(),
   'isStarted': instance.isStarted,
   'isEnded': instance.isEnded,
+  'jsonString': instance.jsonString,
 };

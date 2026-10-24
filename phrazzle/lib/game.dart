@@ -16,7 +16,7 @@ import 'package:phrazzle/lobby.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class Game extends StatefulWidget {
-  final DeviceStore deviceStore;
+  final DeviceStorage deviceStore;
 
   const Game(this.deviceStore, {super.key});
 
