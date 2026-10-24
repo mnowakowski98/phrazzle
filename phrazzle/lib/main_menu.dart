@@ -12,11 +12,7 @@ class _MainMenuState extends State<MainMenu> {
   Widget build(BuildContext context) {      
       return Column(
         children: [
-          Row(
-            children: [
-              
-            ],
-          ),
+          ElevatedButton(onPressed: null, child: Text('Single player game'))
         ],
       );
   }

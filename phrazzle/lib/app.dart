@@ -80,9 +80,13 @@ class _AppState extends State<App> {
       );
     }
 
-    return Column(children: [
-      Text(user.name),
-      MainMenu()
-    ],);
+    return Column(
+      crossAxisAlignment: .center,
+      children: [
+        Text(user.name, style: TextStyle(color: Colors.teal, fontSize: 24)),
+        Divider(),
+        MainMenu(),
+      ],
+    );
   }
 }
