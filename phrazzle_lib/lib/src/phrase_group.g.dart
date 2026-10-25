@@ -6,9 +6,8 @@ part of 'phrase_group.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+PhraseGroup _$PhraseGroupFromJson(Map<String, dynamic> json) =>
+    PhraseGroup(json['initialPhrase'] as String);
+
 Map<String, dynamic> _$PhraseGroupToJson(PhraseGroup instance) =>
-    <String, dynamic>{
-      'initialPhrase': instance.initialPhrase,
-      'isLocked': instance.isLocked,
-      'phrases': instance.phrases.toList(),
-    };
+    <String, dynamic>{'initialPhrase': instance.initialPhrase};

@@ -2,7 +2,7 @@ import 'package:phrazzle_lib/phrazzle.dart';
 import 'dart:io';
 
 void main(List<String> arguments) {
-  final game = Phrazzle();
+  final game = Game();
   String? input;
 
   final playerNames = <String, String>{};
@@ -32,6 +32,7 @@ void main(List<String> arguments) {
   } while (input.isEmpty);
 
   // Start game and create a round
+  final round = game.createRound(startingPhrase);
   game.start();
 
   // Player turn loop

@@ -28,7 +28,7 @@ class Users {
 
   @Route.get('/users')
   Response getUsers(Request _) {
-    return Response.ok(jsonEncode(userStore.users.map((user) => user.json)));
+    return Response.ok(jsonEncode(userStore.users.map((user) => user.toJson())));
   }
 
   @Route.put('/users')

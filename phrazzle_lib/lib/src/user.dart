@@ -5,6 +5,9 @@ import 'package:uuid/uuid.dart';
 
 part 'user.g.dart';
 
+// This class isn't really a part of the game.
+// It's here because I don't have a better way to share types between phrazzle and phrazzle_central.
+
 @JsonSerializable()
 class User {
   final String id;
@@ -16,9 +19,10 @@ class User {
   factory User.newId(User user) => User._internal(Uuid().v4(), user._name);
   factory User.info(String name) => User._internal('', name);
 
-  Map<String, dynamic> get json => _$UserToJson(this);
+  Map<String, dynamic> toJson() => _$UserToJson(this);
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 
-  String get jsonString => jsonEncode(json);
+  @JsonKey(includeToJson: false)
+  String get jsonString => jsonEncode(toJson());
   factory User.fromJsonString(String jsonString) => User.fromJson(jsonDecode(jsonString));
 }

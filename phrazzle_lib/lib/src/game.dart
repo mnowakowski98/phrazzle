@@ -2,50 +2,20 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:json_annotation/json_annotation.dart';
+import 'package:phrazzle_lib/src/round.dart';
 
 import 'package:uuid/uuid.dart';
 
 part 'game.g.dart';
 
 /// Class that handles Game lobby information
-@JsonSerializable(explicitToJson: true, createFactory: false)
+@JsonSerializable(constructor: 'existing')
 class Game {
   @JsonKey(includeFromJson: false, includeToJson: false)
   static const gameStartedMessage = 'Game already started';
 
   final _players = <String>{};
   Set<String> get players => Set.unmodifiable(_players);
-
-  var _isStarted = false;
-  bool get isStarted => _isStarted;
-
-  var _isEnded = false;
-  bool get isEnded => _isEnded;
-
-  var _sendUpdates = false;
-  StreamController<String>? _updateJsonStringController;
-
-  @JsonKey(includeToJson: false)
-  Stream<String> get jsonStringStream {
-    _updateJsonStringController ??= StreamController<String>.broadcast(
-      onListen: () => _sendUpdates = true,
-      onCancel: () => _sendUpdates = false
-    );
-    return _updateJsonStringController!.stream;
-  }
-
-  Game();
-
-  String get jsonString => jsonEncode(_$GameToJson(this));
-
-  factory Game.fromJsonString(String jsonString) {
-    final json = jsonDecode(jsonString);
-    final game = Game();
-    game._isStarted = json['isStarted'];
-    game._isEnded = json['isEnded'];
-    game._players.addAll((json['players'] as Set).cast<String>());
-    return game;
-  }
 
   /// Add a player to the game and get id
   String addPlayer() {
@@ -66,6 +36,46 @@ class Game {
     if (_sendUpdates) _updateJsonStringController?.add(jsonString);
   }
 
+  final _rounds = <String, Round>{};
+  Map<String, Round> get rounds => Map.unmodifiable(_rounds);
+
+  /// Create a new round
+  (String id, Round round) createRound(String phrase) {
+    final roundId = Uuid().v4();
+    final round = Round(phrase, players);
+    _rounds[roundId] = round;
+
+    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
+    return (roundId, round);
+  }
+
+  @JsonKey(includeToJson: true, includeFromJson: true)
+  String? _currentRoundId;
+
+  @JsonKey(includeToJson: false)
+  Round? get currentRound => _rounds[_currentRoundId];
+  Round setCurrentRound(String roundId) {
+    final round = _rounds[roundId];
+    if (round == null) throw ArgumentError('Tried to set invalid round $roundId as current');
+    _currentRoundId = roundId;
+
+    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
+    return round;
+  }
+
+  /// Add a phrase to the current round
+  String addPhrase(String playerId, String phrase) {
+    if (isStarted == false) throw StateError('Game not started yet');
+    if (isEnded == true) throw StateError('Game has ended');
+
+    final round = currentRound;
+    if (round == null) throw StateError('Game has no current round');
+    return round.addPhrase(playerId, phrase);
+  }
+
+  var _isStarted = false;
+  bool get isStarted => _isStarted;
+
   /// Start the game, prevent player set modification
   bool start() {
     if (isStarted) throw StateError(gameStartedMessage);
@@ -76,13 +86,48 @@ class Game {
     return true;
   }
 
+  var _isEnded = false;
+  bool get isEnded => _isEnded;
+
   /// End the game
   void end() {
     if (isStarted == false) throw StateError('Game not started yet');
+    if (isEnded == true) throw StateError('Game has already ended');
+
     _isEnded = true;
 
     if (_sendUpdates) _updateJsonStringController?.add(jsonString);
     _sendUpdates = false;
     _updateJsonStringController?.close();
   }
+
+  var _sendUpdates = false;
+  StreamController<String>? _updateJsonStringController;
+
+  @JsonKey(includeToJson: false)
+  Stream<String> get jsonStringStream {
+    _updateJsonStringController ??= StreamController<String>.broadcast(
+      onListen: () => _sendUpdates = true,
+      onCancel: () => _sendUpdates = false
+    );
+    return _updateJsonStringController!.stream;
+  }
+
+  Game();
+  factory Game.existing(Set<String> players, Map<String, Round> rounds, bool isStarted, bool isEnded) {
+    final game = Game();
+    game._players.addAll(players);
+    game._rounds.addAll(rounds);
+    if (isStarted == false && isEnded == true) throw ArgumentError('Game can not be ended if it is not started');
+    game._isStarted = isStarted;
+    game._isEnded = isEnded;
+    return game;
+  }
+
+  Map<String, dynamic> toJson() => _$GameToJson(this);
+  factory Game.fromJson(Map<String, dynamic> json) => _$GameFromJson(json);
+
+  @JsonKey(includeToJson: false)
+  String get jsonString => jsonEncode(toJson());
+  factory Game.fromJsonString(String jsonString) => Game.fromJson(jsonDecode(jsonString));
 }
