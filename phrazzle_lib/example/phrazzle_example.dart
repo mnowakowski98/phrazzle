@@ -32,14 +32,12 @@ void main(List<String> arguments) {
   } while (input.isEmpty);
 
   // Start game and create a round
-  final round = game.createRound(startingPhrase);
+  final roundId = game.createRound(startingPhrase).id;
+  final round = game.setCurrentRound(roundId);
   game.start();
 
   // Player turn loop
-  final phraseGroups = <String, PhraseGroup>{};
   for (final playerId in game.players) {
-    final phraseGroup = PhraseGroup(startingPhrase);
-    phraseGroups[playerId] = phraseGroup;
     var phraseIndex = 1;
 
     // Get player phrase entries
@@ -48,13 +46,14 @@ void main(List<String> arguments) {
       print('Entry: $phraseIndex');
       input = stdin.readLineSync();
       if (input!.isNotEmpty) {
-        phraseGroup.addPhrase(input);
+        game.addPhrase(playerId, input);
         phraseIndex++;
       }
     } while (input.isNotEmpty);
 
-    if (PhraseValidator.getChainValidationInfo(startingPhrase, phraseGroup.phrases).every((info) => info.isValid)) {
-      print('Score: ${phraseGroup.phrases.length}');
+    final phraseGroup = round.phraseGroups[playerId]!;
+    if (phraseGroup.isValidChain) {
+      print('Score: ${round.scores[playerId]}');
     } else {
       print('Invalid phrase in chain');
     }

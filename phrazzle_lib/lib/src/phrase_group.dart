@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:json_annotation/json_annotation.dart';
+import 'package:phrazzle_lib/phrazzle.dart';
 
 part 'phrase_group.g.dart';
 
@@ -20,6 +21,8 @@ class PhraseGroup {
     _phrases.add(phrase);
     return phrase;
   }
+
+  bool get isValidChain => PhraseValidator.getChainValidationInfo(initialPhrase, _phrases).every((info) => info.isValid);
 
   PhraseGroup._internal(this.initialPhrase, this._phrases, this._isLocked);
   factory PhraseGroup(String initialPhrase) => PhraseGroup._internal(initialPhrase, [], false);

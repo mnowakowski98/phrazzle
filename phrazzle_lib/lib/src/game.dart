@@ -40,13 +40,13 @@ class Game {
   Map<String, Round> get rounds => Map.unmodifiable(_rounds);
 
   /// Create a new round
-  (String id, Round round) createRound(String phrase) {
+  ({String id, Round round}) createRound(String phrase) {
     final roundId = Uuid().v4();
     final round = Round(phrase, players);
     _rounds[roundId] = round;
 
     if (_sendUpdates) _updateJsonStringController?.add(jsonString);
-    return (roundId, round);
+    return (id: roundId, round: round);
   }
 
   @JsonKey(includeToJson: true, includeFromJson: true)
