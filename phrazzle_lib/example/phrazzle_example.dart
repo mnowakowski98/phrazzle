@@ -31,9 +31,10 @@ void main(List<String> arguments) {
     if (input!.isNotEmpty) startingPhrase = input;
   } while (input.isEmpty);
 
-  // Start game and create a round
-  final roundId = game.createRound(startingPhrase).id;
-  final round = game.setCurrentRound(roundId);
+  // Create a roound and start the game
+  final createRound = game.createRound(startingPhrase);
+  final round = createRound.round;
+  game.currentRoundId = createRound.id;
   game.start();
 
   // Player turn loop

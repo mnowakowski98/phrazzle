@@ -10,12 +10,14 @@ part 'user.g.dart';
 
 @JsonSerializable()
 class User {
-  final String id;
+  final String _id;
+  String get id => _id;
   final String _name;
   String get name => _name;
 
-  User._internal(this.id, this._name);
+  User._internal(this._id, this._name);
   factory User(String id, String name) => User._internal(id, name);
+  factory User.blank() => User._internal('', '');
   factory User.newId(User user) => User._internal(Uuid().v4(), user._name);
   factory User.info(String name) => User._internal('', name);
 

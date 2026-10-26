@@ -1,11 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:phrazzle/device_store.dart';
 import 'package:phrazzle/env.dart';
-import 'package:phrazzle/main_menu.dart';
-import 'package:phrazzle_lib/phrazzle.dart';
+import 'package:phrazzle/game/local_game.dart';
+import 'package:phrazzle/menu/login.dart';
+import 'package:phrazzle/menu/main_menu.dart';
+import 'package:phrazzle_lib/phrazzle.dart' show User;
 
 class App extends StatefulWidget {
   final DeviceStorage deviceStore;
@@ -17,76 +20,73 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  User? user;
+  User user = User.blank();
+  var showLocalGame = false;
+  var hadConnectionError = false;
 
-  var editingPlayerName = false;
-  var playerNameText = '';
-  final _nameController = TextEditingController();
+  void skipLogin() => setState(() => widget.deviceStore.skipLogin = true);
 
-  void editUser() async {
+  void editUser(User user) async {
     User newUser;
     if (widget.deviceStore.userId == null) {
       final response = await http.post(
-        Uri.parse('${Env.centralUrl}/users'), body: User.info(playerNameText).jsonString
+        Uri.parse('${Env.centralUrl}/users'), body: User.info(user.name).jsonString
       );
       newUser = User.fromJsonString(response.body);
     } else {
       final response = await http.put(
-        Uri.parse('${Env.centralUrl}/users'), body: User(widget.deviceStore.userId!, playerNameText).jsonString
+        Uri.parse('${Env.centralUrl}/users'), body: User(widget.deviceStore.userId!, user.name).jsonString
       );
       newUser = User.fromJsonString(response.body);
     }
     widget.deviceStore.userId = newUser.id;
-    setState(() => user = newUser);
+    setState(() => this.user = newUser);
   }
 
   void getUser() async {
     if (widget.deviceStore.userId == null) return;
-    final response = await http.get(Uri.parse('${Env.centralUrl}/users/${widget.deviceStore.userId}'));
-    if (response.statusCode == 404) {
-      widget.deviceStore.userId = null;
-      setState(() => user = null);
-      return;
+    try {
+      final response = await http.get(Uri.parse('${Env.centralUrl}/users/${widget.deviceStore.userId}'));
+      if (response.statusCode == 404) {
+        setState(() {
+          widget.deviceStore.userId = null;
+          user = User.blank();
+        });
+        return;
+      }
+      setState(() => user = User.fromJsonString(response.body));
+    } on SocketException {
+      setState(() {
+        user = User.blank();
+        hadConnectionError = true;
+      });
     }
-    setState(() => user = User.fromJsonString(response.body));
+  }
+
+  void startLocalGame() {
+    setState(() => showLocalGame = true);
+  }
+
+  void leaveGame() {
+    showLocalGame = false;
   }
 
   @override
   void initState() {
     super.initState();
-    if (user == null) getUser();
-    _nameController.addListener(() => setState(() => playerNameText = _nameController.text));
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
+    if (user.id.isEmpty) getUser();
   }
 
   @override
   Widget build(BuildContext context) {
     final user = this.user;
 
-    if (user == null) {
-      return Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(controller: _nameController, decoration: InputDecoration(hintText: 'Display name')),
-          ),
-          ElevatedButton(onPressed: editUser, child: Text('Start')),
-        ],
-      );
+    if (user.id.isEmpty && widget.deviceStore.skipLogin == false && hadConnectionError == false) {
+      return Login(editUser, skipLogin);
     }
 
-    return Column(
-      crossAxisAlignment: .center,
-      children: [
-        Text(user.name, style: TextStyle(color: Colors.teal, fontSize: 24)),
-        Divider(),
-        MainMenu(),
-      ],
-    );
+    if (showLocalGame) return LocalGame(leaveGame);
+
+    return MainMenu(user, startLocalGame: startLocalGame,);
   }
 }

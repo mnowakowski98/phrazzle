@@ -11,8 +11,48 @@ part 'game.g.dart';
 /// Class that handles Game lobby information
 @JsonSerializable(constructor: 'existing')
 class Game {
+  var _sendUpdates = false;
+  StreamController<String>? _updateJsonStringController;
+
+  @JsonKey(includeToJson: false)
+  Stream<String> get jsonStringStream {
+    _updateJsonStringController ??= StreamController<String>.broadcast(
+      onListen: () => _sendUpdates = true,
+      onCancel: () => _sendUpdates = false
+    );
+    return _updateJsonStringController!.stream;
+  }
+
   @JsonKey(includeFromJson: false, includeToJson: false)
   static const gameStartedMessage = 'Game already started';
+
+  var _isStarted = false;
+  bool get isStarted => _isStarted;
+
+  /// Start the game, prevent player set modification
+  bool start() {
+    if (isStarted) throw StateError(gameStartedMessage);
+    if (_players.isEmpty) return false;
+
+    _isStarted = true;
+    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
+    return true;
+  }
+
+  var _isEnded = false;
+  bool get isEnded => _isEnded;
+
+  /// End the game
+  void end() {
+    if (isStarted == false) throw StateError('Game not started yet');
+    if (isEnded == true) throw StateError('Game has already ended');
+
+    _isEnded = true;
+
+    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
+    _sendUpdates = false;
+    _updateJsonStringController?.close();
+  }
 
   final _players = <String>{};
   Set<String> get players => Set.unmodifiable(_players);
@@ -49,19 +89,18 @@ class Game {
     return (id: roundId, round: round);
   }
 
-  @JsonKey(includeToJson: true, includeFromJson: true)
   String? _currentRoundId;
+  String? get currentRoundId => _currentRoundId;
+  set currentRoundId(String? id) {
+    final round = _rounds[id];
+    if (round == null) throw ArgumentError('Tried to set invalid round $id as current');
+    _currentRoundId = id;
+
+    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
+  }
 
   @JsonKey(includeToJson: false)
   Round? get currentRound => _rounds[_currentRoundId];
-  Round setCurrentRound(String roundId) {
-    final round = _rounds[roundId];
-    if (round == null) throw ArgumentError('Tried to set invalid round $roundId as current');
-    _currentRoundId = roundId;
-
-    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
-    return round;
-  }
 
   /// Add a phrase to the current round
   String addPhrase(String playerId, String phrase) {
@@ -71,46 +110,6 @@ class Game {
     final round = currentRound;
     if (round == null) throw StateError('Game has no current round');
     return round.addPhrase(playerId, phrase);
-  }
-
-  var _isStarted = false;
-  bool get isStarted => _isStarted;
-
-  /// Start the game, prevent player set modification
-  bool start() {
-    if (isStarted) throw StateError(gameStartedMessage);
-    if (_players.isEmpty) return false;
-
-    _isStarted = true;
-    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
-    return true;
-  }
-
-  var _isEnded = false;
-  bool get isEnded => _isEnded;
-
-  /// End the game
-  void end() {
-    if (isStarted == false) throw StateError('Game not started yet');
-    if (isEnded == true) throw StateError('Game has already ended');
-
-    _isEnded = true;
-
-    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
-    _sendUpdates = false;
-    _updateJsonStringController?.close();
-  }
-
-  var _sendUpdates = false;
-  StreamController<String>? _updateJsonStringController;
-
-  @JsonKey(includeToJson: false)
-  Stream<String> get jsonStringStream {
-    _updateJsonStringController ??= StreamController<String>.broadcast(
-      onListen: () => _sendUpdates = true,
-      onCancel: () => _sendUpdates = false
-    );
-    return _updateJsonStringController!.stream;
   }
 
   Game();

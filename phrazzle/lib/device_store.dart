@@ -1,3 +1,6 @@
+import 'package:http/http.dart' as http;
+import 'package:phrazzle/env.dart';
+import 'package:phrazzle_lib/phrazzle.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -8,13 +11,16 @@ class DeviceStorage {
   final String instanceId;
 
   String? get userId => _preferences.getString('USER_ID');
-  set userId(String? id) {
-    if (id == null) {
+  set userId(String? value) {
+    if (value == null) {
       _preferences.remove('USER_ID');
     } else {
-      _preferences.setString('USER_ID', id);
+      _preferences.setString('USER_ID', value);
     }
   }
+
+  bool get skipLogin => _preferences.getBool('SKIP_LOGIN') ?? false;
+  set skipLogin(bool value) => _preferences.setBool('SKIP_LOGIN', value);
 
   DeviceStorage._internal(this._preferences, this.deviceId, this.instanceId);
 
