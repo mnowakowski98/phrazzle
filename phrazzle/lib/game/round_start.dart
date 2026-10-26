@@ -29,7 +29,7 @@ class _RoundStartState extends State<RoundStart> {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: .start, children: [
-      Text('New round', style: TextStyle(color: Colors.teal, fontSize: 24)),
+      Text('Round start', style: TextStyle(color: Colors.teal, fontSize: 24)),
       Column(
         crossAxisAlignment: .center,
         children: [

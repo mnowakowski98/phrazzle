@@ -33,23 +33,29 @@ class Game extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentRound = game.currentRound;
+
+    Widget gameWidget = Placeholder();
+
     if (game.isStarted == false) {
-      return Lobby(
+      gameWidget = Lobby(
         game: game,
         startGame: startGame,
-        leaveGame: leaveGame,
       );
     }
 
     if (game.isStarted == true && game.isEnded == false) {
       if (currentRound == null) {
-        return RoundStart(startRound);
+        gameWidget = RoundStart(startRound);
       } else {
-        return PhraseEntry(currentRound.phraseGroups[playerId]!, enterPhrase, endRound);
+        gameWidget = PhraseEntry(playerId, currentRound, enterPhrase, endRound);
       }
     }
-    if (game.isStarted && game.isEnded) return Scores(game.currentRound!, users, leaveGame);
+    if (game.isStarted && game.isEnded) gameWidget = Scores(game.currentRound!, users);
 
-    return Placeholder();
+    return Column(children: [
+      Expanded(child: gameWidget),
+      Divider(),
+      TextButton(onPressed: leaveGame, child: Text('Leave', style: TextStyle(color: Colors.red),))
+    ],);
   }
 }

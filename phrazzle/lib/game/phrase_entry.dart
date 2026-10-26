@@ -3,13 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class PhraseEntry extends StatefulWidget {
-  final PhraseGroup phraseGroup;
+  final String playerId;
+  final Round round;
 
   final void Function(String phrase) onEntry; 
   final void Function() onEntryEnd;
 
   const PhraseEntry(
-    this.phraseGroup,
+    this.playerId,
+    this.round,
     this.onEntry,
     this.onEntryEnd, {
     super.key,
@@ -48,12 +50,14 @@ class _PhraseEntryState extends State<PhraseEntry> {
 
   @override
   Widget build(BuildContext context) {
-    final phraseGroup = widget.phraseGroup;
+    final phraseGroup = widget.round.phraseGroups[widget.playerId]!;
     final phrases = [for (final phrase in phraseGroup.phrases.toList().reversed) phrase, phraseGroup.initialPhrase];
     final rootPhrase = phraseGroup.phrases.isEmpty ? phraseGroup.initialPhrase : phraseGroup.phrases.last;
     final phraseInfo = PhraseValidator.getPhraseMatchingInformation(rootPhrase, phrase);
 
     final showDoneButton = phraseGroup.isLocked == false && rootPhrase != phraseGroup.initialPhrase;
+
+    final unlockedPhraseGroups = widget.round.phraseGroups.entries.where((entry) => entry.value.isLocked == false).map((entry) => entry.key);
 
     return Column(
       children: [
@@ -70,7 +74,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
                   ),
                   onChanged: (value) => setState(() => phrase = value),
                   inputFormatters: [
-                    TextInputFormatter.withFunction((oldValue, newValue) => newValue.text.length <= rootPhrase.length ? newValue : oldValue)
+                    // TextInputFormatter.withFunction((oldValue, newValue) => newValue.text.length <= rootPhrase.length ? newValue : oldValue)
                   ],
                 ),
                 onKeyEvent: (node, event) {
@@ -83,7 +87,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
               ),
             ),
             TextButton(
-              onPressed: () => submitPhrase(phrase, phraseInfo),
+              onPressed: phrase.isNotEmpty ? () => submitPhrase(phrase, phraseInfo) : null,
               child: Text('Enter'),
             ),
           ],
@@ -103,21 +107,21 @@ class _PhraseEntryState extends State<PhraseEntry> {
           ),
         ),
         if (showDoneButton) TextButton(onPressed: phrase.isEmpty ? endEntry : null, child: Text('Done')),
-        // if (phraseGroup.isLocked) Column(
-        //   children: [
-        //     Divider(),
-        //     Text(widget.connectedGame.round!.unlockedPhrases > 1 ? 'Waiting on players' : 'Waiting on player', style: TextStyle(fontSize: 16),),
-        //     if (widget.connectedGame.round!.unlockedPhrases <= 2) Row(
-        //       mainAxisAlignment: .spaceAround,
-        //       children: [
-        //         // for (final playerName in widget.connectedGame.round!.unlockedPhraseIds.map((id) => widget.connectedGame.game.players[id]!.name))
-        //         //   Text(playerName, style: TextStyle(fontSize: 18, color: Colors.cyan))
-        //       ]
-        //     ),
-        //     if (widget.connectedGame.round!.unlockedPhrases >= 3) Text(widget.connectedGame.round!.unlockedPhrases.toString(), style: TextStyle(fontSize: 18, color: Colors.teal),),
-        //     Divider(),
-        //   ],
-        // ),
+        if (phraseGroup.isLocked) Column(
+          children: [
+            Divider(),
+            Text(unlockedPhraseGroups.length > 1 ? 'Waiting on players' : 'Waiting on player', style: TextStyle(fontSize: 16),),
+            if (unlockedPhraseGroups.length <= 2) Row(
+              mainAxisAlignment: .spaceAround,
+              children: [
+                // for (final playerName in widget.connectedGame.round!.unlockedPhraseIds.map((id) => widget.connectedGame.game.players[id]!.name))
+                //   Text(playerName, style: TextStyle(fontSize: 18, color: Colors.cyan))
+              ]
+            ),
+            if (unlockedPhraseGroups.length >= 3) Text(unlockedPhraseGroups.toString(), style: TextStyle(fontSize: 18, color: Colors.teal),),
+            Divider(),
+          ],
+        ),
       ],
     );
   }

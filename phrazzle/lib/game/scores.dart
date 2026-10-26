@@ -5,9 +5,7 @@ class Scores extends StatelessWidget {
   final Round round;
   final Map<String, User> users;
 
-  final void Function() onLeaveGame;
-
-  const Scores(this.round, this.users, this.onLeaveGame, {super.key});
+  const Scores(this.round, this.users, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -84,10 +82,6 @@ class Scores extends StatelessWidget {
                 Tab(text: player.name),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextButton(onPressed: onLeaveGame, child: Text('Leave game')),
-          )
         ],
       ),
     );
