@@ -12,12 +12,18 @@ class Login extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text('Login'),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: UserTile(User.blank(), forceEdit: true, onEditingEnd: onLogin,),
+        Expanded(
+          child: Column(
+            children: [
+              Text('Login'),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: UserTile(User.blank(), forceEdit: true, onEditingEnd: onLogin,),
+              ),
+            ],
+          ),
         ),
-        TextButton(onPressed: onSkip, child: Text('Skip'))
+        TextButton(onPressed: onSkip, child: Text('Skip', style: TextStyle(color: Colors.amber),))
       ],
     );
   }

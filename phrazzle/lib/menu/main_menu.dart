@@ -2,34 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:phrazzle/menu/user_tile.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
-class MainMenu extends StatefulWidget {
+class MainMenu extends StatelessWidget {
   final User user;
 
   final void Function() startLocalGame;
+  final void Function() logout;
 
-  const MainMenu(this.user, {required this.startLocalGame, super.key});
-
-  @override
-  State<MainMenu> createState() => _MainMenuState();
-}
-
-class _MainMenuState extends State<MainMenu> {
-  var editingPlayerName = false;
-  var playerNameText = '';
+  const MainMenu(
+    this.user, {
+    required this.startLocalGame,
+    required this.logout,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {   
-      final user = widget.user;   
+      final user = this.user;
+
       return Column(
         children: [
-          if (user.id.isNotEmpty) Column(
-            children: [
-              UserTile(user),
-              Divider(),
-            ],
+          Expanded(
+            child: Column(
+              children: [
+                if (user.id.isNotEmpty) Column(
+                  children: [
+                    UserTile(user),
+                    Divider(),
+                  ],
+                ),
+                ElevatedButton(onPressed: startLocalGame, child: Text('Single player game')),
+                Divider(),
+              ],
+            ),
           ),
-          ElevatedButton(onPressed: widget.startLocalGame, child: Text('Single player game')),
-          Divider(),
+          TextButton(onPressed: logout, child: Text(user.id.isNotEmpty ? 'Logout' : 'Login'),)
         ],
       );
   }

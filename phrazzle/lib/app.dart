@@ -25,6 +25,11 @@ class _AppState extends State<App> {
 
   void skipLogin() => setState(() => widget.deviceStore.skipLogin = true);
 
+  void logout() => setState(() {
+    user = User.blank();
+    widget.deviceStore.skipLogin = false;
+  });
+
   void editUser(User user) async {
     User newUser;
     if (widget.deviceStore.userId == null) {
@@ -86,6 +91,6 @@ class _AppState extends State<App> {
 
     if (showLocalGame) return LocalGame(user, leaveGame);
 
-    return MainMenu(user, startLocalGame: startLocalGame,);
+    return MainMenu(user, startLocalGame: startLocalGame, logout: logout,);
   }
 }
