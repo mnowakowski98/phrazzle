@@ -14,7 +14,7 @@ class _PhraseEntryState extends State<PhraseEntry> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Focus(child: TextField()),
+        Focus(child: TextField(controller: _phraseController,)),
       ],
     );
   }

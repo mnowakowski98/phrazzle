@@ -15,6 +15,13 @@ class _LocalGameState extends State<LocalGame> {
   final Phrazzle game = Phrazzle();
   String get playerId => game.players.first;
 
+  void startRound(String phrase) {
+    setState(() {
+      final round = game.createRound(phrase);
+      game.currentRoundId = round.id;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +31,12 @@ class _LocalGameState extends State<LocalGame> {
 
   @override
   Widget build(BuildContext context) {
-    return Game(playerId, game, startGame: game.start, leaveGame: widget.onGameEnd,);
+    return Game(
+      playerId,
+      game,
+      startGame: game.start,
+      leaveGame: widget.onGameEnd,
+      startRound: startRound,
+    );
   }
 }

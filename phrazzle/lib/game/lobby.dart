@@ -6,7 +6,6 @@ import 'package:phrazzle_lib/phrazzle.dart';
 
 class Lobby extends StatefulWidget {
   final Phrazzle game;
-  final String playerId;
 
   final void Function() startGame;
   final void Function() leaveGame;
@@ -14,7 +13,6 @@ class Lobby extends StatefulWidget {
   const Lobby({
     super.key,
     required this.game,
-    required this.playerId,
     required this.startGame,
     required this.leaveGame,
   });

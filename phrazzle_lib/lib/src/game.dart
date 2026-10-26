@@ -93,7 +93,7 @@ class Game {
   String? get currentRoundId => _currentRoundId;
   set currentRoundId(String? id) {
     final round = _rounds[id];
-    if (round == null) throw ArgumentError('Tried to set invalid round $id as current');
+    if (id != null && round == null) throw ArgumentError('Tried to set invalid round $id as current');
     _currentRoundId = id;
 
     if (_sendUpdates) _updateJsonStringController?.add(jsonString);

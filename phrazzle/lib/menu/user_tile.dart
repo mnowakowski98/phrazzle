@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:phrazzle_lib/phrazzle.dart';
 
@@ -51,7 +52,21 @@ class _UserTileState extends State<UserTile> {
   Widget build(BuildContext context) {
     if (isEditingName) {
       return Row(children: [
-        Expanded(child: TextField(controller: _nameEditingController, decoration: InputDecoration(hintText: 'Display name'))),
+          Expanded(
+            child: Focus(
+              onKeyEvent: (node, event) {
+                if (event is KeyUpEvent || event.logicalKey != .enter) {
+                    return .ignored;
+                  }
+                  endEditing();
+                  return .handled;
+              },
+              child: TextField(
+                controller: _nameEditingController,
+                decoration: InputDecoration(hintText: 'Display name'),
+              ),
+            ),
+          ),
         IconButton(onPressed: endEditing, icon: Icon(Icons.check))
       ]);
     }
