@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -68,7 +67,7 @@ class _AppState extends State<App> {
   }
 
   void leaveGame() {
-    showLocalGame = false;
+    setState(() => showLocalGame = false);
   }
 
   @override
@@ -85,7 +84,7 @@ class _AppState extends State<App> {
       return Login(editUser, skipLogin);
     }
 
-    if (showLocalGame) return LocalGame(leaveGame);
+    if (showLocalGame) return LocalGame(user, leaveGame);
 
     return MainMenu(user, startLocalGame: startLocalGame,);
   }

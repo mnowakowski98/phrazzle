@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:phrazzle/game/game.dart';
-import 'package:phrazzle_lib/phrazzle.dart' show Phrazzle;
+import 'package:phrazzle_lib/phrazzle.dart' show Phrazzle, User;
 
 class LocalGame extends StatefulWidget {
-  final void Function() onGameEnd;
+  final User user;
+  final void Function() leaveGame;
 
-  const LocalGame(this.onGameEnd, {super.key});
+  const LocalGame(this.user, this.leaveGame, {super.key});
   
   @override
   State<LocalGame> createState() => _LocalGameState();
@@ -22,6 +23,14 @@ class _LocalGameState extends State<LocalGame> {
     });
   }
 
+  void enterPhrase(String phrase) => setState(() => game.addPhrase(playerId, phrase));
+
+  void endRound() {
+    setState(() {
+      game.end();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -34,9 +43,12 @@ class _LocalGameState extends State<LocalGame> {
     return Game(
       playerId,
       game,
+      {playerId: widget.user},
       startGame: game.start,
-      leaveGame: widget.onGameEnd,
+      leaveGame: widget.leaveGame,
       startRound: startRound,
+      enterPhrase: enterPhrase,
+      endRound: endRound,
     );
   }
 }
