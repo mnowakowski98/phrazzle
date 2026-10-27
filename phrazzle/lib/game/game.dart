@@ -38,7 +38,7 @@ class Game extends StatelessWidget {
 
     if (game.isStarted == false) {
       gameWidget = Lobby(
-        game: game,
+        users,
         startGame: startGame,
       );
     }

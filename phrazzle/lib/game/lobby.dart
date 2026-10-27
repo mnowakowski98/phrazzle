@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:phrazzle/player_list.dart';
+import 'package:phrazzle/menu/user_tile.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class Lobby extends StatefulWidget {
-  final Phrazzle game;
+  final Map<String, User> playerUsers;
 
   final void Function() startGame;
 
-  const Lobby({
+  const Lobby(this.playerUsers, {
     super.key,
-    required this.game,
     required this.startGame,
   });
 
@@ -22,6 +21,9 @@ class _LobbyState extends State<Lobby> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Expanded(child: ListView(children: [
+          for (final user in widget.playerUsers.values) UserTile(user)
+        ],)),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: ElevatedButton(

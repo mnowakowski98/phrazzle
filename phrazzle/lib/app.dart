@@ -71,6 +71,14 @@ class _AppState extends State<App> {
     setState(() => showLocalGame = true);
   }
 
+  void startConnectedGame() {
+
+  }
+
+  void joinConnectedGame(String gameCode) {
+    
+  }
+
   void leaveGame() {
     setState(() => showLocalGame = false);
   }
@@ -91,6 +99,12 @@ class _AppState extends State<App> {
 
     if (showLocalGame) return LocalGame(user, leaveGame);
 
-    return MainMenu(user, startLocalGame: startLocalGame, logout: logout,);
+    return MainMenu(
+      user,
+      startLocalGame: startLocalGame,
+      startConnectedGame: startConnectedGame,
+      joinConnectedGame: joinConnectedGame,
+      logout: logout,
+    );
   }
 }
