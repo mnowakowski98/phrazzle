@@ -1,20 +1,28 @@
 import 'package:phrazzle_lib/phrazzle.dart';
 
-abstract class UserStore {
-  final _usersCache = <String, User>{};
-  // TODO: Restrict these to implementors somehow
-  User? cachedUser(String id) => _usersCache[id];
-  Iterable<User> get cachedUsers => _usersCache.values;
-  User? uncache(String id) => _usersCache.remove(id);
-  User cacheUser(User user) {
-    if (user.id.isEmpty) throw ArgumentError('Attempted to cache empty user ${user.name}');
-    _usersCache[user.id] = user;
+class UserStore {
+  final _users = <String, User>{};
+
+  User createUser(User user) {
+    final newUser = User.newId(user);
+    _users[newUser.id] = newUser;
+    return newUser;
+  }
+
+  User? getUser(String id) => _users[id];
+
+  Iterable<User> get users => _users.values;
+
+  User updateUser(User user) {
+    final existing = _users[user.id];
+    if (existing == null) throw StateError('Tried to update invalid user ${user.name} (${user.id})');
+    _users[user.id] = user;
     return user;
   }
 
-  User createUser(User user);
-  User? getUser(String id);
-  Iterable<User> get users;
-  User updateUser(User user);
-  User deleteUser(User user);
+  User deleteUser(User user) {
+    final existing = _users[user.id];
+    if (existing == null) throw StateError('Tried to delete invalid user ${user.name} (${user.id})');
+    return _users.remove(user.id)!;
+  }
 }

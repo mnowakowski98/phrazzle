@@ -76,4 +76,10 @@ class JsonGameStore extends GameStore {
     file.delete();
     _gamesCache.remove(gameId);
   }
+
+  @override
+  User getUser(String gameId, String playerId) {
+    // TODO: implement getUser
+    throw UnimplementedError();
+  }
 }

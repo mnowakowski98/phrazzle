@@ -3,9 +3,11 @@ import 'dart:io';
 
 import 'package:google_cloud/google_cloud.dart';
 import 'package:google_cloud_shelf/google_cloud_shelf.dart';
+import 'package:phrazzle_central/routes/players.dart';
 import 'package:phrazzle_central/routes/users.dart';
-import 'package:phrazzle_central/stores/volatile_game_store.dart';
-import 'package:phrazzle_central/stores/volatile_user_store.dart';
+import 'package:phrazzle_central/stores/game_store.dart';
+import 'package:phrazzle_central/stores/player_store.dart';
+import 'package:phrazzle_central/stores/user_store.dart';
 
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
@@ -23,10 +25,15 @@ void main(List<String> arguments) async {
   } on MetadataServerException {
     print('Unable to determine cloud project');
   }
+  
+  final gameStore = GameStore();
+  final userStore = UserStore();
+  final playerStore = PlayerStore();
 
   final cascade = Cascade()
-    .add(Games(VolatileGameStore()).router.call)
-    .add(Users(VolatileUserStore()).router.call)
+    .add(Games(gameStore).router.call)
+    .add(Users(userStore).router.call)
+    .add(Players(playerStore, userStore).router.call)
     .add((Request req) {
       if (req.url.toString() != 'healthz') return Response.notFound(null);
       return Response.ok(jsonEncode({'status': 'healthy'}), headers: {'content-type': 'application/json'});

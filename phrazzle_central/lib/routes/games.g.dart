@@ -12,14 +12,22 @@ Router _$GamesRouter(Games service) {
   router.add('GET', r'/game/<gameId>/code', service.getGameCode);
   router.add('POST', r'/game', service.createGame);
   router.add('POST', r'/game/<gameId>/player', service.addPlayer);
-  router.add('GET', r'/game/<gameId>/<playerId>', service.joinGame);
-  router.add('DELETE', r'/game/<gameId>/<playerId>', service.removePlayer);
-  router.add('PUT', r'/game/<gameId>/<phrase>', service.startGame);
+  router.add('GET', r'/game/<gameId>/player/<playerId>', service.joinGame);
+  router.add(
+    'DELETE',
+    r'/game/<gameId>/player/<playerId>',
+    service.removePlayer,
+  );
+  router.add('POST', r'/game/<gameId>/start/<phrase>', service.startGame);
   router.add(
     'POST',
-    r'/game/phrase/<gameId>/<playerId>/<phrase>',
+    r'/game/phrase/<gameId>/player/<playerId>/phrase/<phrase>',
     service.addSubPhrase,
   );
-  router.add('PUT', r'/game/<gameId>/<playerId>/done', service.endEntry);
+  router.add(
+    'PUT',
+    r'/game/<gameId>/players/<playerId>/done',
+    service.endEntry,
+  );
   return router;
 }

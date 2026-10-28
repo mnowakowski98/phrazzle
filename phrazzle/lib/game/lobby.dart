@@ -3,7 +3,7 @@ import 'package:phrazzle/menu/user_tile.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class Lobby extends StatefulWidget {
-  final Map<String, User> playerUsers;
+  final Iterable<User> playerUsers;
 
   final void Function() startGame;
 
@@ -22,7 +22,7 @@ class _LobbyState extends State<Lobby> {
     return Column(
       children: [
         Expanded(child: ListView(children: [
-          for (final user in widget.playerUsers.values) UserTile(user)
+          for (final user in widget.playerUsers) UserTile(user)
         ],)),
         Padding(
           padding: const EdgeInsets.all(8.0),

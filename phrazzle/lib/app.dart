@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:phrazzle/device_store.dart';
 import 'package:phrazzle/env.dart';
+import 'package:phrazzle/game/connected_game.dart';
 import 'package:phrazzle/game/local_game.dart';
 import 'package:phrazzle/menu/login.dart';
 import 'package:phrazzle/menu/main_menu.dart';
@@ -22,6 +23,9 @@ class _AppState extends State<App> {
   User user = User.blank();
   var showLocalGame = false;
   var hadConnectionError = false;
+
+  String? connectedGameId;
+  String? connectedPlayerId;
 
   void skipLogin() => setState(() => widget.deviceStore.skipLogin = true);
 
@@ -71,16 +75,36 @@ class _AppState extends State<App> {
     setState(() => showLocalGame = true);
   }
 
-  void startConnectedGame() {
+  void startConnectedGame() async {
+    final createGameResponse = await http.post(Uri.parse('${Env.centralUrl}/game'));
+    final gameId = createGameResponse.body;
+    final createPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/player'));
+    final playerId = createPlayerResponse.body;
 
+    setState(() {
+      connectedGameId = gameId;
+      connectedPlayerId = playerId;
+    });
   }
 
-  void joinConnectedGame(String gameCode) {
-    
+  void joinConnectedGame(String gameCode) async {
+    final gameIdResponse = await http.get(Uri.parse('${Env.centralUrl}/game/$gameCode'));
+    final gameId = gameIdResponse.body;
+    final createPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/player'));
+    final playerId = createPlayerResponse.body;
+
+    setState(() {
+      connectedGameId = gameId;
+      connectedPlayerId = playerId;
+    });
   }
 
   void leaveGame() {
-    setState(() => showLocalGame = false);
+    setState(() {
+      showLocalGame = false;
+      connectedGameId = null;
+      connectedPlayerId = null;
+    });
   }
 
   @override
@@ -98,6 +122,11 @@ class _AppState extends State<App> {
     }
 
     if (showLocalGame) return LocalGame(user, leaveGame);
+    final connectedGameId = this.connectedGameId;
+    final connectedPlayerId = this.connectedPlayerId;
+    if (connectedGameId != null && connectedPlayerId != null) {
+      return ConnectedGame(connectedGameId, connectedPlayerId, leaveGame);
+    }
 
     return MainMenu(
       user,

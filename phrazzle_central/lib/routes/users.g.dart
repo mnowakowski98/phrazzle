@@ -8,10 +8,10 @@ part of 'users.dart';
 
 Router _$UsersRouter(Users service) {
   final router = Router();
-  router.add('POST', r'/users', service.createUser);
-  router.add('GET', r'/users/<id>', service.getUser);
-  router.add('GET', r'/users', service.getUsers);
-  router.add('PUT', r'/users', service.updateUser);
-  router.add('DELETE', r'/users/<id>', service.deleteUser);
+  router.add('POST', r'/user', service.createUser);
+  router.add('GET', r'/user/<id>', service.getUser);
+  router.add('GET', r'/user', service.getUsers);
+  router.add('PUT', r'/user', service.updateUser);
+  router.add('DELETE', r'/user/<id>', service.deleteUser);
   return router;
 }

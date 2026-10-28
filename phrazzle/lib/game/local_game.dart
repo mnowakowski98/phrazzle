@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phrazzle/game/game.dart';
 import 'package:phrazzle_lib/phrazzle.dart' show Phrazzle, User;
 
+/// State manager for games running on client devices
 class LocalGame extends StatefulWidget {
   final User user;
   final void Function() leaveGame;
