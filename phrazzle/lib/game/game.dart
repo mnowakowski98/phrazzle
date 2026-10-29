@@ -51,7 +51,7 @@ class Game extends StatelessWidget {
       if (currentRound == null) {
         gameWidget = RoundStart(startRound);
       } else {
-        gameWidget = PhraseEntry(playerId, currentRound, enterPhrase, endRound);
+        gameWidget = PhraseEntry(playerId, currentRound, users, enterPhrase, endRound);
       }
     }
     if (game.isStarted && game.isEnded) gameWidget = Scores(game.currentRound!, users);
