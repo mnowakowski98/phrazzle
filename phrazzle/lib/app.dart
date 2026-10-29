@@ -84,6 +84,9 @@ class _AppState extends State<App> {
     setState(() {
       connectedGameId = gameId;
       connectedPlayerId = playerId;
+
+      widget.deviceStore.lastGameId = connectedGameId;
+      widget.deviceStore.lastPlayerId = playerId;
     });
   }
 
@@ -96,6 +99,9 @@ class _AppState extends State<App> {
     setState(() {
       connectedGameId = gameId;
       connectedPlayerId = playerId;
+
+      widget.deviceStore.lastGameId = gameId;
+      widget.deviceStore.lastPlayerId = playerId;
     });
   }
 
@@ -104,6 +110,9 @@ class _AppState extends State<App> {
       showLocalGame = false;
       connectedGameId = null;
       connectedPlayerId = null;
+
+      widget.deviceStore.lastGameId = null;
+      widget.deviceStore.lastPlayerId = null;
     });
   }
 
@@ -111,6 +120,8 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     if (user.id.isEmpty) getUser();
+    connectedGameId = widget.deviceStore.lastGameId;
+    connectedPlayerId = widget.deviceStore.lastPlayerId;
   }
 
   @override
