@@ -56,7 +56,7 @@ class _MainMenuState extends State<MainMenu> {
                 Divider(),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Focus(child: TextField(decoration: InputDecoration(hintText: 'Enter a game code'),),),
+                  child: Focus(child: TextField(controller: _gameCodeController, decoration: InputDecoration(hintText: 'Enter a game code'),),),
                 ),
                 ElevatedButton(onPressed: gameCode.isNotEmpty ? () => widget.joinConnectedGame(gameCode) : null, child: Text('Join game')),
               ],)

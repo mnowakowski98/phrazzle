@@ -31,7 +31,7 @@ void main(List<String> arguments) async {
   final playerStore = PlayerStore();
 
   final cascade = Cascade()
-    .add(Games(gameStore).router.call)
+    .add(Games(gameStore, playerStore).router.call)
     .add(Users(userStore).router.call)
     .add(Players(playerStore, userStore).router.call)
     .add((Request req) {

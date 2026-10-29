@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:phrazzle/env.dart';
 
@@ -13,11 +11,14 @@ import 'package:phrazzle_lib/phrazzle.dart' show Phrazzle, User;
 class ConnectedGame extends StatefulWidget {
   final String gameId;
   final String playerId;
+  final User user;
+
   final void Function() leaveGame;
 
   const ConnectedGame(
     this.gameId,
     this.playerId,
+    this.user,
     this.leaveGame, {
     super.key,
   });
@@ -33,6 +34,23 @@ class _ConnectedGameState extends State<ConnectedGame> {
   final playerUsers = <String, User>{};
   var gameCode = '';
 
+  void getGameCode() async {
+    final gameCodeResponse = await http.get(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/code'));
+    setState(() => gameCode = gameCodeResponse.body);
+  }
+
+  void getUsers(Set<String> playerIds) async {
+    final newUsers = <String, User>{};
+    for (final playerId in playerIds) {
+      if (playerUsers.containsKey(playerId)) continue;
+      final userResponse = await http.get(Uri.parse('${Env.centralUrl}/player/$playerId/user'));
+      final user = User.fromJsonString(userResponse.body);
+      newUsers[playerId] = user;
+    }
+    print('Adding users ${newUsers.keys.toString()}');
+    setState(() => playerUsers.addAll(newUsers));
+  }
+
   void connect() async {
     final channel = WebSocketChannel.connect(Uri.parse('${Env.gameUrl}/game/${widget.gameId}/player/${widget.playerId}'));
     try {
@@ -42,13 +60,24 @@ class _ConnectedGameState extends State<ConnectedGame> {
       widget.leaveGame();
     }
 
-    channel.stream.listen((data) => setState(() => game = Phrazzle.fromJsonString(data)));
+    channel.stream.listen((data) => setState(() {
+      final game = Phrazzle.fromJsonString(data);
+      if (game.players.length > playerUsers.length) {
+        print('Updating users');
+        getUsers(game.players);
+        setState(() => this.game = game);
+      }
+    }));
+
+    channel.sink.add(widget.user.jsonString);
 
     channel.sink.done.whenComplete(() {
+      print('Closed connection: ${channel.closeCode} - ${channel.closeReason}');
       setState(() => this.channel = null);
       widget.leaveGame();
     });
 
+    print('Connected to ${widget.gameId} as ${widget.playerId}');
     setState(() => this.channel = channel);
   }
 
@@ -58,47 +87,51 @@ class _ConnectedGameState extends State<ConnectedGame> {
     widget.leaveGame();
   }
 
-  void getUsers() async {
-    for (final playerId in game.players) {
-      if (playerUsers.containsKey(playerId)) continue;
-      final userResponse = await http.get(Uri.parse('${Env.centralUrl}/player/$playerId/user'));
-      final user = User.fromJsonString(userResponse.body);
-      setState(() => playerUsers[playerId] = user);
-    }
+  void startGame() async {
+    await http.post(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/start'));
   }
 
-  void startGame() {
-
+  void startRound(String phrase) async {
+    final createRoundResponse = await http.post(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/round/$phrase'));
+    final roundId = createRoundResponse.body;
+    await http.put(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/round/$roundId'));
   }
 
-  void startRound(String phrase) {
-
+  void enterPhrase(String phrase) async {
+    await http.post(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/player/${widget.playerId}/phrase/$phrase'));
   }
 
-  void enterPhrase(String phrase) {
-
-  }
-
-  void endRound() {
-
+  void lockEntry() async {
+    await http.put(Uri.parse('/game/${widget.gameId}/player/${widget.playerId}/lock'));
   }
 
   @override
   void initState() {
     super.initState();
     connect();
-    getUsers();
+    getGameCode();
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Expanded(child: Game(widget.playerId, game, playerUsers, startGame: startGame, leaveGame: disconnect, startRound: startRound, enterPhrase: enterPhrase, endRound: endRound)),
-        if (game.isStarted) Column(children: [
-          Text('Game code'),
-          Text(gameCode)
-        ],)
+        Expanded(
+          child: Game(
+            widget.playerId,
+            game,
+            playerUsers,
+            startGame: startGame,
+            leaveGame: disconnect,
+            startRound: startRound,
+            enterPhrase: enterPhrase,
+            endRound: lockEntry,
+            child: game.isStarted == false ? Column(children: [
+              Text('Game code'),
+              Text(gameCode)
+            ]) : null,
+          ),
+        ),
       ],
     );
   }

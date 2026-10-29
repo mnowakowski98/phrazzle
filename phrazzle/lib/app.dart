@@ -38,12 +38,12 @@ class _AppState extends State<App> {
     User newUser;
     if (widget.deviceStore.userId == null) {
       final response = await http.post(
-        Uri.parse('${Env.centralUrl}/users'), body: User.info(user.name).jsonString
+        Uri.parse('${Env.centralUrl}/user'), body: User.info(user.name).jsonString
       );
       newUser = User.fromJsonString(response.body);
     } else {
       final response = await http.put(
-        Uri.parse('${Env.centralUrl}/users'), body: User(widget.deviceStore.userId!, user.name).jsonString
+        Uri.parse('${Env.centralUrl}/user'), body: User(widget.deviceStore.userId!, user.name).jsonString
       );
       newUser = User.fromJsonString(response.body);
     }
@@ -54,7 +54,7 @@ class _AppState extends State<App> {
   void getUser() async {
     if (widget.deviceStore.userId == null) return;
     try {
-      final response = await http.get(Uri.parse('${Env.centralUrl}/users/${widget.deviceStore.userId}'));
+      final response = await http.get(Uri.parse('${Env.centralUrl}/user/${widget.deviceStore.userId}'));
       if (response.statusCode == 404) {
         setState(() {
           widget.deviceStore.userId = null;
@@ -78,7 +78,7 @@ class _AppState extends State<App> {
   void startConnectedGame() async {
     final createGameResponse = await http.post(Uri.parse('${Env.centralUrl}/game'));
     final gameId = createGameResponse.body;
-    final createPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/player'));
+    final createPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/player/${user.id}'));
     final playerId = createPlayerResponse.body;
 
     setState(() {
@@ -90,7 +90,7 @@ class _AppState extends State<App> {
   void joinConnectedGame(String gameCode) async {
     final gameIdResponse = await http.get(Uri.parse('${Env.centralUrl}/game/$gameCode'));
     final gameId = gameIdResponse.body;
-    final createPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/player'));
+    final createPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/player/${user.id}'));
     final playerId = createPlayerResponse.body;
 
     setState(() {
@@ -125,7 +125,7 @@ class _AppState extends State<App> {
     final connectedGameId = this.connectedGameId;
     final connectedPlayerId = this.connectedPlayerId;
     if (connectedGameId != null && connectedPlayerId != null) {
-      return ConnectedGame(connectedGameId, connectedPlayerId, leaveGame);
+      return ConnectedGame(connectedGameId, connectedPlayerId, user, leaveGame);
     }
 
     return MainMenu(

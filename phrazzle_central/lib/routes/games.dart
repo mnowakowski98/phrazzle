@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:phrazzle_central/stores/game_store.dart';
+import 'package:phrazzle_central/stores/player_store.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
@@ -13,11 +14,10 @@ part 'games.g.dart';
 
 class Client {
   final WebSocketChannel channel;
-  final String deviceId;
-  final String instanceId;
+  final User user;
 
-  Client(this.channel, this.deviceId, this.instanceId);
-  factory Client.pending(WebSocketChannel channel) => Client(channel, '', '');
+  Client(this.channel, this.user);
+  factory Client.pending(WebSocketChannel channel) => Client(channel, User.blank());
 }
 
 final clients = <String, Client>{};
@@ -25,8 +25,9 @@ final clients = <String, Client>{};
 /// Service for the creation, cordination and status of games
 class Games {
   final GameStore gameStore;
+  final PlayerStore playerStore;
 
-  Games(this.gameStore);
+  Games(this.gameStore, this.playerStore);
 
   /// Get the game id from a game code
   @Route.get('/game/<gameCode>')
@@ -57,16 +58,17 @@ class Games {
   }
 
   /// Create a new player in an existing game
-  @Route.post('/game/<gameId>/player')
-  Response addPlayer(Request _, String gameId) {
+  @Route.post('/game/<gameId>/player/<userId>')
+  Response addPlayer(Request _, String gameId, String userId) {
     final game = gameStore.getGame(gameId);
     if (game == null) {
       return Response.notFound(gameId);
     }
 
     final playerId = game.addPlayer();
+    playerStore.setUserId(playerId, userId);
 
-    print('Created player $playerId in $gameId');
+    print('Created player $playerId in $gameId with $userId');
     return Response.ok(playerId);
   }
 
@@ -91,19 +93,21 @@ class Games {
     return webSocketHandler((channel, _) {
       clients[playerId] = Client.pending(channel);
 
-      // Get device and instance id from the client
       channel.stream.listen((data) {
-        final decoded = jsonDecode(data) as Map<String, dynamic>;
-        final deviceId = decoded['deviceId'];
-        final instanceId = decoded['instanceId'];
-        if (deviceId == null || instanceId == null) throw Exception('Received invalid message trying to connect $playerId');
-        clients[playerId] = Client(channel, deviceId, instanceId);
-        print('Got client ids for $playerId: $deviceId - $instanceId');
-      });
+        // TODO: Parse out different message types eventually
+        final user = User.fromJsonString(data);
+        if (user.id != playerStore.getUserId(playerId)) {
+          // TODO: Send a json close message
+          channel.sink.close(1000, 'Incorrect user');
+          return;
+        }
 
-      // Send current game state and pipe future updates
-      channel.sink.add(game.jsonString);
-      game.jsonStringStream.listen((data) => channel.sink.add(data));
+        // Send current game state and pipe future updates
+        channel.sink.add(game.jsonString);
+        game.jsonStringStream.listen((data) => channel.sink.add(data));
+
+        print('$playerId authenticated as ${user.name} (${user.id})');
+      });
 
       // Unlink active channel from player (does not delete player)
       channel.sink.done.whenComplete(() {
@@ -140,9 +144,8 @@ class Games {
   }
 
   /// Start the game
-  @Route.post('/game/<gameId>/start/<phrase>')
-  Response startGame(Request _, String gameId, String phrase) {
-    final decodedPhrase = Uri.decodeComponent(phrase);
+  @Route.post('/game/<gameId>/start')
+  Response startGame(Request _, String gameId) {
 
     final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
@@ -156,12 +159,41 @@ class Games {
       );
     }
 
-    print('Started $gameId with phrase "$decodedPhrase"');
+    print('Started $gameId');
     return Response.ok(gameId);
   }
 
+  /// Create a new round in a game
+  @Route.post('/game/<gameId>/round/<phrase>')
+  Response createRound(Request _, String gameId, String phrase) {
+    phrase = Uri.decodeComponent(phrase);
+
+    final game = gameStore.getGame(gameId);
+    if (game == null) return Response.notFound(gameId);
+
+    final round = game.createRound(phrase);
+
+    print('Created round ${round.id} in $gameId');
+    return Response.ok(round.id);
+  }
+
+  /// Set a round in a game as current
+  @Route.put('/game/<gameId>/round/<roundId>')
+  Response setCurrentRound(Request _, String gameId, String roundId) {
+    final game = gameStore.getGame(gameId);
+    if (game == null) return Response.notFound(gameId);
+
+    final round = game.rounds[roundId];
+    if (round == null) return Response.notFound(roundId);
+
+    game.currentRoundId = roundId;
+
+    print('Set round $roundId as current for $gameId');
+    return Response.ok(roundId);
+  }
+
   /// Add player phrase
-  @Route.post('/game/phrase/<gameId>/player/<playerId>/phrase/<phrase>')
+  @Route.post('/game/<gameId>/player/<playerId>/phrase/<phrase>')
   Response addSubPhrase(Request _, String gameId, String playerId, String phrase) {
     phrase = Uri.decodeComponent(phrase);
 
@@ -177,12 +209,13 @@ class Games {
     if (game.players.contains(playerId) == false) return Response.notFound(playerId);
 
     game.addPhrase(playerId, phrase);
+    print('Added $phrase to player $playerId');
     return Response.ok(phrase);
   }
 
   /// Prevent player from entering more phrases
   /// End the game if all players are done
-  @Route.put('/game/<gameId>/players/<playerId>/done')
+  @Route.put('/game/<gameId>/player/<playerId>/lock')
   Response endEntry(Request _, String gameId, String playerId) {
     final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
@@ -199,8 +232,12 @@ class Games {
 
     currentRound.phraseGroups[playerId]!.lock();
 
-    // TODO: End game if all players are locked
+    if (currentRound.phraseGroups.values.every((phraseGroup) => phraseGroup.isLocked)) {
+      game.end();
+      print ('Ended game cause a round ended lmao');
+    }
 
+    print('Locked $playerId in $gameId');
     return Response.ok(playerId);
   }
 

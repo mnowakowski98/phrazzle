@@ -4,7 +4,6 @@ import 'package:uuid/uuid.dart';
 /// Game store that forgets when the instance stops existing
 class GameStore {
   final _games = <String, Game>{};
-  final _playerUsers = <String, String>{};
 
   GameStore();
 

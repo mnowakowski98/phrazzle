@@ -18,6 +18,8 @@ class Game extends StatelessWidget {
   final void Function(String phrase) enterPhrase;
   final void Function() endRound;
 
+  final Widget? child;
+
   const Game(
     this.playerId,
     this.game,
@@ -27,12 +29,14 @@ class Game extends StatelessWidget {
     required this.startRound,
     required this.enterPhrase,
     required this.endRound,
+    this.child,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     final currentRound = game.currentRound;
+    final child = this.child;
 
     Widget gameWidget = Placeholder();
 
@@ -55,6 +59,7 @@ class Game extends StatelessWidget {
     return Column(children: [
       Expanded(child: gameWidget),
       Divider(),
+      if (child != null) Column(children: [child, Divider()],),
       TextButton(onPressed: leaveGame, child: Text('Leave', style: TextStyle(color: Colors.red),))
     ],);
   }
