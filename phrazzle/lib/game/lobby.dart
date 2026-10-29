@@ -21,15 +21,15 @@ class _LobbyState extends State<Lobby> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Text('Players', style: TextStyle(color: Colors.teal, fontSize: 24),),
+        Divider(),
         Expanded(child: ListView(children: [
           for (final user in widget.playerUsers) UserTile(user)
         ],)),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ElevatedButton(
-            onPressed: widget.startGame,
-            child: Text('Start'),
-          ),
+        Divider(),
+        ElevatedButton(
+          onPressed: widget.startGame,
+          child: Text('Start'),
         ),
 
       ],

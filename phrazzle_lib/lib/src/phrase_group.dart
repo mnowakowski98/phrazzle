@@ -5,9 +5,10 @@ import 'package:phrazzle_lib/phrazzle.dart';
 
 part 'phrase_group.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(constructor: 'existing')
 class PhraseGroup {
-  final String initialPhrase;
+  final String _initialPhrase;
+  String get initialPhrase => _initialPhrase;
 
   var _isLocked = false;
   bool get isLocked => _isLocked;
@@ -24,7 +25,8 @@ class PhraseGroup {
 
   bool get isValidChain => PhraseValidator.getChainValidationInfo(initialPhrase, _phrases).every((info) => info.isValid);
 
-  PhraseGroup._internal(this.initialPhrase, this._phrases, this._isLocked);
+  PhraseGroup._internal(this._initialPhrase, this._phrases, this._isLocked);
+  factory PhraseGroup.existing(String initialPhrase, List<String> phrases, bool isLocked) => PhraseGroup._internal(initialPhrase, phrases, isLocked);
   factory PhraseGroup(String initialPhrase) => PhraseGroup._internal(initialPhrase, [], false);
 
   Map<String, dynamic> toJson() => _$PhraseGroupToJson(this);

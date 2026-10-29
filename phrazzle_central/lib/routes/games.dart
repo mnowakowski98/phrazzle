@@ -146,15 +146,14 @@ class Games {
   /// Start the game
   @Route.post('/game/<gameId>/start')
   Response startGame(Request _, String gameId) {
-
     final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
 
     final started = game.start();
     if (started == false) {
-      print('$gameId already started');
+      print('$gameId not started: game has no players');
       return Response.badRequest(
-        body: jsonEncode({'gameId': gameId, 'message': 'Game already started'}),
+        body: jsonEncode({'gameId': gameId, 'message': 'Game has no players'}),
         headers: {'content-type': 'application/json'},
       );
     }
@@ -208,7 +207,7 @@ class Games {
 
     if (game.players.contains(playerId) == false) return Response.notFound(playerId);
 
-    game.addPhrase(playerId, phrase);
+    phrase = game.addPhrase(playerId, phrase);
     print('Added $phrase to player $playerId');
     return Response.ok(phrase);
   }
@@ -230,7 +229,7 @@ class Games {
       );
     }
 
-    currentRound.phraseGroups[playerId]!.lock();
+    game.lockPlayer(playerId);
 
     if (currentRound.phraseGroups.values.every((phraseGroup) => phraseGroup.isLocked)) {
       game.end();

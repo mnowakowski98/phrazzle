@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:phrazzle/menu/user_tile.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
@@ -55,9 +56,25 @@ class _MainMenuState extends State<MainMenu> {
                 Text('or'),
                 Divider(),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Focus(child: TextField(controller: _gameCodeController, decoration: InputDecoration(hintText: 'Enter a game code'),),),
-                ),
+                    padding: const EdgeInsets.all(8.0),
+                    child: Focus(
+                      child: TextField(
+                        controller: _gameCodeController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter a game code',
+                        ),
+                        inputFormatters: [
+                          TextInputFormatter.withFunction((oldValue, newValue) {
+                            if (newValue.text.length > 5) return oldValue;
+                            return newValue.copyWith(
+                              text: newValue.text.toUpperCase(),
+                            );
+                          }),
+                        ],
+                        style: TextStyle(color: Colors.cyan),
+                      ),
+                    ),
+                  ),
                 ElevatedButton(onPressed: gameCode.isNotEmpty ? () => widget.joinConnectedGame(gameCode) : null, child: Text('Join game')),
               ],)
             ],

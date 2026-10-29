@@ -65,8 +65,8 @@ class _ConnectedGameState extends State<ConnectedGame> {
       if (game.players.length > playerUsers.length) {
         print('Updating users');
         getUsers(game.players);
-        setState(() => this.game = game);
       }
+      setState(() => this.game = game);
     }));
 
     channel.sink.add(widget.user.jsonString);
@@ -102,7 +102,7 @@ class _ConnectedGameState extends State<ConnectedGame> {
   }
 
   void lockEntry() async {
-    await http.put(Uri.parse('/game/${widget.gameId}/player/${widget.playerId}/lock'));
+    await http.put(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/player/${widget.playerId}/lock'));
   }
 
   @override
@@ -127,8 +127,8 @@ class _ConnectedGameState extends State<ConnectedGame> {
             enterPhrase: enterPhrase,
             endRound: lockEntry,
             child: game.isStarted == false ? Column(children: [
-              Text('Game code'),
-              Text(gameCode)
+              Text('Game code', style: TextStyle(color: Colors.teal, fontSize: 20),),
+              Text(gameCode.toUpperCase(), style: TextStyle(color: Colors.cyan, fontSize: 24),)
             ]) : null,
           ),
         ),

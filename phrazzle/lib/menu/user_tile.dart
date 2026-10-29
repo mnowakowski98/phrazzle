@@ -71,6 +71,6 @@ class _UserTileState extends State<UserTile> {
       ]);
     }
 
-    return Text(widget.user.name, style: TextStyle(color: Colors.teal, fontSize: 20),);
+    return Text(widget.user.name, style: TextStyle(color: Colors.cyan, fontSize: 20),);
   }
 }

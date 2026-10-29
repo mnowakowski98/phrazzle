@@ -109,17 +109,33 @@ class Game {
 
     final round = currentRound;
     if (round == null) throw StateError('Game has no current round');
-    return round.addPhrase(playerId, phrase);
+
+    phrase = round.addPhrase(playerId, phrase);
+    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
+    return phrase;
+  }
+
+  String lockPlayer(String playerId) {
+    if (isStarted == false) throw StateError('Game not started yet');
+    if (isEnded == true) throw StateError('Game has ended');
+
+    final round = currentRound;
+    if (round == null) throw StateError('Game has no current round');
+
+    round.phraseGroups[playerId]?.lock();
+    if (_sendUpdates) _updateJsonStringController?.add(jsonString);
+    return playerId;
   }
 
   Game();
-  factory Game.existing(Set<String> players, Map<String, Round> rounds, bool isStarted, bool isEnded) {
+  factory Game.existing(Set<String> players, Map<String, Round> rounds, String? currentRoundId, bool isStarted, bool isEnded) {
     final game = Game();
     game._players.addAll(players);
     game._rounds.addAll(rounds);
     if (isStarted == false && isEnded == true) throw ArgumentError('Game can not be ended if it is not started');
     game._isStarted = isStarted;
     game._isEnded = isEnded;
+    game._currentRoundId = currentRoundId;
     return game;
   }
 
