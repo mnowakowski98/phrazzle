@@ -24,7 +24,7 @@ class _LocalGameState extends State<LocalGame> {
     });
   }
 
-  void enterPhrase(String phrase) => setState(() => game.currentRound?.addPhrase(playerId, phrase));
+  void enterPhrase(String phrase) => setState(() => game.addPhrase(playerId, phrase));
 
   void endRound() {
     setState(() {

@@ -16,6 +16,9 @@ class GameInfo {
   final Map<String, RoundInfo> rounds;
   final String? currentRoundId;
 
+  @JsonKey(includeToJson: false)
+  RoundInfo? get currentRound => rounds[currentRoundId];
+
   GameInfo({
     required this.isStarted,
     required this.isEnded,
@@ -126,7 +129,27 @@ class Game {
   }
 
   @JsonKey(includeToJson: false)
-  Round? get currentRound => _rounds[_currentRoundId];
+  Round? get _currentRound => _rounds[_currentRoundId];
+
+  String addPhrase(String playerId, String phrase) {
+    final round = _currentRound;
+    if (round == null) throw StateError('No current round');
+
+    final addedPhrase = round.addPhrase(playerId, phrase);
+    if (_sendUpdates) _updateController?.add(info);
+    return addedPhrase;
+  }
+
+  void lockPlayer(String playerId) {
+    final round = _currentRound;
+    if (round == null) throw StateError('No current round');
+
+    final group = round.getGroup(playerId);
+    if (group == null) throw ArgumentError('Tried to lock invalid player $playerId');
+    group.lock();
+
+    if (_sendUpdates) _updateController?.add(info);
+  }
 
   Game();
   factory Game.fromInfo(GameInfo info) {

@@ -211,8 +211,8 @@ class Games {
       );
     }
 
-    final round = game.currentRound;
-    if (round == null) {
+    final roundId = game.info.currentRoundId;
+    if (roundId == null) {
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game not started yet'}),
         headers: {'content-type': 'application/json'}
@@ -221,7 +221,7 @@ class Games {
 
     if (game.info.players.contains(playerId) == false) return Response.notFound(playerId);
 
-    phrase = round.addPhrase(playerId, phrase);
+    phrase = game.addPhrase(playerId, phrase);
     print('Added $phrase to player $playerId');
     return Response.ok(phrase);
   }
@@ -235,17 +235,17 @@ class Games {
 
     if (game.info.players.contains(playerId) == false) return Response.notFound(playerId);
 
-    final currentRound = game.currentRound;
+    final currentRound = game.info.currentRound;
     if (currentRound == null) {
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game has no current round'}),
         headers: {'content-type': 'application/json'}
       );
     }
+    
+    game.lockPlayer(playerId);
 
-    currentRound.getGroup(playerId)!.lock();
-
-    if (currentRound.info.phraseGroups.values.every((phraseGroup) => phraseGroup.isLocked)) {
+    if (game.info.currentRound!.phraseGroups.values.every((phraseGroup) => phraseGroup.isLocked)) {
       game.end();
       print ('Ended game cause a round ended lmao');
     }
