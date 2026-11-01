@@ -50,7 +50,13 @@ class Games {
 
   /// Create a new game
   @Route.post('/game')
-  Response createGame(Request _) {
+  Future<Response> createGame(Request request) async {
+    final bodyString = await request.readAsString();
+    if (bodyString.isNotEmpty) {
+      // TODO: Create game with associated options
+      final gameConfig = GameConfig.fromJsonString(bodyString);
+    }
+
     final gameId = gameStore.createGame(Game());
 
     print('Created game $gameId');
@@ -80,7 +86,7 @@ class Games {
       return Response.notFound(gameId);
     }
 
-    if (game.players.contains(playerId) == false) return Response.notFound(playerId);
+    if (game.info.players.contains(playerId) == false) return Response.notFound(playerId);
     if (clients[playerId] != null) {
       print('$playerId already connected');
       return Response.badRequest(
@@ -103,8 +109,8 @@ class Games {
         }
 
         // Send current game state and pipe future updates
-        channel.sink.add(game.jsonString);
-        game.jsonStringStream.listen((data) => channel.sink.add(data));
+        channel.sink.add(game.info.jsonString);
+        game.updateStream.listen((_) => channel.sink.add(game.info.jsonString));
 
         print('$playerId authenticated as ${user.name} (${user.id})');
       });
@@ -125,7 +131,7 @@ class Games {
     final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
 
-    if (game.players.contains(playerId) == false) return Response.notFound(playerId);
+    if (game.info.players.contains(playerId) == false) return Response.notFound(playerId);
 
     // Close channel if it's still active
     final client = clients[playerId];
@@ -134,7 +140,7 @@ class Games {
 
     game.removePlayer(playerId);
 
-    if (game.players.isEmpty) {
+    if (game.info.players.isEmpty) {
       gameStore.removeGame(gameId);
       print('Removed $gameId due to lack of players');
     }
@@ -182,7 +188,7 @@ class Games {
     final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
 
-    final round = game.rounds[roundId];
+    final round = game.info.rounds[roundId];
     if (round == null) return Response.notFound(roundId);
 
     game.currentRoundId = roundId;
@@ -198,16 +204,24 @@ class Games {
 
     final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
-    if (game.isStarted == false) {
+    if (game.info.isStarted == false) {
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game not started yet'}),
         headers: {'content-type': 'application/json'}
       );
     }
 
-    if (game.players.contains(playerId) == false) return Response.notFound(playerId);
+    final round = game.currentRound;
+    if (round == null) {
+      return Response.badRequest(
+        body: jsonEncode({'gameId': gameId, 'message': 'Game not started yet'}),
+        headers: {'content-type': 'application/json'}
+      );
+    }
 
-    phrase = game.addPhrase(playerId, phrase);
+    if (game.info.players.contains(playerId) == false) return Response.notFound(playerId);
+
+    phrase = round.addPhrase(playerId, phrase);
     print('Added $phrase to player $playerId');
     return Response.ok(phrase);
   }
@@ -219,7 +233,7 @@ class Games {
     final game = gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
 
-    if (game.players.contains(playerId) == false) return Response.notFound(playerId);
+    if (game.info.players.contains(playerId) == false) return Response.notFound(playerId);
 
     final currentRound = game.currentRound;
     if (currentRound == null) {
@@ -229,9 +243,9 @@ class Games {
       );
     }
 
-    game.lockPlayer(playerId);
+    currentRound.getGroup(playerId)!.lock();
 
-    if (currentRound.phraseGroups.values.every((phraseGroup) => phraseGroup.isLocked)) {
+    if (currentRound.info.phraseGroups.values.every((phraseGroup) => phraseGroup.isLocked)) {
       game.end();
       print ('Ended game cause a round ended lmao');
     }

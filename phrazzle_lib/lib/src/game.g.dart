@@ -6,17 +6,17 @@ part of 'game.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Game _$GameFromJson(Map<String, dynamic> json) => Game.existing(
-  (json['players'] as List<dynamic>).map((e) => e as String).toSet(),
-  (json['rounds'] as Map<String, dynamic>).map(
-    (k, e) => MapEntry(k, Round.fromJson(e as Map<String, dynamic>)),
+GameInfo _$GameInfoFromJson(Map<String, dynamic> json) => GameInfo(
+  isStarted: json['isStarted'] as bool,
+  isEnded: json['isEnded'] as bool,
+  players: (json['players'] as List<dynamic>).map((e) => e as String).toSet(),
+  rounds: (json['rounds'] as Map<String, dynamic>).map(
+    (k, e) => MapEntry(k, RoundInfo.fromJson(e as Map<String, dynamic>)),
   ),
-  json['currentRoundId'] as String?,
-  json['isStarted'] as bool,
-  json['isEnded'] as bool,
+  currentRoundId: json['currentRoundId'] as String?,
 );
 
-Map<String, dynamic> _$GameToJson(Game instance) => <String, dynamic>{
+Map<String, dynamic> _$GameInfoToJson(GameInfo instance) => <String, dynamic>{
   'isStarted': instance.isStarted,
   'isEnded': instance.isEnded,
   'players': instance.players.toList(),

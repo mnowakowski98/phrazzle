@@ -15,7 +15,7 @@ class LocalGame extends StatefulWidget {
 
 class _LocalGameState extends State<LocalGame> {
   final Phrazzle game = Phrazzle();
-  String get playerId => game.players.first;
+  String get playerId => game.info.players.first;
 
   void startRound(String phrase) {
     setState(() {
@@ -24,7 +24,7 @@ class _LocalGameState extends State<LocalGame> {
     });
   }
 
-  void enterPhrase(String phrase) => setState(() => game.addPhrase(playerId, phrase));
+  void enterPhrase(String phrase) => setState(() => game.currentRound?.addPhrase(playerId, phrase));
 
   void endRound() {
     setState(() {
@@ -43,7 +43,7 @@ class _LocalGameState extends State<LocalGame> {
   Widget build(BuildContext context) {
     return Game(
       playerId,
-      game,
+      game.info,
       {playerId: widget.user},
       startGame: game.start,
       leaveGame: widget.leaveGame,

@@ -38,7 +38,7 @@ void main(List<String> arguments) {
   game.start();
 
   // Player turn loop
-  for (final playerId in game.players) {
+  for (final playerId in game.info.players) {
     var phraseIndex = 1;
 
     // Get player phrase entries
@@ -47,16 +47,16 @@ void main(List<String> arguments) {
       print('Entry: $phraseIndex');
       input = stdin.readLineSync();
       if (input!.isNotEmpty) {
-        game.addPhrase(playerId, input);
+        round.addPhrase(playerId, input);
         phraseIndex++;
       }
     } while (input.isNotEmpty);
 
-    final phraseGroup = round.phraseGroups[playerId]!;
-    if (phraseGroup.isValidChain) {
-      print('Score: ${round.scores[playerId]}');
-    } else {
-      print('Invalid phrase in chain');
-    }
+    // final phraseGroup = round.phraseGroups[playerId]!;
+    // if (phraseGroup.isValidChain) {
+    //   print('Score: ${round.scores[playerId]}');
+    // } else {
+    //   print('Invalid phrase in chain');
+    // }
   }
 }

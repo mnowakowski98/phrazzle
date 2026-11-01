@@ -4,11 +4,11 @@ import 'package:phrazzle/game/phrase_entry.dart';
 import 'package:phrazzle/game/round_start.dart';
 import 'package:phrazzle/game/scores.dart';
 
-import 'package:phrazzle_lib/phrazzle.dart' show Phrazzle, User;
+import 'package:phrazzle_lib/phrazzle.dart' show GameInfo, User;
 
 class Game extends StatelessWidget {
   final String playerId;
-  final Phrazzle game;
+  final GameInfo game;
   final Map<String, User> users;
 
   final void Function() startGame;
@@ -35,7 +35,7 @@ class Game extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentRound = game.currentRound;
+    final currentRound = game.rounds[game.currentRoundId];
     final child = this.child;
 
     Widget gameWidget = Placeholder();
@@ -54,7 +54,8 @@ class Game extends StatelessWidget {
         gameWidget = PhraseEntry(playerId, currentRound, users, enterPhrase, endRound);
       }
     }
-    if (game.isStarted && game.isEnded) gameWidget = Scores(game.currentRound!, users);
+
+    if (game.isStarted && game.isEnded && currentRound != null) gameWidget = Scores(currentRound, users);
 
     return Column(children: [
       Expanded(child: gameWidget),

@@ -6,16 +6,16 @@ part of 'phrase_group.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-PhraseGroup _$PhraseGroupFromJson(Map<String, dynamic> json) =>
-    PhraseGroup.existing(
-      json['initialPhrase'] as String,
-      (json['phrases'] as List<dynamic>).map((e) => e as String).toList(),
-      json['isLocked'] as bool,
+PhraseGroupInfo _$PhraseGroupInfoFromJson(Map<String, dynamic> json) =>
+    PhraseGroupInfo(
+      initialPhrase: json['initialPhrase'] as String,
+      phrases: (json['phrases'] as List<dynamic>).map((e) => e as String),
+      isLocked: json['isLocked'] as bool,
     );
 
-Map<String, dynamic> _$PhraseGroupToJson(PhraseGroup instance) =>
+Map<String, dynamic> _$PhraseGroupInfoToJson(PhraseGroupInfo instance) =>
     <String, dynamic>{
       'initialPhrase': instance.initialPhrase,
-      'isLocked': instance.isLocked,
       'phrases': instance.phrases.toList(),
+      'isLocked': instance.isLocked,
     };

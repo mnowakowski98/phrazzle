@@ -5,13 +5,13 @@ void main() {
   group('Game not started', () {
     test('Game started returns false', () {
       final game = Phrazzle();
-      expect(game.isStarted, false);
+      expect(game.info.isStarted, false);
     });
 
     test('Can add a player', () {
       final game = Phrazzle();
       final id = game.addPlayer();
-      expect(true, game.players.contains(id));
+      expect(true, game.info.players.contains(id));
     });
 
     test('Can remove a player', () {
@@ -19,7 +19,7 @@ void main() {
       final id = game.addPlayer();
 
       game.removePlayer(id);
-      expect(false, game.players.contains(id));
+      expect(false, game.info.players.contains(id));
     });
 
     test('Starts if at least one player is added', () {
@@ -44,7 +44,7 @@ void main() {
       final game = Phrazzle();
       game.addPlayer();
       game.start();
-      expect(game.isStarted, true);
+      expect(game.info.isStarted, true);
     });
 
     test('Throws StateError when adding players', () {

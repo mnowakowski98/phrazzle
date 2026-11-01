@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class Scores extends StatelessWidget {
-  final Round round;
+  final RoundInfo round;
   final Map<String, User> users;
 
   const Scores(this.round, this.users, {super.key});

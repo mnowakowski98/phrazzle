@@ -17,7 +17,7 @@ class DeviceStorage {
     }
   }
 
-  static const String lastGameIdKey = 'LAST_Game_ID';
+  static const String lastGameIdKey = 'LAST_GAME_ID';
   String? get lastGameId => _preferences.getString(lastGameIdKey);
   set lastGameId(String? value) {
     if (value == null) {

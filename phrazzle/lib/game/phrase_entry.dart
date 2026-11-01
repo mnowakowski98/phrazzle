@@ -4,7 +4,7 @@ import 'package:phrazzle_lib/phrazzle.dart';
 
 class PhraseEntry extends StatefulWidget {
   final String playerId;
-  final Round round;
+  final RoundInfo round;
 
   final Map<String, User> playerUsers;
 

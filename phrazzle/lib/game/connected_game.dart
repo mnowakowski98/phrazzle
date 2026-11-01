@@ -5,7 +5,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:phrazzle/game/game.dart';
-import 'package:phrazzle_lib/phrazzle.dart' show Phrazzle, User;
+import 'package:phrazzle_lib/phrazzle.dart' show GameInfo, Phrazzle, User;
 
 /// State manager for games that connect to the central app
 class ConnectedGame extends StatefulWidget {
@@ -61,10 +61,10 @@ class _ConnectedGameState extends State<ConnectedGame> {
     }
 
     channel.stream.listen((data) => setState(() {
-      final game = Phrazzle.fromJsonString(data);
-      if (game.players.length > playerUsers.length) {
+      final game = Phrazzle.fromInfo(GameInfo.fromJsonString(data));
+      if (game.info.players.length > playerUsers.length) {
         print('Updating users');
-        getUsers(game.players);
+        getUsers(game.info.players);
       }
       setState(() => this.game = game);
     }));
@@ -119,14 +119,14 @@ class _ConnectedGameState extends State<ConnectedGame> {
         Expanded(
           child: Game(
             widget.playerId,
-            game,
+            game.info,
             playerUsers,
             startGame: startGame,
             leaveGame: disconnect,
             startRound: startRound,
             enterPhrase: enterPhrase,
             endRound: lockEntry,
-            child: game.isStarted == false ? Column(children: [
+            child: game.info.isStarted == false ? Column(children: [
               Text('Game code', style: TextStyle(color: Colors.teal, fontSize: 20),),
               Text(gameCode.toUpperCase(), style: TextStyle(color: Colors.cyan, fontSize: 24),)
             ]) : null,

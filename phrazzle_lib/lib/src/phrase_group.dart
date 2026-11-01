@@ -1,38 +1,49 @@
 import 'dart:convert';
 
 import 'package:json_annotation/json_annotation.dart';
-import 'package:phrazzle_lib/phrazzle.dart';
 
 part 'phrase_group.g.dart';
 
-@JsonSerializable(constructor: 'existing')
+@JsonSerializable()
+class PhraseGroupInfo {
+  final String initialPhrase;
+  final Iterable<String> phrases;
+  final bool isLocked;
+
+  PhraseGroupInfo({
+    required this.initialPhrase,
+    required this.phrases,
+    required this.isLocked,
+  });
+
+  Map<String, dynamic> toJson() => _$PhraseGroupInfoToJson(this);
+  factory PhraseGroupInfo.fromJson(Map<String, dynamic> json) => _$PhraseGroupInfoFromJson(json);
+
+  @JsonKey(includeToJson: false)
+  String get jsonString => jsonEncode(_$PhraseGroupInfoToJson(this));
+  factory PhraseGroupInfo.fromJsonString(String jsonString) => PhraseGroupInfo.fromJson(jsonDecode(jsonString));
+}
+
 class PhraseGroup {
+  PhraseGroupInfo get info => PhraseGroupInfo(initialPhrase: _initialPhrase, phrases: _phrases, isLocked: _isLocked);
+
   final String _initialPhrase;
-  String get initialPhrase => _initialPhrase;
+  final List<String> _phrases;
 
   var _isLocked = false;
-  bool get isLocked => _isLocked;
   void lock() => _isLocked = true;
 
-  final List<String> _phrases;
-  Iterable<String> get phrases => List.unmodifiable(_phrases);
-
   String addPhrase(String phrase) {
-    if (isLocked) throw StateError('Phrase group is locked');
+    if (_isLocked) throw StateError('Phrase group is locked');
     _phrases.add(phrase);
     return phrase;
   }
 
-  bool get isValidChain => PhraseValidator.getChainValidationInfo(initialPhrase, _phrases).every((info) => info.isValid);
-
-  PhraseGroup._internal(this._initialPhrase, this._phrases, this._isLocked);
-  factory PhraseGroup.existing(String initialPhrase, List<String> phrases, bool isLocked) => PhraseGroup._internal(initialPhrase, phrases, isLocked);
-  factory PhraseGroup(String initialPhrase) => PhraseGroup._internal(initialPhrase, [], false);
-
-  Map<String, dynamic> toJson() => _$PhraseGroupToJson(this);
-  factory PhraseGroup.fromJson(Map<String, dynamic> json) => _$PhraseGroupFromJson(json);
-
-  @JsonKey(includeToJson: false)
-  String get jsonString => jsonEncode(_$PhraseGroupToJson(this));
-  factory PhraseGroup.fromJsonString(String jsonString) => PhraseGroup.fromJson(jsonDecode(jsonString));
+  PhraseGroup(String initialPhrase) : _initialPhrase = initialPhrase, _phrases = [];
+  factory PhraseGroup.fromInfo(PhraseGroupInfo info) {
+    final group = PhraseGroup(info.initialPhrase);
+    group._phrases.addAll(info.phrases);
+    group._isLocked = info.isLocked;
+    return group;
+  }
 }

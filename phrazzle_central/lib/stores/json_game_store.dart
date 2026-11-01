@@ -30,9 +30,9 @@ class JsonGameStore extends GameStore {
   final _gamesCache = <String, Game>{};
   void _cacheGame(String gameId, Game game, File file) {
     _gamesCache[gameId] = game;
-    game.jsonStringStream.listen((data) {
+    game.updateStream.listen((_) {
       if (file.existsSync() == false) throw ArgumentError('Tried to write $gameId to invalid file');
-      file.writeAsStringSync(data);
+      file.writeAsStringSync(game.info.jsonString);
     });
   }
 
@@ -44,7 +44,7 @@ class JsonGameStore extends GameStore {
     if (file.existsSync()) throw StateError('Game $gameId already exists');
 
     file.createSync();
-    file.writeAsStringSync(game.jsonString);
+    file.writeAsStringSync(game.info.jsonString);
     _cacheGame(gameId, game, file);
 
     print('Wrote game file $gameId.json');
@@ -62,7 +62,7 @@ class JsonGameStore extends GameStore {
     final fileText = file.readAsStringSync();
     final json = jsonDecode(fileText);
 
-    final game = Game.fromJsonString(json);
+    final game = Game.fromInfo(GameInfo.fromJsonString(json));
     _cacheGame(gameId, game, file);
 
     print('Cached game $gameId');
