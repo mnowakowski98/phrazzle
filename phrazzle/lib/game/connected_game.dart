@@ -113,6 +113,12 @@ class _ConnectedGameState extends State<ConnectedGame> {
   }
 
   @override
+  void dispose() {
+    channel?.sink.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [

@@ -81,7 +81,7 @@ class _MainMenuState extends State<MainMenu> {
           ),
           Expanded(child: Center(child: ElevatedButton(onPressed: widget.startLocalGame, child: Text('Single player')),)),
           Divider(),
-          TextButton(onPressed: widget.logout, child: Text(user.id.isNotEmpty ? 'Logout' : 'Login'),)
+          OutlinedButton(onPressed: widget.logout, child: Text(user.id.isNotEmpty ? 'Logout' : 'Login'),)
         ],
       );
   }

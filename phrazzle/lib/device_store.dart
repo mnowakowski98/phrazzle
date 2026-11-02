@@ -7,14 +7,23 @@ class DeviceStorage {
   final String deviceId;
   final String instanceId;
 
-  static const String userIdKey = 'USER_ID';
-  String? get userId => _preferences.getString(userIdKey);
+  static const String lastUserIdKey = 'LAST_USER_ID';
+  String? get userId => _preferences.getString(lastUserIdKey);
   set userId(String? value) {
     if (value == null) {
-      _preferences.remove(userIdKey);
+      _preferences.remove(lastUserIdKey);
     } else {
-      _preferences.setString(userIdKey, value);
+      _preferences.setString(lastUserIdKey, value);
     }
+  }
+
+  static const String usersKey = 'USERS';
+  Iterable<String> get userIds => _preferences.getStringList('USERS') ?? [];
+  void addUser(String id) {
+    final users = userIds.toList();
+    if (users.contains(id)) throw ArgumentError('User $id already exists');
+    users.add(id);
+    _preferences.setStringList(usersKey, users);
   }
 
   static const String lastGameIdKey = 'LAST_GAME_ID';
@@ -36,9 +45,6 @@ class DeviceStorage {
       _preferences.setString(lastPlayerIdKey, value);
     }
   }
-
-  bool get skipLogin => _preferences.getBool('SKIP_LOGIN') ?? false;
-  set skipLogin(bool value) => _preferences.setBool('SKIP_LOGIN', value);
 
   DeviceStorage._internal(this._preferences, this.deviceId, this.instanceId);
 

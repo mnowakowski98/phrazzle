@@ -15,11 +15,14 @@ class User {
   final String _name;
   String get name => _name;
 
-  User._internal(this._id, this._name);
-  factory User(String id, String name) => User._internal(id, name);
-  factory User.blank() => User._internal('', '');
-  factory User.newId(User user) => User._internal(Uuid().v4(), user._name);
-  factory User.info(String name) => User._internal('', name);
+  bool get isInfo => _id.isEmpty;
+  bool get isAnonymous => _id == 'anonymous';
+
+  User(String id, String name) : _id = id, _name = name;
+  User.blank() : _id = '', _name = '';
+  User.anonymous() : _id = 'anonymous', _name = '';
+  User.info(String name) : _id = '', _name = name;
+  User.newId(User user) : _id = Uuid().v4(), _name = user._name;
 
   Map<String, dynamic> toJson() => _$UserToJson(this);
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
