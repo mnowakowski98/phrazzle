@@ -1,3 +1,4 @@
+import 'package:phrazzle_lib/phrazzle.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -8,8 +9,8 @@ class DeviceStorage {
   final String instanceId;
 
   static const String lastUserIdKey = 'LAST_USER_ID';
-  String? get userId => _preferences.getString(lastUserIdKey);
-  set userId(String? value) {
+  String? get lastUserId => _preferences.getString(lastUserIdKey);
+  set lastUserId(String? value) {
     if (value == null) {
       _preferences.remove(lastUserIdKey);
     } else {
@@ -18,12 +19,29 @@ class DeviceStorage {
   }
 
   static const String usersKey = 'USERS';
-  Iterable<String> get userIds => _preferences.getStringList('USERS') ?? [];
-  void addUser(String id) {
-    final users = userIds.toList();
-    if (users.contains(id)) throw ArgumentError('User $id already exists');
-    users.add(id);
-    _preferences.setStringList(usersKey, users);
+  Iterable<User> get users => _preferences.getStringList('USERS')?.reversed.map((userString) => User.fromJsonString(userString)) ?? [];
+  void storeUser(User user) {
+    if (user.isUser == false) return;
+
+    final users = this.users.toList();
+    final existingUserIndex = users.indexWhere((storedUser) => storedUser.id == user.id);
+    if (existingUserIndex >= 0) {
+      users.removeAt(existingUserIndex);
+      users.add(user);
+    } else {
+      users.add(user);
+    }
+
+    _preferences.setStringList(usersKey, users.map((user) => user.jsonString).toList());
+  }
+
+  User? removeUser(String userId) {
+    final users = this.users.toList();
+    final existingUser = users.singleWhere((storedUser) => storedUser.id == userId, orElse: () => User.blank());
+    if (existingUser.id.isEmpty) return null;
+    users.remove(existingUser);
+    _preferences.setStringList(usersKey, users.map((user) => user.jsonString).toList());
+    return existingUser;
   }
 
   static const String lastGameIdKey = 'LAST_GAME_ID';

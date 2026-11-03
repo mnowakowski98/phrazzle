@@ -32,33 +32,56 @@ class _AppState extends State<App> {
     }
   }
 
-  User user = User.blank();
-  bool get isLoggedIn => user.isInfo == false && user.isAnonymous == false;
+  User? user;
+  Iterable<User> get storedUsers => widget.deviceStore.users;
 
   void skipLogin() => setState(() => user = User.anonymous());
 
   void createUser(User user) async {
+    if (user.isInfo == false) return;
+
     final response = await http.post(
       Uri.parse('${Env.centralUrl}/user'), body: User.info(user.name).jsonString
     );
-    setState(() => user = User.fromJsonString(response.body));
+
+    final centralUser = User.fromJsonString(response.body);
+    setState(() {
+      this.user = centralUser;
+      widget.deviceStore.storeUser(centralUser);
+      widget.deviceStore.lastUserId = centralUser.id;
+    });
   }
 
-  void login(BuildContext context, String userId) async {
-    final response = await http.get(Uri.parse('${Env.centralUrl}/user/$userId'));
-    if (response.statusCode == 404 && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed'),  behavior: .floating,));
+  void login(User user) async {
+    if (user.isAnonymous) {
+      setState(() => this.user = user);
       return;
     }
-    final user = User.fromJsonString(response.body);
-    setState(() => this.user = user);
+    if (user.isUser == false) return;
+
+    final response = await http.get(
+      Uri.parse('${Env.centralUrl}/user/${user.id}'),
+    );
+
+    if (response.statusCode == 404) {
+      setState(() => widget.deviceStore.removeUser(user.id));
+      return;
+    }
+
+    final centralUser = User.fromJsonString(response.body);
+    setState(() {
+      this.user = centralUser;
+      widget.deviceStore.storeUser(centralUser);
+    });
   }
 
-  void logout() => setState(() {
-    user = User.blank();
-  });
+  void logout() {
+    final user = this.user ?? User.anonymous();
+    if (user.isUser == true) widget.deviceStore.storeUser(user);
+    setState(() => this.user = null);
+  }
   
-  bool get allowOnline => serviceHealthy == true && isLoggedIn;
+  bool get allowOnline => serviceHealthy == true && user?.isUser == true;
 
   var showLocalGame = false;
 
@@ -70,6 +93,9 @@ class _AppState extends State<App> {
   }
 
   void startConnectedGame() async {
+    final user = this.user;
+    if (user == null) return;
+
     final createGameResponse = await http.post(Uri.parse('${Env.centralUrl}/game'));
     final gameId = createGameResponse.body;
     final createPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/player/${user.id}'));
@@ -85,6 +111,9 @@ class _AppState extends State<App> {
   }
 
   void joinConnectedGame(String gameCode) async {
+    final user = this.user;
+    if (user == null) return;
+
     final gameIdResponse = await http.get(Uri.parse('${Env.centralUrl}/game/$gameCode'));
     final gameId = gameIdResponse.body;
     final createPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/player/${user.id}'));
@@ -121,40 +150,49 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
-    final user = this.user;
+    var user = this.user;
+    Widget displayWidget = Login(storedUsers, onCreateUser: createUser, onLogin: login);
 
-    Widget displayWidget = MainMenu(
-      user,
-      startLocalGame: startLocalGame,
-      startConnectedGame: startConnectedGame,
-      joinConnectedGame: joinConnectedGame,
-      logout: logout,
-    );
+    if (serviceHealthy == false) user = User.anonymous();
 
-    if (user.isInfo) {
-      displayWidget = Login((User user) => login(context, user.id), skipLogin);
+    if (showLocalGame) {
+      displayWidget = LocalGame(user ?? User.anonymous(), leaveGame);
     }
 
-    if (showLocalGame) displayWidget = LocalGame(user, leaveGame);
+    if (user != null) {
+      displayWidget = MainMenu(
+        user,
+        startLocalGame: startLocalGame,
+        startConnectedGame: startConnectedGame,
+        joinConnectedGame: joinConnectedGame,
+        logout: logout,
+      );
 
-    final connectedGameId = this.connectedGameId;
-    final connectedPlayerId = this.connectedPlayerId;
-    if (connectedGameId != null && connectedPlayerId != null) {
-      displayWidget = ConnectedGame(connectedGameId, connectedPlayerId, user, leaveGame);
+      final connectedGameId = this.connectedGameId;
+      final connectedPlayerId = this.connectedPlayerId;
+      if (connectedGameId != null &&
+          connectedPlayerId != null) {
+        displayWidget = ConnectedGame(
+          connectedGameId,
+          connectedPlayerId,
+          user,
+          leaveGame,
+        );
+      }
     }
 
-    return Column(children: [
-      if (serviceHealthy == false) Column(
-        children: [
-          Divider(),
-          Row(mainAxisAlignment: .center, spacing: 5, children: [
+    if (serviceHealthy == false) {
+      return Center(
+        child: Column(
+          children: [
             Text('Unable to connect to central service', style: TextStyle(color: Colors.red),),
-            TextButton(onPressed: pollServiceHealth, child: Text('Retry'))
-          ],),
-          Divider(),
-        ],
-      ),
-      Expanded(child: displayWidget),
-    ],);
+            TextButton(onPressed: pollServiceHealth, child: Text('Retry')),
+            Expanded(child: displayWidget),
+          ],
+        ),
+      );
+    }
+
+    return displayWidget;
   }
 }
