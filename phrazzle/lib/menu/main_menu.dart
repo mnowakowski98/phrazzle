@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phrazzle/menu/user_tile.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class MainMenu extends StatefulWidget {

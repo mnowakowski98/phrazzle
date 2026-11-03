@@ -47,7 +47,6 @@ class _ConnectedGameState extends State<ConnectedGame> {
       final user = User.fromJsonString(userResponse.body);
       newUsers[playerId] = user;
     }
-    print('Adding users ${newUsers.keys.toString()}');
     setState(() => playerUsers.addAll(newUsers));
   }
 
@@ -63,7 +62,6 @@ class _ConnectedGameState extends State<ConnectedGame> {
     channel.stream.listen((data) => setState(() {
       final game = Phrazzle.fromInfo(GameInfo.fromJsonString(data));
       if (game.info.players.length > playerUsers.length) {
-        print('Updating users');
         getUsers(game.info.players);
       }
       setState(() => this.game = game);
@@ -72,12 +70,10 @@ class _ConnectedGameState extends State<ConnectedGame> {
     channel.sink.add(widget.user.jsonString);
 
     channel.sink.done.whenComplete(() {
-      print('Closed connection: ${channel.closeCode} - ${channel.closeReason}');
       setState(() => this.channel = null);
       widget.leaveGame();
     });
 
-    print('Connected to ${widget.gameId} as ${widget.playerId}');
     setState(() => this.channel = channel);
   }
 

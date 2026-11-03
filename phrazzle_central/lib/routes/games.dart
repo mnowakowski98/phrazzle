@@ -50,13 +50,7 @@ class Games {
 
   /// Create a new game
   @Route.post('/game')
-  Future<Response> createGame(Request request) async {
-    final bodyString = await request.readAsString();
-    if (bodyString.isNotEmpty) {
-      // TODO: Create game with associated options
-      final gameConfig = GameConfig.fromJsonString(bodyString);
-    }
-
+  Response createGame(Request request) {
     final gameId = gameStore.createGame(Game());
 
     print('Created game $gameId');
