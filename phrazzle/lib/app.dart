@@ -21,17 +21,6 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  bool? serviceHealthy;
-  void pollServiceHealth() async {
-    try {
-      final healthzResponse = await http.get(Uri.parse('${Env.centralUrl}/healthz'));
-      final isHealthy = jsonDecode(healthzResponse.body)['status'] == 'healthy';
-      setState(() => serviceHealthy = isHealthy);
-    } on SocketException {
-      setState(() => serviceHealthy = false);
-    }
-  }
-
   User? user;
   Iterable<User> get storedUsers => widget.deviceStore.users;
 
@@ -52,7 +41,14 @@ class _AppState extends State<App> {
     });
   }
 
-  void login(User user) async {
+  void login(User user, [bool setLastId = false, bool autoLogin = false]) async {
+    if (setLastId) {
+      setState(() {
+        widget.deviceStore.lastUserId = user.id;
+        widget.deviceStore.autoLogin = autoLogin;
+      });
+    }
+
     if (user.isAnonymous) {
       setState(() => this.user = user);
       return;
@@ -64,7 +60,11 @@ class _AppState extends State<App> {
     );
 
     if (response.statusCode == 404) {
-      setState(() => widget.deviceStore.removeUser(user.id));
+      setState(() {
+        widget.deviceStore.lastUserId = null;
+        widget.deviceStore.autoLogin = false;
+        widget.deviceStore.removeUser(user.id);
+      });
       return;
     }
 
@@ -80,17 +80,28 @@ class _AppState extends State<App> {
     if (user.isUser == true) widget.deviceStore.storeUser(user);
     setState(() => this.user = null);
   }
-  
-  bool get allowOnline => serviceHealthy == true && user?.isUser == true;
+
+  bool? serviceHealthy;
+  Future<void> pollServiceHealth() async {
+    var isHealthy = true;
+    try {
+      final healthzResponse = await http.get(Uri.parse('${Env.centralUrl}/healthz'));
+      isHealthy = jsonDecode(healthzResponse.body)['status'] == 'healthy';
+    } on SocketException {
+      isHealthy = false;
+    }
+    setState(() => serviceHealthy = isHealthy);
+  }
 
   var showLocalGame = false;
-
-  String? connectedGameId;
-  String? connectedPlayerId;
-
   void startLocalGame() {
     setState(() => showLocalGame = true);
   }
+  
+  bool get allowOnline => serviceHealthy == true && user?.isUser == true;
+
+  String? connectedGameId;
+  String? connectedPlayerId;
 
   void startConnectedGame() async {
     final user = this.user;
@@ -139,25 +150,36 @@ class _AppState extends State<App> {
     });
   }
 
+  void startApp() async {
+    await pollServiceHealth();
+    if (serviceHealthy == false) {
+      login(User.anonymous());
+      return;
+    }
+
+    final autoLogin = widget.deviceStore.autoLogin;
+    final lastUserId = widget.deviceStore.lastUserId;
+    if (autoLogin && lastUserId != null) login(User.pending(lastUserId));
+  }
+
   @override
   void initState() {
     super.initState();
-    pollServiceHealth();
-    
+    startApp();
+
     connectedGameId = widget.deviceStore.lastGameId;
     connectedPlayerId = widget.deviceStore.lastPlayerId;
   }
 
   @override
   Widget build(BuildContext context) {
-    var user = this.user;
+    final user = this.user;
     Widget displayWidget = Login(
+      widget.deviceStore.lastUserId,
       storedUsers,
       onCreateUser: createUser,
-      onLogin: login,
+      onLogin: (user, autoLogin) => login(user, true, autoLogin),
     );
-
-    if (serviceHealthy == false) user = User.anonymous();
 
     if (user != null) {
       displayWidget = MainMenu(
@@ -192,7 +214,7 @@ class _AppState extends State<App> {
               'Unable to connect to central service',
               style: TextStyle(color: Colors.red),
             ),
-            TextButton(onPressed: pollServiceHealth, child: Text('Retry')),
+            TextButton(onPressed: startApp, child: Text('Retry')),
             Expanded(child: displayWidget),
           ],
         ),

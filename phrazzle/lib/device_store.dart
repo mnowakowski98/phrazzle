@@ -8,6 +8,17 @@ class DeviceStorage {
   final String deviceId;
   final String instanceId;
 
+  static const String autoLoginKey = 'AUTO_LOGIN';
+  bool get autoLogin {
+    var value = _preferences.getBool(autoLoginKey);
+    if (value == null) {
+      value = false;
+      _preferences.setBool(autoLoginKey, value);
+    }
+    return value;
+  }
+  set autoLogin(bool value) => _preferences.setBool(autoLoginKey, value);
+
   static const String lastUserIdKey = 'LAST_USER_ID';
   String? get lastUserId => _preferences.getString(lastUserIdKey);
   set lastUserId(String? value) {
