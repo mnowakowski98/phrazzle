@@ -28,13 +28,17 @@ class DriftUserStore implements UserStore {
 
   @override
   Future<User> updateUser(User user) async {
-    // TODO: implement updateUser
-    throw UnimplementedError();
+    await (_database.update(_database.users)
+      ..where((tableUser) => tableUser.uuid.equals(user.id)))
+      .write(UsersCompanion(uuid: Value(user.id), name: Value(user.name)));
+    return user;
   }
 
   @override
   Future<User> deleteUser(User user) async {
-    // TODO: implement deleteUser
-    throw UnimplementedError();
+    await (_database.delete(_database.users)
+      ..where((tableUser) => tableUser.uuid.equals(user.id)))
+      .go();
+    return user;
   }
 }
