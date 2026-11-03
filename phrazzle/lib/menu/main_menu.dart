@@ -7,16 +7,16 @@ class MainMenu extends StatefulWidget {
   final User user;
 
   final void Function() startLocalGame;
-  final void Function()? startConnectedGame;
-  final void Function(String gameCode)? joinConnectedGame;
+  final void Function() startConnectedGame;
+  final void Function(String gameCode) joinConnectedGame;
   final void Function()? logout;
 
   const MainMenu(
     this.user, {
     required this.startLocalGame,
-    this.startConnectedGame,
-    this.joinConnectedGame,
-    this.logout,
+    required this.startConnectedGame,
+    required this.joinConnectedGame,
+    required this.logout,
     super.key,
   });
 
@@ -43,21 +43,18 @@ class _MainMenuState extends State<MainMenu> {
   @override
   Widget build(BuildContext context) {   
       final user = widget.user;
-      final startConnectedGame = widget.startConnectedGame;
-      final joinConnectedGame = widget.joinConnectedGame;
-      final allowConnectedGame = user.isUser == true && startConnectedGame != null && joinConnectedGame != null;
       final logout = widget.logout;
 
       return Column(
         children: [
           Column(
             children: [
-              if (allowConnectedGame) Column(children: [
+              if (user.isUser) Column(children: [
                 UserTile(user),
                 Divider(),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(onPressed: startConnectedGame, child: Text('Start new game')),
+                  child: ElevatedButton(onPressed: widget.startConnectedGame, child: Text('Start new game')),
                 ),
                 Text('or'),
                 Padding(
@@ -82,17 +79,17 @@ class _MainMenuState extends State<MainMenu> {
                   ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(onPressed: gameCode.isNotEmpty ? () => joinConnectedGame(gameCode) : null, child: Text('Join game')),
+                  child: ElevatedButton(onPressed: gameCode.isNotEmpty ? () => widget.joinConnectedGame(gameCode) : null, child: Text('Join game')),
                 ),
                 Divider(),
               ],)
             ],
           ),
           Expanded(child: Center(child: ElevatedButton(onPressed: widget.startLocalGame, child: Text('Single player')),)),
-          if (logout != null) Column(
+          if (widget.logout != null) Column(
             children: [
               Divider(),
-              OutlinedButton(onPressed: logout, child: Text(user.isUser ? 'Logout' : 'Login', style: TextStyle(color: user.isUser ? Colors.orange : null),),)
+              OutlinedButton(onPressed: logout, child: Text(user.isUser ? 'Logout' : 'Login', style: TextStyle(color: user.isUser ? Colors.orange : Colors.green),),)
             ],
           ),
         ],

@@ -151,13 +151,13 @@ class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
     var user = this.user;
-    Widget displayWidget = Login(storedUsers, onCreateUser: createUser, onLogin: login);
+    Widget displayWidget = Login(
+      storedUsers,
+      onCreateUser: createUser,
+      onLogin: login,
+    );
 
     if (serviceHealthy == false) user = User.anonymous();
-
-    if (showLocalGame) {
-      displayWidget = LocalGame(user ?? User.anonymous(), leaveGame);
-    }
 
     if (user != null) {
       displayWidget = MainMenu(
@@ -165,13 +165,12 @@ class _AppState extends State<App> {
         startLocalGame: startLocalGame,
         startConnectedGame: startConnectedGame,
         joinConnectedGame: joinConnectedGame,
-        logout: logout,
+        logout: serviceHealthy == true ? logout : null,
       );
 
       final connectedGameId = this.connectedGameId;
       final connectedPlayerId = this.connectedPlayerId;
-      if (connectedGameId != null &&
-          connectedPlayerId != null) {
+      if (connectedGameId != null && connectedPlayerId != null) {
         displayWidget = ConnectedGame(
           connectedGameId,
           connectedPlayerId,
@@ -179,13 +178,20 @@ class _AppState extends State<App> {
           leaveGame,
         );
       }
+
+      if (showLocalGame) {
+        displayWidget = LocalGame(user, leaveGame);
+      }
     }
 
     if (serviceHealthy == false) {
       return Center(
         child: Column(
           children: [
-            Text('Unable to connect to central service', style: TextStyle(color: Colors.red),),
+            Text(
+              'Unable to connect to central service',
+              style: TextStyle(color: Colors.red),
+            ),
             TextButton(onPressed: pollServiceHealth, child: Text('Retry')),
             Expanded(child: displayWidget),
           ],
