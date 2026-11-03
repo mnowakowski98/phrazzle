@@ -16,35 +16,36 @@ class Users {
   Future<Response> createUser(Request request) async {
     final body = await request.readAsString();
     final user = User.fromJsonString(body);
-    return Response.ok(userStore.createUser(user).jsonString);
+    return Response.ok((await userStore.createUser(user)).jsonString);
   }
 
   @Route.get('/user/<id>')
-  Response getUser(Request _, String id) {
-    final user = userStore.getUser(id);
+  Future<Response> getUser(Request _, String id) async {
+    final user = await userStore.getUser(id);
     if (user == null) return Response.notFound(id);
     return Response.ok(user.jsonString);
   }
 
   @Route.get('/user')
-  Response getUsers(Request _) {
-    return Response.ok(jsonEncode(userStore.users.map((user) => user.toJson())));
+  Future<Response> getUsers(Request _) async {
+    final users = await userStore.users;
+    return Response.ok(jsonEncode(users.map((user) => user.toJson())));
   }
 
   @Route.put('/user')
   Future<Response> updateUser(Request request) async {
     final body = await request.readAsString();
     final newUser = User.fromJsonString(body);
-    final existingUser = userStore.getUser(newUser.id);
+    final existingUser = await userStore.getUser(newUser.id);
     if (existingUser == null) return Response.notFound(newUser.id);
-    return Response.ok(userStore.updateUser(newUser).jsonString); 
+    return Response.ok((await userStore.updateUser(newUser)).jsonString); 
   }
 
   @Route.delete('/user/<id>')
-  Response deleteUser(Request _, String id)  {
-    final user = userStore.getUser(id);
+  Future<Response> deleteUser(Request _, String id)  async {
+    final user = await userStore.getUser(id);
     if (user == null) return Response.notFound(id);
-    return Response.ok(userStore.deleteUser(user).jsonString);
+    return Response.ok((await userStore.deleteUser(user)).jsonString);
   }
 
   Router get router => _$UsersRouter(this);

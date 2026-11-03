@@ -1,20 +1,23 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:google_cloud/google_cloud.dart';
-import 'package:google_cloud_shelf/google_cloud_shelf.dart';
-import 'package:phrazzle_central/routes/players.dart';
-import 'package:phrazzle_central/routes/users.dart';
-import 'package:phrazzle_central/stores/game_store.dart';
-import 'package:phrazzle_central/stores/player_store.dart';
-import 'package:phrazzle_central/stores/user_store.dart';
-
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_cors_headers/shelf_cors_headers.dart';
 import 'package:shelf_router/shelf_router.dart';
 
+import 'package:google_cloud/google_cloud.dart';
+import 'package:google_cloud_shelf/google_cloud_shelf.dart';
+
+import 'package:phrazzle_central/database.dart' show AppDatabase;
+
 import 'package:phrazzle_central/routes/games.dart';
+import 'package:phrazzle_central/routes/users.dart';
+import 'package:phrazzle_central/routes/players.dart';
+
+import 'package:phrazzle_central/stores/game_store.dart';
+import 'package:phrazzle_central/stores/drift_user_store.dart';
+import 'package:phrazzle_central/stores/player_store.dart';
 
 final app = Router();
 
@@ -27,7 +30,7 @@ void main(List<String> arguments) async {
   }
   
   final gameStore = GameStore();
-  final userStore = UserStore();
+  final userStore = DriftUserStore(AppDatabase());
   final playerStore = PlayerStore();
 
   final cascade = Cascade()

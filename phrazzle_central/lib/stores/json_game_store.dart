@@ -6,7 +6,7 @@ import 'package:phrazzle_central/stores/game_store.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 import 'package:uuid/uuid.dart';
 
-class JsonGameStore extends GameStore {
+class JsonGameStore implements GameStore {
   final Directory _storeDirectory;
   Directory get _gamesDirectory => Directory(normalize(join(_storeDirectory.path, 'games/')));
 
