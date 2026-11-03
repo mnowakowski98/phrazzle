@@ -24,10 +24,7 @@ class MainApp extends StatelessWidget {
         ),
       ),
       home: Scaffold(
-        appBar: AppBar(
-          title: Text('Phrazzle'),
-        ),
-        body: Padding(padding: EdgeInsets.all(8.0), child: App(deviceStore)),
+        body: SafeArea(child: Padding(padding: EdgeInsets.all(8.0), child: App(deviceStore))),
       ),
     );
   }

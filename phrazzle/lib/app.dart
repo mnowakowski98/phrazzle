@@ -177,6 +177,7 @@ class _AppState extends State<App> {
     Widget displayWidget = Login(
       widget.deviceStore.lastUserId,
       storedUsers,
+      widget.deviceStore.autoLogin,
       onCreateUser: createUser,
       onLogin: (user, autoLogin) => login(user, true, autoLogin),
     );

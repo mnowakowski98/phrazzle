@@ -47,45 +47,54 @@ class _MainMenuState extends State<MainMenu> {
 
       return Column(
         children: [
-          Column(
-            children: [
-              if (user.isUser) Column(children: [
-                UserTile(user),
-                Divider(),
+          if (user.name.isNotEmpty) Column(children: [
+            Text(user.name, style: TextStyle(color: Colors.teal, fontSize: 28, fontWeight: .bold),),
+            Divider(),
+          ],),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: .center,
+              children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(onPressed: widget.startConnectedGame, child: Text('Start new game')),
+                  child: ElevatedButton(onPressed: widget.startLocalGame, child: Text('Single player')),
                 ),
-                Text('or'),
-                Padding(
+                if (user.isUser) Column(children: [
+                  Divider(),
+                  Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Focus(
-                      child: TextField(
-                        controller: _gameCodeController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter a game code',
+                    child: ElevatedButton(onPressed: widget.startConnectedGame, child: Text('Start new game')),
+                  ),
+                  Text('or'),
+                  Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Focus(
+                        child: TextField(
+                          controller: _gameCodeController,
+                          decoration: InputDecoration(
+                            hintText: 'Enter a game code',
+                          ),
+                          inputFormatters: [
+                            TextInputFormatter.withFunction((oldValue, newValue) {
+                              if (newValue.text.length > 5) return oldValue;
+                              return newValue.copyWith(
+                                text: newValue.text.toUpperCase(),
+                              );
+                            }),
+                          ],
+                          style: TextStyle(color: Colors.cyan),
                         ),
-                        inputFormatters: [
-                          TextInputFormatter.withFunction((oldValue, newValue) {
-                            if (newValue.text.length > 5) return oldValue;
-                            return newValue.copyWith(
-                              text: newValue.text.toUpperCase(),
-                            );
-                          }),
-                        ],
-                        style: TextStyle(color: Colors.cyan),
                       ),
                     ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(onPressed: gameCode.isNotEmpty ? () => widget.joinConnectedGame(gameCode) : null, child: Text('Join game')),
                   ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(onPressed: gameCode.isNotEmpty ? () => widget.joinConnectedGame(gameCode) : null, child: Text('Join game')),
-                ),
-                Divider(),
-              ],)
-            ],
+                  Divider(),
+                ],),
+              ],
+            ),
           ),
-          Expanded(child: Center(child: ElevatedButton(onPressed: widget.startLocalGame, child: Text('Single player')),)),
           if (widget.logout != null) Column(
             children: [
               Divider(),

@@ -5,13 +5,15 @@ import 'package:phrazzle_lib/phrazzle.dart';
 class Login extends StatefulWidget {
   final String? lastUserId;
   final Iterable<User> storedUsers;
+  final bool autoLogin;
 
   final void Function(User user) onCreateUser;
   final void Function(User user, bool autoLogin) onLogin;
 
   const Login(
     this.lastUserId,
-    this.storedUsers, {
+    this.storedUsers,
+    this.autoLogin, {
     required this.onCreateUser,
     required this.onLogin,
     super.key,
@@ -25,10 +27,18 @@ class _LoginState extends State<Login> {
   var autoLogin = true;
 
   @override
+  void initState() {
+    super.initState();
+    autoLogin = widget.autoLogin;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: .start,
       children: [
+        Center(child: Text('Phrazzle', style: TextStyle(color: Colors.teal, fontSize: 28, fontWeight: .bold),),),
+        Divider(),
         Text('Create user', style: TextStyle(color: Colors.teal, fontSize: 20)),
         Padding(
           padding: const EdgeInsets.all(8.0),
@@ -77,6 +87,7 @@ class _LoginState extends State<Login> {
         Divider(),
         Center(
           child: OutlinedButton(
+            style: ButtonStyle(),
             onPressed: () => widget.onLogin(User.anonymous(), autoLogin),
             child: Text('Play offline', style: TextStyle(color: Colors.blueGrey),),
           ),
