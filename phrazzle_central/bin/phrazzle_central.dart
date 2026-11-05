@@ -22,9 +22,9 @@ import 'package:phrazzle_central/stores/player_store.dart';
 final app = Router();
 
 void main(List<String> arguments) async {
-  String? projectId;
+  String? googleCloudProjectId;
   try {
-    projectId = await projectIdFromMetadataServer();
+    googleCloudProjectId = await projectIdFromMetadataServer();
   } on MetadataServerException {
     print('Unable to determine cloud project');
   }
@@ -44,10 +44,10 @@ void main(List<String> arguments) async {
 
   final pipeline = Pipeline()
       .addMiddleware(corsHeaders())
-      .addMiddleware(createLoggingMiddleware(projectId: projectId))
+      .addMiddleware(createLoggingMiddleware(projectId: googleCloudProjectId))
       .addHandler(cascade.handler);
 
-  if (projectId != null) {
+  if (googleCloudProjectId != null) {
     await serveHandler(pipeline);
   } else {
     final port = int.tryParse(String.fromEnvironment('PORT')) ?? 80;

@@ -17,7 +17,7 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
-  static QueryExecutor _openConnection() => NativeDatabase.createInBackground(File('store/database'));
+  static QueryExecutor _openConnection() => NativeDatabase.createInBackground(File('./store/database.sqlite'));
 
-  AppDatabase([QueryExecutor? executer]) : super(executer ?? _openConnection());
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 }
