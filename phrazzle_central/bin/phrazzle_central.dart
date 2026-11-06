@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:phrazzle_central/stores/json_game_store.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_cors_headers/shelf_cors_headers.dart';
@@ -29,7 +30,8 @@ void main(List<String> arguments) async {
     print('Unable to determine cloud project');
   }
   
-  final gameStore = GameStore();
+  // final gameStore = GameStore();
+  final gameStore = JsonGameStore('./store/');
   final userStore = DriftUserStore(AppDatabase());
   final playerStore = PlayerStore();
 

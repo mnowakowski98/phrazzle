@@ -241,6 +241,10 @@ class Games {
 
     if (game.info.currentRound!.phraseGroups.values.every((phraseGroup) => phraseGroup.isLocked)) {
       game.end();
+
+      Timer(const Duration(seconds: 5), () {
+        gameStore.removeGame(gameId);
+      });
       print ('Ended game cause a round ended lmao');
     }
 
