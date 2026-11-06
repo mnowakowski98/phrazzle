@@ -164,28 +164,4 @@ class Game {
     game._currentRoundId = info.currentRoundId;
     return game;
   }
-
-  factory Game.fromConfig(GameConfig config) {
-    final game = Game();
-    final playerSlots = config.playerSlots;
-    if (playerSlots != null) {
-      for (var index = 0; index < playerSlots; index++) {
-        game.addPlayer();
-      }
-    }
-
-    final roundPhrases = config.roundPhrases;
-    if (roundPhrases != null) {
-      for (final phrase in roundPhrases) {
-        game.createRound(phrase).id;
-      }
-      game.currentRoundId = game.info.rounds.keys.elementAt(0);
-    }
-
-    if (config.autoStart == true) {
-      game.start();
-    }
-
-    return game;
-  }
 }
