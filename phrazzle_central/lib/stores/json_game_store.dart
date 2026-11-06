@@ -82,12 +82,18 @@ class JsonGameStore implements GameStore {
       _subscriptions.remove(gameId);
     }
 
-    final cached = _gamesCache[gameId];
+    final file = _getStoreFile(_gamesDirectory, gameId);
+    Game? cached = _gamesCache[gameId];
     if (cached != null) {
       _gamesCache.remove(gameId);
     }
+    
+    if (cached == null) {
+      final jsonString = await file.readAsString();
+      cached = Game.fromInfo(GameInfo.fromJsonString(jsonString));
+    }
 
-    final file = _getStoreFile(_gamesDirectory, gameId);
-    if (await file.exists() == true) await file.delete();
+    final deleteFile = cached.info.players.isEmpty;
+    if (deleteFile && await file.exists() == true) await file.delete();
   }
 }

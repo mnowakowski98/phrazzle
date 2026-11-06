@@ -245,7 +245,6 @@ class Games {
 
       Timer(const Duration(seconds: 5), () async {
         await gameStore.removeGame(gameId);
-        await playerStore.removeGameRecords(gameId);
       });
       print ('Ended game cause a round ended lmao');
     }
