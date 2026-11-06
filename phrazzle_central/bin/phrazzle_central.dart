@@ -38,7 +38,8 @@ void main(List<String> arguments) async {
     .add(Users(userStore).router.call)
     .add(Players(playerStore, userStore).router.call)
     .add((Request req) {
-      if (req.url.toString() != 'healthz') return Response.notFound(null);
+      final urlString = req.url.toString();
+      if (urlString != 'healthz' && urlString != 'health') return Response.notFound(null);
       return Response.ok(jsonEncode({'status': 'healthy'}), headers: {'content-type': 'application/json'});
     });
 

@@ -12,7 +12,7 @@ class DeviceStorage {
   bool get autoLogin {
     var value = _preferences.getBool(autoLoginKey);
     if (value == null) {
-      value = false;
+      value = true;
       _preferences.setBool(autoLoginKey, value);
     }
     return value;

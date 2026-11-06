@@ -9,12 +9,12 @@ RUN dart pub get
 
 WORKDIR /app/phrazzle_central
 RUN dart pub get
-RUN dart compile exe bin/phrazzle_central.dart -o /app/server
+RUN dart build cli -t bin/phrazzle_central.dart -o /app/server
 
 FROM scratch
 COPY --from=build /runtime/ /
-COPY --from=build /app/server /app/
+COPY --from=build /app/server/bundle/ /app/
 
 # Start server.
 EXPOSE 80
-CMD ["/app/server"]
+CMD ["/app/bin/phrazzle_central"]

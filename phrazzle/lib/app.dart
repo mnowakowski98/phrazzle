@@ -82,15 +82,20 @@ class _AppState extends State<App> {
   }
 
   bool? serviceHealthy;
-  Future<void> pollServiceHealth() async {
+  Future<bool> pollServiceHealth() async {
     var isHealthy = true;
     try {
-      final healthzResponse = await http.get(Uri.parse('${Env.centralUrl}/healthz'));
-      isHealthy = jsonDecode(healthzResponse.body)['status'] == 'healthy';
-    } on SocketException {
+      final healthResponse = await http.get(Uri.parse('${Env.centralUrl}/health'));
+      if (healthResponse.statusCode == 200) {
+        isHealthy = jsonDecode(healthResponse.body)['status'] == 'healthy';
+      } else {
+        isHealthy = false;
+      }
+    } catch (_) {
       isHealthy = false;
     }
     setState(() => serviceHealthy = isHealthy);
+    return isHealthy;
   }
 
   var showLocalGame = false;
@@ -151,8 +156,8 @@ class _AppState extends State<App> {
   }
 
   void startApp() async {
-    await pollServiceHealth();
-    if (serviceHealthy == false) {
+    bool isHealthy = await pollServiceHealth();
+    if (isHealthy == false) {
       login(User.anonymous());
       return;
     }
