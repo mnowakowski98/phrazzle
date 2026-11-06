@@ -66,7 +66,7 @@ class Games {
     }
 
     final playerId = game.addPlayer();
-    playerStore.setUserId(playerId, userId);
+    playerStore.setPlayerRecord(gameId, playerId, userId);
 
     print('Created player $playerId in $gameId with $userId');
     return Response.ok(playerId);
@@ -96,7 +96,7 @@ class Games {
       channel.stream.listen((data) {
         // TODO: Parse out different message types eventually
         final user = User.fromJsonString(data);
-        if (user.id != playerStore.getUserId(playerId)) {
+        if (user.id != playerStore.getPlayerRecords(playerId)?.$3) {
           // TODO: Send a json close message
           channel.sink.close(1000, 'Incorrect user');
           return;

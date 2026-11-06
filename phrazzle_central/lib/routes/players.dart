@@ -14,8 +14,9 @@ class Players {
 
   @Route.get('/player/<playerId>/user')
   Future<Response> getUser(Request _, String playerId) async {
-    final userId = playerStore.getUserId(playerId);
-    if (userId == null) return Response.notFound(playerId);
+    final userRecord = playerStore.getPlayerRecords(playerId);
+    if (userRecord == null) return Response.notFound(playerId);
+    final userId = userRecord.$3;
     final user = await userStore.getUser(userId);
     if (user == null) throw StateError('player $playerId linked to invalid user $userId');
     return Response.ok(user.jsonString);
