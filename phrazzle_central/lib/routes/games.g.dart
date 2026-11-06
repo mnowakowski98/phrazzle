@@ -8,7 +8,7 @@ part of 'games.dart';
 
 Router _$GamesRouter(Games service) {
   final router = Router();
-  router.add('GET', r'/game/<gameCode>', service.getGameId);
+  router.add('GET', r'/game/code/<gameCode>', service.getGameId);
   router.add('GET', r'/game/<gameId>/code', service.getGameCode);
   router.add('POST', r'/game', service.createGame);
   router.add('POST', r'/game/<gameId>/player/<userId>', service.addPlayer);

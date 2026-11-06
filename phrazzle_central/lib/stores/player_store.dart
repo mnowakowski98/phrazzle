@@ -1,18 +1,20 @@
-typedef PlayerRecord = (String gameId, String playerId, String userId);
+import 'package:phrazzle_lib/phrazzle.dart';
 
 class PlayerStore {
-  final _playerRecords = <(String, String, String)>{};
+  final _playerRecords = <PlayerRecord>{};
 
-  void setPlayerRecord(String gameId, String playerId, String userId) async =>
-      _playerRecords.add((gameId, playerId, userId));
+  Future<void> setPlayerRecord(String gameId, String playerId, String userId) async =>
+      _playerRecords.add(PlayerRecord(gameId, playerId, userId));
 
-  Future<Iterable<PlayerRecord>> getGameRecords(String gameId) async => _playerRecords.where((record) => record.$1 == gameId); 
+  Future<Iterable<PlayerRecord>> getGameRecords(String gameId) async => _playerRecords.where((record) => record.gameId == gameId); 
 
   Future<PlayerRecord?> getPlayerRecord(String playerId) async =>
-      _playerRecords.where((record) => record.$2 == playerId).singleOrNull;
+      _playerRecords.where((record) => record.playerId == playerId).singleOrNull;
 
   Future<Iterable<PlayerRecord>> getUserRecords(String userId) async =>
-      _playerRecords.where((record) => record.$3 == userId);
+      _playerRecords.where((record) => record.userId == userId);
 
-  Future<void> removeGameRecords(String gameId) async => _playerRecords.removeWhere((record) => record.$1 == gameId);
+  Future<void> removeGameRecords(String gameId) async => _playerRecords.removeWhere((record) => record.gameId == gameId);
+
+  Future<void> removePlayerRecord(String playerId) async => _playerRecords.removeWhere((record) => record.playerId == playerId);
 }

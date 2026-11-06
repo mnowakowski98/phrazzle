@@ -14,7 +14,7 @@ class DriftUserStore implements UserStore {
   @override
   Future<User> createUser(User user) async {
     user = User.newId(user);
-    await _database.into(_database.users).insert(UsersCompanion.insert(uuid: Value(user.id), name: user.name));
+    await _database.into(_database.users).insert(UsersCompanion.insert(uuid: user.id, name: user.name));
     return user;
   }
 

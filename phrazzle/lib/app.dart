@@ -129,7 +129,7 @@ class _AppState extends State<App> {
     final user = this.user;
     if (user == null) return;
 
-    final gameIdResponse = await http.get(Uri.parse('${Env.centralUrl}/game/$gameCode'));
+    final gameIdResponse = await http.get(Uri.parse('${Env.centralUrl}/game/code/$gameCode'));
     final gameId = gameIdResponse.body;
     final createPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/player/${user.id}'));
     final playerId = createPlayerResponse.body;

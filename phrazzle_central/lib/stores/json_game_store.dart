@@ -74,6 +74,32 @@ class JsonGameStore implements GameStore {
     return game;
   }
 
+  // Future<Map<String, Game>> getGames(Set<String> gameIds) {
+
+  // }
+
+  @override
+  Future<void> disableGame(String gameId) async {
+    final sub = _subscriptions[gameId];
+    if (sub != null) {
+      await sub.cancel();
+      _subscriptions.remove(gameId);
+    }
+
+    final file = _getStoreFile(_gamesDirectory, gameId);
+    Game? cached = _gamesCache[gameId];
+    if (cached != null) {
+      _gamesCache.remove(gameId);
+    }
+    
+    if (cached == null) {
+      final jsonString = await file.readAsString();
+      cached = Game.fromInfo(GameInfo.fromJsonString(jsonString));
+    }
+
+    await file.rename('${file.path}.disabled');
+  }
+
   @override
   Future<void> removeGame(String gameId) async {
     final sub = _subscriptions[gameId];
@@ -93,7 +119,6 @@ class JsonGameStore implements GameStore {
       cached = Game.fromInfo(GameInfo.fromJsonString(jsonString));
     }
 
-    final deleteFile = cached.info.players.isEmpty;
-    if (deleteFile && await file.exists() == true) await file.delete();
+    if (await file.exists() == true) await file.delete();
   }
 }

@@ -30,7 +30,7 @@ class Games {
   Games(this.gameStore, this.playerStore);
 
   /// Get the game id from a game code
-  @Route.get('/game/<gameCode>')
+  @Route.get('/game/code/<gameCode>')
   Future<Response> getGameId(Request _, String gameCode) async {
     gameCode = gameCode.toLowerCase();
     final codeIds = <String, String>{};
@@ -96,8 +96,7 @@ class Games {
       channel.stream.listen((data) async {
         // TODO: Parse out different message types eventually
         final user = User.fromJsonString(data);
-        if (user.id != (await playerStore.getPlayerRecord(playerId))?.$3) {
-          // TODO: Send a json close message
+        if (user.id != (await playerStore.getPlayerRecord(playerId))?.userId) {
           channel.sink.close(1000, 'Incorrect user');
           return;
         }
@@ -244,7 +243,7 @@ class Games {
       game.end();
 
       Timer(const Duration(seconds: 5), () async {
-        await gameStore.removeGame(gameId);
+        await gameStore.disableGame(gameId);
       });
       print ('Ended game cause a round ended lmao');
     }
