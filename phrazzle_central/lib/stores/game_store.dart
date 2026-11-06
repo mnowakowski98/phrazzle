@@ -7,15 +7,15 @@ class GameStore {
 
   GameStore();
 
-  Iterable<String> get gameIds => _games.keys;
+  Future<Iterable<String>> get gameIds async => _games.keys;
 
-  String createGame(Game game) {
+  Future<String> createGame(Game game) async {
     final gameId = Uuid().v4();
     _games[gameId] = game;
     return gameId;
   }
 
-  Game? getGame(String gameId) => _games[gameId];
+  Future<Game?> getGame(String gameId) async => _games[gameId];
 
-  void removeGame(String gameId) => _games.remove(gameId);
+  Future<void> removeGame(String gameId) async => _games.remove(gameId);
 }

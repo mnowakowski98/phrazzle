@@ -78,6 +78,9 @@ class _ConnectedGameState extends State<ConnectedGame> {
   }
 
   void disconnect() {
+    if (game.info.isStarted == false) {
+      http.delete(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/player/${widget.playerId}'));
+    }
     channel?.sink.close(1000);
     setState(() => channel = null);
     widget.leaveGame();

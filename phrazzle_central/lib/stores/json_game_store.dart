@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -25,26 +26,30 @@ class JsonGameStore implements GameStore {
   File _getStoreFile(Directory directory, String id) => File(normalize(join(directory.path, '$id.json')));
 
   @override
-  Iterable<String> get gameIds => _gamesDirectory.listSync().map((file) => basenameWithoutExtension(file.path));
+  Future<Iterable<String>> get gameIds async => _gamesDirectory.listSync().map((file) => basenameWithoutExtension(file.path));
 
   final _gamesCache = <String, Game>{};
+  final _subscriptions = <String, StreamSubscription<GameInfo>>{};
+
   void _cacheGame(String gameId, Game game, File file) {
     _gamesCache[gameId] = game;
-    game.updateStream.listen((_) {
-      if (file.existsSync() == false) throw ArgumentError('Tried to write $gameId to invalid file');
-      file.writeAsStringSync(game.info.jsonString);
+    final sub = game.updateStream.listen((_) async {
+      if (_subscriptions[gameId] == null) return;
+      if (await file.exists() == false) throw ArgumentError('Tried to write $gameId to invalid file');
+      await file.writeAsString(game.info.jsonString);
     });
+    _subscriptions[gameId] = sub;
   }
 
   @override
-  String createGame(Game game) {
+  Future<String> createGame(Game game) async {
     final gameId = Uuid().v4();
 
     final file = _getStoreFile(_gamesDirectory, gameId);
-    if (file.existsSync()) throw StateError('Game $gameId already exists');
+    if (await file.exists()) throw StateError('Game $gameId already exists');
 
-    file.createSync();
-    file.writeAsStringSync(game.info.jsonString);
+    await file.create();
+    await file.writeAsString(game.info.jsonString);
     _cacheGame(gameId, game, file);
 
     print('Wrote game file $gameId.json');
@@ -52,14 +57,14 @@ class JsonGameStore implements GameStore {
   }
 
   @override
-  Game? getGame(String gameId) {
+  Future<Game?> getGame(String gameId) async {
     final cached = _gamesCache[gameId];
     if (cached != null) return cached;
 
     final file = _getStoreFile(_gamesDirectory, gameId);
-    if (file.existsSync() == false) return null;
+    if (await file.exists() == false) return null;
 
-    final fileText = file.readAsStringSync();
+    final fileText = await file.readAsString();
     final json = jsonDecode(fileText);
 
     final game = Game.fromInfo(GameInfo.fromJsonString(json));
@@ -70,10 +75,19 @@ class JsonGameStore implements GameStore {
   }
 
   @override
-  void removeGame(String gameId) {
+  Future<void> removeGame(String gameId) async {
+    final sub = _subscriptions[gameId];
+    if (sub != null) {
+      await sub.cancel();
+      _subscriptions.remove(gameId);
+    }
+
+    final cached = _gamesCache[gameId];
+    if (cached != null) {
+      _gamesCache.remove(gameId);
+    }
+
     final file = _getStoreFile(_gamesDirectory, gameId);
-    if (file.existsSync() == false) return;
-    file.delete();
-    _gamesCache.remove(gameId);
+    if (await file.exists() == true) await file.delete();
   }
 }

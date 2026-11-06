@@ -3,16 +3,16 @@ typedef PlayerRecord = (String gameId, String playerId, String userId);
 class PlayerStore {
   final _playerRecords = <(String, String, String)>{};
 
-  void setPlayerRecord(String gameId, String playerId, String userId) =>
+  void setPlayerRecord(String gameId, String playerId, String userId) async =>
       _playerRecords.add((gameId, playerId, userId));
 
-  Iterable<PlayerRecord> getGameRecords(String gameId) => _playerRecords.where((record) => record.$1 == gameId); 
+  Future<Iterable<PlayerRecord>> getGameRecords(String gameId) async => _playerRecords.where((record) => record.$1 == gameId); 
 
-  PlayerRecord? getPlayerRecords(String playerId) =>
+  Future<PlayerRecord?> getPlayerRecord(String playerId) async =>
       _playerRecords.where((record) => record.$2 == playerId).singleOrNull;
 
-  Iterable<PlayerRecord> getUserRecords(String userId) =>
+  Future<Iterable<PlayerRecord>> getUserRecords(String userId) async =>
       _playerRecords.where((record) => record.$3 == userId);
 
-  void removeGameRecords(String gameId) => _playerRecords.removeWhere((record) => record.$1 == gameId);
+  Future<void> removeGameRecords(String gameId) async => _playerRecords.removeWhere((record) => record.$1 == gameId);
 }

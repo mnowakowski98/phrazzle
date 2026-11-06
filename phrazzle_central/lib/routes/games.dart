@@ -31,10 +31,10 @@ class Games {
 
   /// Get the game id from a game code
   @Route.get('/game/<gameCode>')
-  Response getGameId(Request _, String gameCode) {
+  Future<Response> getGameId(Request _, String gameCode) async {
     gameCode = gameCode.toLowerCase();
     final codeIds = <String, String>{};
-    codeIds.addEntries(gameStore.gameIds.map((id) => MapEntry(id.substring(0, 5), id)));
+    codeIds.addEntries((await gameStore.gameIds).map((id) => MapEntry(id.substring(0, 5), id)));
     final gameId = codeIds[gameCode];
     if (gameId == null) return Response.notFound(gameCode);
     return Response.ok(gameId);
@@ -42,16 +42,16 @@ class Games {
 
   // Get the game code from a game id
   @Route.get('/game/<gameId>/code')
-  Response getGameCode(Request _, String gameId) {
-    final game = gameStore.getGame(gameId);
+  Future<Response> getGameCode(Request _, String gameId) async {
+    final game = await gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
     return Response.ok(gameId.substring(0, 5));
   }
 
   /// Create a new game
   @Route.post('/game')
-  Response createGame(Request request) {
-    final gameId = gameStore.createGame(Game());
+  Future<Response> createGame(Request request) async {
+    final gameId = await gameStore.createGame(Game());
 
     print('Created game $gameId');
     return Response.ok(gameId);
@@ -59,8 +59,8 @@ class Games {
 
   /// Create a new player in an existing game
   @Route.post('/game/<gameId>/player/<userId>')
-  Response addPlayer(Request _, String gameId, String userId) {
-    final game = gameStore.getGame(gameId);
+  Future<Response> addPlayer(Request _, String gameId, String userId) async {
+    final game = await gameStore.getGame(gameId);
     if (game == null) {
       return Response.notFound(gameId);
     }
@@ -74,8 +74,8 @@ class Games {
 
   /// Join the game as an existing player
   @Route.get('/game/<gameId>/player/<playerId>')
-  FutureOr<Response> joinGame(Request req, String gameId, String playerId) {
-    final game = gameStore.getGame(gameId);
+  Future<Response> joinGame(Request req, String gameId, String playerId) async {
+    final game = await gameStore.getGame(gameId);
     if (game == null) {
       return Response.notFound(gameId);
     }
@@ -93,10 +93,10 @@ class Games {
     return webSocketHandler((channel, _) {
       clients[playerId] = Client.pending(channel);
 
-      channel.stream.listen((data) {
+      channel.stream.listen((data) async {
         // TODO: Parse out different message types eventually
         final user = User.fromJsonString(data);
-        if (user.id != playerStore.getPlayerRecords(playerId)?.$3) {
+        if (user.id != (await playerStore.getPlayerRecord(playerId))?.$3) {
           // TODO: Send a json close message
           channel.sink.close(1000, 'Incorrect user');
           return;
@@ -121,8 +121,8 @@ class Games {
 
   /// Remove an existing player by id
   @Route.delete('/game/<gameId>/player/<playerId>')
-  Response removePlayer(Request _, String gameId, String playerId) {
-    final game = gameStore.getGame(gameId);
+  Future<Response> removePlayer(Request _, String gameId, String playerId) async {
+    final game = await gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
 
     if (game.info.players.contains(playerId) == false) return Response.notFound(playerId);
@@ -135,7 +135,8 @@ class Games {
     game.removePlayer(playerId);
 
     if (game.info.players.isEmpty) {
-      gameStore.removeGame(gameId);
+      await gameStore.removeGame(gameId);
+      await playerStore.removeGameRecords(gameId);
       print('Removed $gameId due to lack of players');
     }
 
@@ -145,8 +146,8 @@ class Games {
 
   /// Start the game
   @Route.post('/game/<gameId>/start')
-  Response startGame(Request _, String gameId) {
-    final game = gameStore.getGame(gameId);
+  Future<Response> startGame(Request _, String gameId) async {
+    final game = await gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
 
     final started = game.start();
@@ -164,10 +165,10 @@ class Games {
 
   /// Create a new round in a game
   @Route.post('/game/<gameId>/round/<phrase>')
-  Response createRound(Request _, String gameId, String phrase) {
+  Future<Response> createRound(Request _, String gameId, String phrase) async {
     phrase = Uri.decodeComponent(phrase);
 
-    final game = gameStore.getGame(gameId);
+    final game = await gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
 
     final round = game.createRound(phrase);
@@ -178,8 +179,8 @@ class Games {
 
   /// Set a round in a game as current
   @Route.put('/game/<gameId>/round/<roundId>')
-  Response setCurrentRound(Request _, String gameId, String roundId) {
-    final game = gameStore.getGame(gameId);
+  Future<Response> setCurrentRound(Request _, String gameId, String roundId) async {
+    final game = await gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
 
     final round = game.info.rounds[roundId];
@@ -193,10 +194,10 @@ class Games {
 
   /// Add player phrase
   @Route.post('/game/<gameId>/player/<playerId>/phrase/<phrase>')
-  Response addSubPhrase(Request _, String gameId, String playerId, String phrase) {
+  Future<Response> addSubPhrase(Request _, String gameId, String playerId, String phrase) async {
     phrase = Uri.decodeComponent(phrase);
 
-    final game = gameStore.getGame(gameId);
+    final game = await gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
     if (game.info.isStarted == false) {
       return Response.badRequest(
@@ -223,8 +224,8 @@ class Games {
   /// Prevent player from entering more phrases
   /// End the game if all players are done
   @Route.put('/game/<gameId>/player/<playerId>/lock')
-  Response endEntry(Request _, String gameId, String playerId) {
-    final game = gameStore.getGame(gameId);
+  Future<Response> endEntry(Request _, String gameId, String playerId) async {
+    final game = await gameStore.getGame(gameId);
     if (game == null) return Response.notFound(gameId);
 
     if (game.info.players.contains(playerId) == false) return Response.notFound(playerId);
@@ -242,8 +243,9 @@ class Games {
     if (game.info.currentRound!.phraseGroups.values.every((phraseGroup) => phraseGroup.isLocked)) {
       game.end();
 
-      Timer(const Duration(seconds: 5), () {
-        gameStore.removeGame(gameId);
+      Timer(const Duration(seconds: 5), () async {
+        await gameStore.removeGame(gameId);
+        await playerStore.removeGameRecords(gameId);
       });
       print ('Ended game cause a round ended lmao');
     }

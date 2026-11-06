@@ -14,7 +14,7 @@ class Players {
 
   @Route.get('/player/<playerId>/user')
   Future<Response> getUser(Request _, String playerId) async {
-    final userRecord = playerStore.getPlayerRecords(playerId);
+    final userRecord = await playerStore.getPlayerRecord(playerId);
     if (userRecord == null) return Response.notFound(playerId);
     final userId = userRecord.$3;
     final user = await userStore.getUser(userId);
