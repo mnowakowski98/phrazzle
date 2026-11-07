@@ -31,7 +31,21 @@ class JsonGameStore implements GameStore {
   final _gamesCache = <String, Game>{};
   final _subscriptions = <String, StreamSubscription<GameInfo>>{};
 
+  Future<void> _uncacheGame(String gameId) async {
+    final sub = _subscriptions[gameId];
+    if (sub != null) {
+      await sub.cancel();
+      _subscriptions.remove(gameId);
+    }
+
+    final cached = _gamesCache[gameId];
+    if (cached != null) _gamesCache.remove(gameId);
+  }
+
   void _cacheGame(String gameId, Game game, File file) {
+    final cached = _gamesCache[gameId];
+    if (cached != null) return;
+
     _gamesCache[gameId] = game;
     final sub = game.updateStream.listen((_) async {
       if (_subscriptions[gameId] == null) return;
@@ -39,6 +53,8 @@ class JsonGameStore implements GameStore {
       await file.writeAsString(game.info.jsonString);
     });
     _subscriptions[gameId] = sub;
+
+    Timer(const Duration(minutes: 10), () => _uncacheGame(gameId));
   }
 
   @override
@@ -68,57 +84,33 @@ class JsonGameStore implements GameStore {
     final json = jsonDecode(fileText);
 
     final game = Game.fromInfo(GameInfo.fromJsonString(json));
-    _cacheGame(gameId, game, file);
+    if (game.info.isEnded == false) _cacheGame(gameId, game, file);
 
-    print('Cached game $gameId');
     return game;
   }
 
-  // Future<Map<String, Game>> getGames(Set<String> gameIds) {
-
-  // }
-
   @override
-  Future<void> disableGame(String gameId) async {
-    final sub = _subscriptions[gameId];
-    if (sub != null) {
-      await sub.cancel();
-      _subscriptions.remove(gameId);
+  Future<Map<String, Game>> getGames(Set<String> gameIds) async {
+    final games = <String, Game>{};
+    for (final gameId in gameIds) {
+      var game = _gamesCache[gameId];
+      if (game == null) {
+        final file = _getStoreFile(_gamesDirectory, gameId);
+        final jsonString = jsonDecode(await file.readAsString());
+        game = Game.fromInfo(GameInfo.fromJsonString(jsonString));
+        games[gameId] = game;
+        if (game.info.isEnded == false) _cacheGame(gameId, game, file);
+      }
     }
-
-    final file = _getStoreFile(_gamesDirectory, gameId);
-    Game? cached = _gamesCache[gameId];
-    if (cached != null) {
-      _gamesCache.remove(gameId);
-    }
-    
-    if (cached == null) {
-      final jsonString = await file.readAsString();
-      cached = Game.fromInfo(GameInfo.fromJsonString(jsonString));
-    }
-
-    await file.rename('${file.path}.disabled');
+    return games;
   }
+
 
   @override
   Future<void> removeGame(String gameId) async {
-    final sub = _subscriptions[gameId];
-    if (sub != null) {
-      await sub.cancel();
-      _subscriptions.remove(gameId);
-    }
+    await _uncacheGame(gameId);
 
     final file = _getStoreFile(_gamesDirectory, gameId);
-    Game? cached = _gamesCache[gameId];
-    if (cached != null) {
-      _gamesCache.remove(gameId);
-    }
-    
-    if (cached == null) {
-      final jsonString = await file.readAsString();
-      cached = Game.fromInfo(GameInfo.fromJsonString(jsonString));
-    }
-
     if (await file.exists() == true) await file.delete();
   }
 }

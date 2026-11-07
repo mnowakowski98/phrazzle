@@ -132,10 +132,10 @@ class Games {
     clients.remove(playerId);
 
     game.removePlayer(playerId);
+    playerStore.removePlayerRecord(playerId);
 
     if (game.info.players.isEmpty) {
       await gameStore.removeGame(gameId);
-      await playerStore.removeGameRecords(gameId);
       print('Removed $gameId due to lack of players');
     }
 
@@ -241,10 +241,6 @@ class Games {
 
     if (game.info.currentRound!.phraseGroups.values.every((phraseGroup) => phraseGroup.isLocked)) {
       game.end();
-
-      Timer(const Duration(seconds: 5), () async {
-        await gameStore.disableGame(gameId);
-      });
       print ('Ended game cause a round ended lmao');
     }
 
