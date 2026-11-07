@@ -3,8 +3,8 @@ import 'package:phrazzle_lib/phrazzle.dart';
 class PlayerStore {
   final _playerRecords = <PlayerRecord>{};
 
-  Future<void> setPlayerRecord(String gameId, String playerId, String userId) async =>
-      _playerRecords.add(PlayerRecord(gameId, playerId, userId));
+  Future<void> setPlayerRecord(PlayerRecord record) async =>
+      _playerRecords.add(PlayerRecord(record.gameId, record.playerId, record.userId));
 
   Future<Iterable<PlayerRecord>> getGameRecords(String gameId) async => _playerRecords.where((record) => record.gameId == gameId); 
 

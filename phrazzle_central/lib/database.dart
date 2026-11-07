@@ -11,24 +11,14 @@ class Users extends Table {
   TextColumn get name => text()();
 }
 
-class Games extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get uuid => text().unique()();
-}
-
-class Players extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get uuid => text().unique()();
-}
-
 class PlayerRecords extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get gameId => integer().references(Games, #id)();
-  IntColumn get playerId => integer().references(Players, #id)();
+  TextColumn get gameId => text()();
+  TextColumn get playerId => text().unique()();
   IntColumn get userId => integer().references(Users, #id)();
 }
 
-@DriftDatabase(tables: [Users, Games, Players, PlayerRecords])
+@DriftDatabase(tables: [Users, PlayerRecords])
 class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;

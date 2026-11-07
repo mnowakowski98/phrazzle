@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:phrazzle_central/stores/drift_player_store.dart';
 import 'package:phrazzle_central/stores/json_game_store.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
@@ -17,7 +18,6 @@ import 'package:phrazzle_central/routes/users.dart';
 import 'package:phrazzle_central/routes/players.dart';
 
 import 'package:phrazzle_central/stores/drift_user_store.dart';
-import 'package:phrazzle_central/stores/player_store.dart';
 
 final app = Router();
 
@@ -28,16 +28,17 @@ void main(List<String> arguments) async {
   } on MetadataServerException {
     print('Unable to determine cloud project');
   }
+
+  final database = AppDatabase();
   
-  // final gameStore = GameStore();
   final gameStore = JsonGameStore('./store/');
-  final userStore = DriftUserStore(AppDatabase());
-  final playerStore = PlayerStore();
+  final userStore = DriftUserStore(database);
+  final playerStore = DriftPlayerStore(database);
 
   final cascade = Cascade()
     .add(Games(gameStore, playerStore).router.call)
     .add(Users(userStore).router.call)
-    .add(Players(playerStore, userStore).router.call)
+    .add(Players(gameStore, playerStore, userStore).router.call)
     .add((Request req) {
       final urlString = req.url.toString();
       if (urlString != 'healthz' && urlString != 'health') return Response.notFound(null);

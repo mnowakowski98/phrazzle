@@ -66,7 +66,7 @@ class Games {
     }
 
     final playerId = game.addPlayer();
-    playerStore.setPlayerRecord(gameId, playerId, userId);
+    playerStore.setPlayerRecord(PlayerRecord(gameId, playerId, userId));
 
     print('Created player $playerId in $gameId with $userId');
     return Response.ok(playerId);
