@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:phrazzle_central/database.steps.dart';
 
 part 'database.g.dart';
 
@@ -21,7 +22,12 @@ class PlayerRecords extends Table {
 @DriftDatabase(tables: [Users, PlayerRecords])
 class AppDatabase extends _$AppDatabase {
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(onUpgrade: stepByStep(from1To2: ((m, schema) async {
+    await m.createAll();
+  })));
 
   static QueryExecutor _openConnection() => NativeDatabase.createInBackground(File('./store/database.sqlite'));
 

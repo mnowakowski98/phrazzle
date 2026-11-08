@@ -9,5 +9,10 @@ part of 'players.dart';
 Router _$PlayersRouter(Players service) {
   final router = Router();
   router.add('GET', r'/player/<playerId>/user', service.getUser);
+  router.add(
+    'GET',
+    r'/player/user/<userId>/game/active',
+    service.getActiveGames,
+  );
   return router;
 }
