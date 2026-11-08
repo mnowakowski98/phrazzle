@@ -48,7 +48,6 @@ class Game {
   var _sendUpdates = false;
   StreamController<GameInfo>? _updateController;
 
-  @JsonKey(includeToJson: false)
   Stream<GameInfo> get updateStream {
     _updateController ??= StreamController<GameInfo>.broadcast(
       onListen: () => _sendUpdates = true,
@@ -57,7 +56,6 @@ class Game {
     return _updateController!.stream;
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   static const gameStartedMessage = 'Game already started';
 
   var _isStarted = false;
@@ -128,7 +126,6 @@ class Game {
     if (_sendUpdates) _updateController?.add(info);
   }
 
-  @JsonKey(includeToJson: false)
   Round? get _currentRound => _rounds[_currentRoundId];
 
   String addPhrase(String playerId, String phrase) {
