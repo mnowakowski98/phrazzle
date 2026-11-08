@@ -39,7 +39,7 @@ class _ConnectedGameState extends State<ConnectedGame> {
     setState(() => gameCode = gameCodeResponse.body);
   }
 
-  void getUsers(Set<String> playerIds) async {
+  void updateUsers(Set<String> playerIds) async {
     final newUsers = <String, User>{};
     for (final playerId in playerIds) {
       if (playerUsers.containsKey(playerId)) continue;
@@ -47,7 +47,11 @@ class _ConnectedGameState extends State<ConnectedGame> {
       final user = User.fromJsonString(userResponse.body);
       newUsers[playerId] = user;
     }
-    setState(() => playerUsers.addAll(newUsers));
+    
+    setState(() {
+      playerUsers.removeWhere((key, _) => playerIds.contains(key) == false);
+      playerUsers.addAll(newUsers);
+    });
   }
 
   void connect() async {
@@ -61,9 +65,7 @@ class _ConnectedGameState extends State<ConnectedGame> {
 
     channel.stream.listen((data) => setState(() {
       final game = Phrazzle.fromInfo(GameInfo.fromJsonString(data));
-      if (game.info.players.length > playerUsers.length) {
-        getUsers(game.info.players);
-      }
+      updateUsers(game.info.players);
       setState(() => this.game = game);
     }));
 
