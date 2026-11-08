@@ -80,10 +80,7 @@ class JsonGameStore implements GameStore {
     final file = _getStoreFile(_gamesDirectory, gameId);
     if (await file.exists() == false) return null;
 
-    final fileText = await file.readAsString();
-    final json = jsonDecode(fileText);
-
-    final game = Game.fromInfo(GameInfo.fromJsonString(json));
+    final game = Game.fromInfo(GameInfo.fromJsonString(await file.readAsString()));
     if (game.info.isEnded == false) _cacheGame(gameId, game, file);
 
     return game;
@@ -96,8 +93,7 @@ class JsonGameStore implements GameStore {
       var game = _gamesCache[gameId];
       if (game == null) {
         final file = _getStoreFile(_gamesDirectory, gameId);
-        final jsonString = jsonDecode(await file.readAsString());
-        game = Game.fromInfo(GameInfo.fromJsonString(jsonString));
+        game = Game.fromInfo(GameInfo.fromJsonString(await file.readAsString()));
         games[gameId] = game;
         if (game.info.isEnded == false) _cacheGame(gameId, game, file);
       }
