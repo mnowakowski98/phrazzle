@@ -5,6 +5,7 @@ import 'package:phrazzle_central/stores/player_store.dart';
 import 'package:phrazzle_central/stores/user_store.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
+import 'package:phrazzle_lib/phrazzle.dart';
 
 part 'players.g.dart';
 
@@ -26,20 +27,20 @@ class Players {
     return Response.ok(user.jsonString);
   }
 
-  @Route.get('/player/user/<userId>/game/active')
-  Future<Response> getActiveGames(Request _, String userId) async {
+  @Route.get('/player/user/<userId>/active')
+  Future<Response> getActiveRecords(Request _, String userId) async {
     final playerRecords = await playerStore.getUserRecords(userId);
     if (playerRecords.isEmpty) return Response.notFound(userId);
 
-    final activeGameIds = <String>[];
+    final activeRecords = <PlayerRecord>[];
     for (final record in playerRecords) {
       final game = await gameStore.getGame(record.gameId);
       if (game == null || game.info.isEnded) continue;
-      activeGameIds.add(record.gameId);
+      activeRecords.add(record);
     }
 
     return Response.ok(
-      jsonEncode(activeGameIds),
+      jsonEncode(activeRecords),
       headers: {'content-type': 'application/json'},
     );
   } 

@@ -125,15 +125,18 @@ class _AppState extends State<App> {
     });
   }
 
-  void joinConnectedGame(String gameCode) async {
+  void joinConnectedGame(String gameCode, [String? playerId]) async {
     final user = this.user;
     if (user == null) return;
 
     final gameIdResponse = await http.get(Uri.parse('${Env.centralUrl}/game/code/$gameCode'));
     final gameId = gameIdResponse.body;
-    final createPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/player/${user.id}'));
-    final playerId = createPlayerResponse.body;
 
+    if (playerId == null) {
+      final createPlayerResponse = await http.post(Uri.parse('${Env.centralUrl}/game/$gameId/player/${user.id}'));
+      playerId = createPlayerResponse.body;
+    }
+    
     setState(() {
       connectedGameId = gameId;
       connectedPlayerId = playerId;

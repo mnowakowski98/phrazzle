@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phrazzle/menu/ongoing_games.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class MainMenu extends StatefulWidget {
@@ -7,7 +8,7 @@ class MainMenu extends StatefulWidget {
 
   final void Function() startLocalGame;
   final void Function() startConnectedGame;
-  final void Function(String gameCode) joinConnectedGame;
+  final void Function(String gameCode, [String? playerId]) joinConnectedGame;
   final void Function()? logout;
 
   const MainMenu(
@@ -39,68 +40,88 @@ class _MainMenuState extends State<MainMenu> {
     super.dispose();
   }
 
+  final tabs = [];
+
   @override
   Widget build(BuildContext context) {   
       final user = widget.user;
       final logout = widget.logout;
 
-      return Column(
-        children: [
-          if (user.name.isNotEmpty) Column(children: [
-            Text(user.name, style: TextStyle(color: Colors.teal, fontSize: 28, fontWeight: .bold),),
-            Divider(),
-          ],),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: .center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(onPressed: widget.startLocalGame, child: Text('Single player')),
-                ),
-                if (user.isUser) Column(children: [
-                  Divider(),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ElevatedButton(onPressed: widget.startConnectedGame, child: Text('Start new game')),
-                  ),
-                  Text('or'),
-                  Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Focus(
-                        child: TextField(
-                          controller: _gameCodeController,
-                          decoration: InputDecoration(
-                            hintText: 'Enter a game code',
-                          ),
-                          inputFormatters: [
-                            TextInputFormatter.withFunction((oldValue, newValue) {
-                              if (newValue.text.length > 5) return oldValue;
-                              return newValue.copyWith(
-                                text: newValue.text.toUpperCase(),
-                              );
-                            }),
-                          ],
-                          style: TextStyle(color: Colors.cyan),
-                        ),
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ElevatedButton(onPressed: gameCode.isNotEmpty ? () => widget.joinConnectedGame(gameCode) : null, child: Text('Join game')),
-                  ),
-                  Divider(),
-                ],),
-              ],
+      return DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            if (user.name.isNotEmpty) Text(user.name, style: TextStyle(color: Colors.teal, fontSize: 28, fontWeight: .bold),),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TabBar(tabs: [Text('Start'), Text('Active')]),
             ),
-          ),
-          if (widget.logout != null) Column(
-            children: [
-              Divider(),
-              OutlinedButton(onPressed: logout, child: Text(user.isUser ? 'Logout' : 'Login', style: TextStyle(color: user.isUser ? Colors.orange : Colors.green),),)
-            ],
-          ),
-        ],
+            Expanded(
+              child: TabBarView(
+                children: [Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ElevatedButton(onPressed: widget.startLocalGame, child: Text('Single player')),
+                    ),
+                    Divider(),
+                    if (user.isUser) Column(children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ElevatedButton(onPressed: widget.startConnectedGame, child: Text('Host')),
+                      ),
+                      Text('or'),
+                      Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            children: [
+                              Text('Enter a game code', style: TextStyle(color: Colors.teal, fontSize: 16),),
+                              Focus(
+                                child: TextField(
+                                  controller: _gameCodeController,
+                                  textAlign: .center,
+                                  inputFormatters: [
+                                    TextInputFormatter.withFunction((oldValue, newValue) {
+                                      if (newValue.text.length > 5) return oldValue;
+                                      return newValue.copyWith(
+                                        text: newValue.text.toUpperCase(),
+                                      );
+                                    }),
+                                  ],
+                                  style: TextStyle(color: Colors.cyan),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(
+                              onPressed: gameCode.isNotEmpty
+                                  ? () => widget.joinConnectedGame(gameCode)
+                                  : null,
+                              child: Text('Join'),
+                            ),
+                      ),
+                    ],),
+                  ],
+                ),
+                OngoingGames(user, (gameCode, playerId) => widget.joinConnectedGame(gameCode, playerId)),
+              ]),
+            ),
+          if (widget.logout != null)
+            Divider(),
+            OutlinedButton(
+              onPressed: logout,
+              child: Text(
+                user.isUser ? 'Logout' : 'Login',
+                style: TextStyle(
+                  color: user.isUser ? Colors.orange : Colors.green,
+                ),
+              ),
+            ),
+          ],
+        ),
       );
   }
 }
