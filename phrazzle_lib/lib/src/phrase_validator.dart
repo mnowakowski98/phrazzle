@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:json_annotation/json_annotation.dart';
 
 part 'phrase_validator.g.dart';
@@ -12,6 +14,9 @@ class PhraseValidationInfo {
 
   Map<String, dynamic> toJson() => _$PhraseValidationInfoToJson(this);
   factory PhraseValidationInfo.fromJson(json) => _$PhraseValidationInfoFromJson(json);
+
+  String get jsonString => jsonEncode(toJson());
+  factory PhraseValidationInfo.fromJsonString(String jsonString) => PhraseValidationInfo.fromJson(jsonDecode(jsonString));
 }
 
 class PhraseValidator {
