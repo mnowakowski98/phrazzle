@@ -205,19 +205,24 @@ class Games {
       );
     }
 
-    final roundId = game.info.currentRoundId;
-    if (roundId == null) {
+    final round = game.info.currentRound;
+    if (round == null) {
       return Response.badRequest(
         body: jsonEncode({'gameId': gameId, 'message': 'Game not started yet'}),
         headers: {'content-type': 'application/json'}
       );
     }
 
-    if (game.info.players.contains(playerId) == false) return Response.notFound(playerId);
+    final phraseGroup = round.phraseGroups[playerId]; 
+    if (phraseGroup == null) return Response.notFound(playerId);
 
-    phrase = game.addPhrase(playerId, phrase);
-    print('Added $phrase to player $playerId');
-    return Response.ok(phrase);
+    final rootPhrase = phraseGroup.phrases.isNotEmpty ? phraseGroup.phrases.last : phraseGroup.initialPhrase;
+    final phraseInfo = PhraseValidator.getPhraseMatchingInformation(rootPhrase, phrase);
+    if (phraseInfo.isValid == true) {
+      phrase = game.addPhrase(playerId, phrase);
+      print('Added $phrase to player $playerId');
+    }
+    return Response.ok(phraseInfo.jsonString);
   }
 
   /// Prevent player from entering more phrases

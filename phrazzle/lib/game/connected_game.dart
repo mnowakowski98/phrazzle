@@ -5,7 +5,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:phrazzle/game/game.dart';
-import 'package:phrazzle_lib/phrazzle.dart' show GameInfo, Phrazzle, User;
+import 'package:phrazzle_lib/phrazzle.dart' show GameInfo, PhraseValidationInfo, Phrazzle, User;
 
 /// State manager for games that connect to the central app
 class ConnectedGame extends StatefulWidget {
@@ -98,8 +98,34 @@ class _ConnectedGameState extends State<ConnectedGame> {
     await http.put(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/round/$roundId'));
   }
 
-  void enterPhrase(String phrase) async {
-    await http.post(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/player/${widget.playerId}/phrase/$phrase'));
+  void enterPhrase(BuildContext context, String phrase) async {
+    final response = await http.post(Uri.parse('${Env.centralUrl}/game/${widget.gameId}/player/${widget.playerId}/phrase/$phrase'));
+    if (context.mounted == false) return;
+
+    final validationInfo = PhraseValidationInfo.fromJsonString(response.body);
+    final toast = ScaffoldMessenger.of(context);
+
+    final toastPhrase = phrase.length <= 10 ? '"$phrase"' : '"${phrase.substring(0, 10)}..."';
+
+    if (validationInfo.isValid) {
+      toast.showSnackBar(
+        SnackBar(
+          behavior: .floating,
+          backgroundColor: Colors.lightGreen,
+          content: Text(
+            'Submitted $toastPhrase',
+          ),
+        ),
+      );
+    } else {
+      toast.showSnackBar(
+        SnackBar(
+          behavior: .floating,
+          backgroundColor: Colors.red,
+          content: Text('Rejected $toastPhrase'),
+        ),
+      );
+    }
   }
 
   void lockEntry() async {
@@ -131,7 +157,7 @@ class _ConnectedGameState extends State<ConnectedGame> {
             startGame: startGame,
             leaveGame: disconnect,
             startRound: startRound,
-            enterPhrase: enterPhrase,
+            enterPhrase: (phrase) => enterPhrase(context, phrase),
             endRound: lockEntry,
             child: game.info.isStarted == false ? Column(children: [
               Text('Game code', style: TextStyle(color: Colors.teal, fontSize: 20),),
