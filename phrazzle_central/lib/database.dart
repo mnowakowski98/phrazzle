@@ -29,6 +29,8 @@ class AppDatabase extends _$AppDatabase {
     await m.createAll();
   })));
 
+  // Not sure if this needs to be here for the migration tool,
+  // check next time it needs to be used
   static QueryExecutor _openConnection() => NativeDatabase.createInBackground(File('./store/database.sqlite'));
 
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());

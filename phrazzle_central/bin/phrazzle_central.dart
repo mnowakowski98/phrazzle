@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:drift/drift.dart';
+import 'package:drift_libsql/drift_libsql.dart';
 import 'package:phrazzle_central/stores/drift_player_store.dart';
 import 'package:phrazzle_central/stores/json_game_store.dart';
 import 'package:shelf/shelf.dart';
@@ -22,14 +24,35 @@ import 'package:phrazzle_central/stores/drift_user_store.dart';
 final app = Router();
 
 void main(List<String> arguments) async {
+  final forceLocalMode = bool.tryParse(const String.fromEnvironment('FORCE_LOCAL')) ?? false;
+
   String? googleCloudProjectId;
-  try {
-    googleCloudProjectId = await projectIdFromMetadataServer();
-  } on MetadataServerException {
-    print('Unable to determine cloud project');
+  if (forceLocalMode == false) {
+    try {
+      googleCloudProjectId = await projectIdFromMetadataServer();
+    } on MetadataServerException {
+      print('Unable to determine cloud project');
+    }
   }
 
-  final database = AppDatabase();
+  final isRunningOnCloud = forceLocalMode == false && googleCloudProjectId != null;
+
+  QueryExecutor? executor;
+
+  if (isRunningOnCloud) {
+    const syncUrlKey = 'DATABASE_SYNC_URL';
+    const tokenKey = 'DATABASE_TOKEN';
+    final syncUrl = Platform.environment[syncUrlKey] ?? const String.fromEnvironment(syncUrlKey);
+    final token = Platform.environment[tokenKey] ?? const String.fromEnvironment(tokenKey);
+    executor = DriftLibsqlDatabase(
+      syncUrl,
+      authToken: token,
+      readYourWrites: true,
+      syncIntervalSeconds: 3,
+    );
+  }
+
+  final database = AppDatabase(executor);
   
   final gameStore = JsonGameStore('./store/');
   final userStore = DriftUserStore(database);
@@ -50,10 +73,15 @@ void main(List<String> arguments) async {
       .addMiddleware(createLoggingMiddleware(projectId: googleCloudProjectId))
       .addHandler(cascade.handler);
 
-  if (googleCloudProjectId != null) {
+  if (isRunningOnCloud) {
     await serveHandler(pipeline);
   } else {
-    final port = int.tryParse(String.fromEnvironment('PORT')) ?? 80;
+    const portKey = 'PORT';
+    final port =
+        int.tryParse(
+          Platform.environment[portKey] ?? String.fromEnvironment(portKey),
+        ) ??
+        80;
     print('Serving locally on $port');
     await serve(pipeline, InternetAddress.anyIPv4, port);
   }
