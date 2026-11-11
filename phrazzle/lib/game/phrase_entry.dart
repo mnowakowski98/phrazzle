@@ -76,9 +76,6 @@ class _PhraseEntryState extends State<PhraseEntry> {
                     hintStyle: TextStyle(color: Colors.teal)
                   ),
                   onChanged: (value) => setState(() => phrase = value),
-                  inputFormatters: [
-                    // TextInputFormatter.withFunction((oldValue, newValue) => newValue.text.length <= rootPhrase.length ? newValue : oldValue)
-                  ],
                 ),
                 onKeyEvent: (node, event) {
                   if (event is KeyUpEvent || event.logicalKey != .enter) {
