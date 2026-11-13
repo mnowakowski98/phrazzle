@@ -9,7 +9,9 @@
             "program": "bin/phrazzle_central.dart",
             "toolArgs": [
                 "--define=PORT=3000",
-                "--define=FORCE_LOCAL=true"
+                "--define=TRY_CLOUD=false",
+                "--define=DATABASE_URL=http://localhost:8080",
+                "--define=LIB_DIRECTORY_PATH=./.dart_tool/lib/",
             ]
         },
         {

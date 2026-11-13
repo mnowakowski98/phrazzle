@@ -1,0 +1,12 @@
+name: drift_libsql_hack
+publish_to: 'none'
+description: "De-fluttered copy of https://github.com/dikatok/drift_libsql"
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  drift: ^2.26.1
+  libsql_dart_hack:
+    path: ../libsql_dart/

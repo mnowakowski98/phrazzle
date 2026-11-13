@@ -1,20 +1,36 @@
 FROM dart:stable AS build
 
+RUN apt-get update && apt-get install -y curl build-essential && rm -rf /var/lib/apt/lists/*
+
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:$PATH
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+RUN rustup install 1.94
+
 WORKDIR /app
+COPY ./libsql_dart ./libsql_dart
+COPY ./drift_libsql ./drift_libsql
 COPY ./phrazzle_lib ./phrazzle_lib
 COPY ./phrazzle_central ./phrazzle_central
 
+WORKDIR /app/libsql_dart
+RUN dart pub get --no-example
+
+WORKDIR /app/drift_libsql
+RUN dart pub get --no-example
+
 WORKDIR /app/phrazzle_lib
-RUN dart pub get
+RUN dart pub get --no-example
 
 WORKDIR /app/phrazzle_central
-RUN dart pub get
+RUN dart pub get --no-example
 RUN dart build cli -t bin/phrazzle_central.dart -o /app/server
 
 FROM scratch
 COPY --from=build /runtime/ /
 COPY --from=build /app/server/bundle/ /app/
 
-# Start server.
 EXPOSE 80
 CMD ["/app/bin/phrazzle_central"]

@@ -2,9 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:drift_libsql/drift_libsql.dart';
-import 'package:phrazzle_central/stores/drift_player_store.dart';
-import 'package:phrazzle_central/stores/json_game_store.dart';
+import 'package:drift_libsql_hack/drift_libsql.dart';
+
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_cors_headers/shelf_cors_headers.dart';
@@ -19,15 +18,17 @@ import 'package:phrazzle_central/routes/games.dart';
 import 'package:phrazzle_central/routes/users.dart';
 import 'package:phrazzle_central/routes/players.dart';
 
+import 'package:phrazzle_central/stores/drift_player_store.dart';
+import 'package:phrazzle_central/stores/json_game_store.dart';
 import 'package:phrazzle_central/stores/drift_user_store.dart';
 
 final app = Router();
 
 void main(List<String> arguments) async {
-  final forceLocalMode = bool.tryParse(const String.fromEnvironment('FORCE_LOCAL')) ?? false;
+  final tryCloud = bool.tryParse(const String.fromEnvironment('TRY_CLOUD')) ?? true;
 
   String? googleCloudProjectId;
-  if (forceLocalMode == false) {
+  if (tryCloud) {
     try {
       googleCloudProjectId = await projectIdFromMetadataServer();
     } on MetadataServerException {
@@ -35,18 +36,23 @@ void main(List<String> arguments) async {
     }
   }
 
-  final isRunningOnCloud = forceLocalMode == false && googleCloudProjectId != null;
+  final isRunningOnCloud = tryCloud == true && googleCloudProjectId != null;
 
   QueryExecutor? executor;
 
-  if (isRunningOnCloud) {
-    const syncUrlKey = 'DATABASE_SYNC_URL';
-    const tokenKey = 'DATABASE_TOKEN';
-    final syncUrl = Platform.environment[syncUrlKey] ?? const String.fromEnvironment(syncUrlKey);
-    final token = Platform.environment[tokenKey] ?? const String.fromEnvironment(tokenKey);
+  const databaseUrlKey = 'DATABASE_URL';
+  const databaseTokenKey = 'DATABASE_TOKEN';
+  final databaseUrl = Platform.environment[databaseUrlKey] ?? const String.fromEnvironment(databaseUrlKey, defaultValue: 'libsql://phrazzledev-nowakowskim.aws-us-east-1.turso.io');
+  final databaseToken = Platform.environment[databaseTokenKey] ?? const String.fromEnvironment(databaseTokenKey);
+
+  const libDirectoryPathKey = 'LIB_DIRECTORY_PATH';
+  const libDirectoryPath = String.fromEnvironment(libDirectoryPathKey);
+
+  if (databaseUrl.isNotEmpty) {
     executor = DriftLibsqlDatabase(
-      syncUrl,
-      authToken: token,
+      databaseUrl,
+      libDirectoryPath,
+      authToken: databaseToken.isNotEmpty ? databaseToken : null,
       readYourWrites: true,
       syncIntervalSeconds: 3,
     );

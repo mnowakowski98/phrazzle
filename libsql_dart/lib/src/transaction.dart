@@ -1,0 +1,65 @@
+import 'package:libsql_dart_hack/src/helpers.dart';
+import 'package:libsql_dart_hack/src/rust/api/transaction.dart';
+import 'package:libsql_dart_hack/src/rust/utils/params.dart';
+import 'package:libsql_dart_hack/src/rust/utils/return_value.dart';
+
+class Transaction {
+  Transaction(this.inner);
+
+  final LibsqlTransaction inner;
+
+  Future<List<Map<String, dynamic>>> query(
+    String sql, {
+    Map<String, dynamic>? named,
+    List<dynamic>? positional,
+  }) async {
+    final res = await inner.query(
+      sql: sql,
+      parameters: LibsqlParams(
+        named: named?.map((k, v) => MapEntry(k, toLibsqlValue(v))),
+        positional: positional?.map(toLibsqlValue).toList(),
+      ),
+    );
+    return res.rows
+        .map(
+          (row) => Map.fromEntries(
+            row.entries.map(
+              (entry) => MapEntry(
+                entry.key,
+                entry.value.mapOrNull(
+                  integer: (integer) => integer.field0,
+                  real: (real) => real.field0,
+                  text: (text) => text.field0,
+                  blob: (blob) => blob.field0,
+                  null_: (_) => null,
+                ),
+              ),
+            ),
+          ),
+        )
+        .toList();
+  }
+
+  Future<int> execute(
+    String sql, {
+    Map<String, dynamic>? named,
+    List<dynamic>? positional,
+  }) async {
+    final res = await inner.execute(
+      sql: sql,
+      parameters: LibsqlParams(
+        named: named?.map((k, v) => MapEntry(k, toLibsqlValue(v))),
+        positional: positional?.map(toLibsqlValue).toList(),
+      ),
+    );
+    return res.rowsAffected.toInt();
+  }
+
+  Future<void> commit() async {
+    await inner.commit();
+  }
+
+  Future<void> rollback() async {
+    await inner.rollback();
+  }
+}

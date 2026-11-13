@@ -1,0 +1,16 @@
+[package]
+edition = "2024"
+name = "libsql_dart"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+name = "libsql_dart"
+
+[dependencies]
+flutter_rust_bridge = "=2.13.0"
+hyper-rustls = { version = "0.25", features = ["webpki-roots"] }
+libsql = "0.9.30"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }

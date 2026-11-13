@@ -19,8 +19,9 @@ dependencies:
   google_cloud_shelf: ^0.6.0+2
   uuid: ^4.6.0
   drift: ^2.35.3
-  sqlite3: ^3.8.0
-  drift_libsql: ^0.1.0
+  sqlite3: ^3.5.2
+  drift_libsql_hack:
+    path: ../drift_libsql/
 
 dev_dependencies:
   build_runner: ^2.15.0

@@ -4,3 +4,6 @@
 
 store/
 store/*
+
+build/
+.buildlog/
