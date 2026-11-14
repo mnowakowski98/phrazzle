@@ -38,27 +38,31 @@ void main(List<String> arguments) async {
 
   final isRunningOnCloud = tryCloud == true && googleCloudProjectId != null;
 
-  QueryExecutor? executor;
-
   const databaseUrlKey = 'DATABASE_URL';
   const databaseTokenKey = 'DATABASE_TOKEN';
-  final databaseUrl = Platform.environment[databaseUrlKey] ?? const String.fromEnvironment(databaseUrlKey, defaultValue: 'libsql://phrazzledev-nowakowskim.aws-us-east-1.turso.io');
+  final databaseUrl = Platform.environment[databaseUrlKey] ?? const String.fromEnvironment(databaseUrlKey);
   final databaseToken = Platform.environment[databaseTokenKey] ?? const String.fromEnvironment(databaseTokenKey);
 
   const libDirectoryPathKey = 'LIB_DIRECTORY_PATH';
   const libDirectoryPath = String.fromEnvironment(libDirectoryPathKey);
 
-  if (databaseUrl.isNotEmpty) {
-    executor = DriftLibsqlDatabase(
-      databaseUrl,
-      libDirectoryPath,
-      authToken: databaseToken.isNotEmpty ? databaseToken : null,
-      readYourWrites: true,
-      syncIntervalSeconds: 3,
-    );
-  }
+  // Libsql connection drops quickly.
+  // Since the connection is only opened once per database
+  // database needs to be recreated per request.
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
-  final database = AppDatabase(executor);
+  AppDatabase database() {
+    QueryExecutor? executor;
+    if (databaseUrl.isNotEmpty) {
+      executor = DriftLibsqlDatabase(
+        databaseUrl,
+        libDirectoryPath,
+        authToken: databaseToken.isNotEmpty ? databaseToken : null,
+      );
+    }
+
+    return AppDatabase(executor);
+  }
   
   final gameStore = JsonGameStore('./store/');
   final userStore = DriftUserStore(database);
