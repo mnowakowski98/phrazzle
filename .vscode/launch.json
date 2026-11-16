@@ -11,7 +11,7 @@
                 "--define=PORT=3000",
                 "--define=TRY_CLOUD=false",
                 "--define=DATABASE_URL=http://localhost:8080",
-                "--define=LIB_DIRECTORY_PATH=./.dart_tool/lib/",
+                "--define=_LIB_DIRECTORY_PATH=./.dart_tool/lib/",
             ]
         },
         {

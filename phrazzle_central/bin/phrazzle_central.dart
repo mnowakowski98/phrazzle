@@ -43,8 +43,8 @@ void main(List<String> arguments) async {
   final databaseUrl = Platform.environment[databaseUrlKey] ?? const String.fromEnvironment(databaseUrlKey);
   final databaseToken = Platform.environment[databaseTokenKey] ?? const String.fromEnvironment(databaseTokenKey);
 
-  const libDirectoryPathKey = 'LIB_DIRECTORY_PATH';
-  const libDirectoryPath = String.fromEnvironment(libDirectoryPathKey);
+  const libDirectoryPathKey = '_LIB_DIRECTORY_PATH';
+  final libDirectoryPath = Platform.environment[libDirectoryPathKey] ?? const String.fromEnvironment(libDirectoryPathKey);
 
   // Libsql connection drops quickly.
   // Since the connection is only opened once per database

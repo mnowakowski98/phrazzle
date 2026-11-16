@@ -15,22 +15,23 @@ COPY ./drift_libsql ./drift_libsql
 COPY ./phrazzle_lib ./phrazzle_lib
 COPY ./phrazzle_central ./phrazzle_central
 
-WORKDIR /app/libsql_dart
-RUN dart pub get --no-example
-
-WORKDIR /app/drift_libsql
-RUN dart pub get --no-example
-
-WORKDIR /app/phrazzle_lib
-RUN dart pub get --no-example
-
 WORKDIR /app/phrazzle_central
 RUN dart pub get --no-example
-RUN dart build cli -t bin/phrazzle_central.dart -o /app/server
+RUN dart build cli --verbose -t bin/phrazzle_central.dart -o /app/server
 
+RUN LIBGCC=$(find / -name libgcc_s.so.1 -path '*lib*' | head -n 1) \
+    && mkdir -p /out$(dirname $LIBGCC) \
+    && cp $LIBGCC /out$LIBGCC
+
+# FROM debian:bookworm-slim
 FROM scratch
-COPY --from=build /runtime/ /
-COPY --from=build /app/server/bundle/ /app/
 
-EXPOSE 80
+ENV _LIB_DIRECTORY_PATH=/app/lib/
+
+COPY --from=build /runtime/ /
+COPY --from=build /out/usr/ /
+COPY --chmod=+x --from=build /app/server/bundle/ /app/
+
+ARG PORT
+EXPOSE $PORT
 CMD ["/app/bin/phrazzle_central"]

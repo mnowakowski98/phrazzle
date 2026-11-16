@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:libsql_dart_hack/src/helpers.dart';
 import 'package:libsql_dart_hack/src/rust/api/api.dart' as libsql;
