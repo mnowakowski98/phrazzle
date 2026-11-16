@@ -176,6 +176,11 @@ final class _PragmaVersionDelegate extends DynamicVersionDelegate {
 
   @override
   Future<void> setSchemaVersion(int version) async {
-    await delegate._client.execute('pragma user_version = $version;');
+    return;
+    // TODO: Renable user_version or migrate migrations (... words man)
+    // Don't do this for now, turso blocks all pragma statements
+    // Not sure if it affects migrations but too lazy to test
+    // Also been on setting up a persistance layer for too long
+    //await delegate._client.execute('pragma user_version = $version;');
   }
 }
