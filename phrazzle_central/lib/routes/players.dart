@@ -5,7 +5,6 @@ import 'package:phrazzle_central/stores/player_store.dart';
 import 'package:phrazzle_central/stores/user_store.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
-import 'package:phrazzle_lib/phrazzle.dart';
 
 part 'players.g.dart';
 
@@ -29,15 +28,11 @@ class Players {
 
   @Route.get('/player/user/<userId>/active')
   Future<Response> getActiveRecords(Request _, String userId) async {
-    final playerRecords = await playerStore.getUserRecords(userId);
-    if (playerRecords.isEmpty) return Response.notFound(userId);
+    final user = await userStore.getUser(userId);
+    if (user == null) return Response.notFound(userId);
 
-    final activeRecords = <PlayerRecord>[];
-    for (final record in playerRecords) {
-      final game = await gameStore.getGame(record.gameId);
-      if (game == null || game.info.isEnded) continue;
-      activeRecords.add(record);
-    }
+    final playerRecords = await playerStore.getUserRecords(userId);
+    final activeRecords = await gameStore.getGames(Set.from(playerRecords.map((record) => record.gameId)));
 
     return Response.ok(
       jsonEncode(activeRecords),

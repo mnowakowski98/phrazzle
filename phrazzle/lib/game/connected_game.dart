@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:phrazzle/env.dart';
 
@@ -5,7 +7,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:phrazzle/game/game.dart';
-import 'package:phrazzle_lib/phrazzle.dart' show GameInfo, PhraseValidationInfo, Phrazzle, User;
+import 'package:phrazzle_lib/phrazzle.dart' show GameInfo, PhraseValidationInfo, Phrazzle, PlayerRecord, User;
 
 /// State manager for games that connect to the central app
 class ConnectedGame extends StatefulWidget {
@@ -39,21 +41,6 @@ class _ConnectedGameState extends State<ConnectedGame> {
     setState(() => gameCode = gameCodeResponse.body);
   }
 
-  void updateUsers(Set<String> playerIds) async {
-    final newUsers = <String, User>{};
-    for (final playerId in playerIds) {
-      if (playerUsers.containsKey(playerId)) continue;
-      final userResponse = await http.get(Uri.parse('${Env.centralUrl}/player/$playerId/user'));
-      final user = User.fromJsonString(userResponse.body);
-      newUsers[playerId] = user;
-    }
-    
-    setState(() {
-      playerUsers.removeWhere((key, _) => playerIds.contains(key) == false);
-      playerUsers.addAll(newUsers);
-    });
-  }
-
   void connect() async {
     final channel = WebSocketChannel.connect(Uri.parse('${Env.gameUrl}/game/${widget.gameId}/player/${widget.playerId}'));
     try {
@@ -63,11 +50,28 @@ class _ConnectedGameState extends State<ConnectedGame> {
       widget.leaveGame();
     }
 
-    channel.stream.listen((data) => setState(() {
-      final game = Phrazzle.fromInfo(GameInfo.fromJsonString(data));
-      updateUsers(game.info.players);
-      setState(() => this.game = game);
-    }));
+    channel.stream.listen((data) async {
+      final json = jsonDecode(data);
+      switch (json['typeKey']) {
+        case 'game':
+          final game = Phrazzle.fromInfo(GameInfo.fromJsonString(json['game']));
+          setState(() => this.game = game);
+          break;
+        case 'playerRecords':
+          final records = json['records'] as Set<PlayerRecord>;
+          final newPlayerUsers = <String, User>{};
+          for (final record in records) {
+            if (playerUsers.keys.contains(record.playerId)) continue;
+            final userResponse = await http.get(Uri.parse('${Env.centralUrl}/user/${record.userId}'));
+            final user = User.fromJsonString(userResponse.body);
+            newPlayerUsers[record.playerId] = user;
+          }
+          setState(() => playerUsers.addAll(newPlayerUsers));
+          break;
+        default:
+          return;
+      }
+    });
 
     channel.sink.add(widget.user.jsonString);
 
@@ -159,7 +163,7 @@ class _ConnectedGameState extends State<ConnectedGame> {
             startRound: startRound,
             enterPhrase: (phrase) => enterPhrase(context, phrase),
             endRound: lockEntry,
-            child: game.info.isStarted == false ? Column(children: [
+            bottomSpace: game.info.isStarted == false ? Column(children: [
               Text('Game code', style: TextStyle(color: Colors.teal, fontSize: 20),),
               Text(gameCode.toUpperCase(), style: TextStyle(color: Colors.cyan, fontSize: 24),)
             ]) : null,

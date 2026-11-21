@@ -3,9 +3,9 @@ import 'package:phrazzle_lib/phrazzle.dart';
 
 class Scores extends StatelessWidget {
   final RoundInfo round;
-  final Map<String, User> users;
+  final Map<String, User> playerUsers;
 
-  const Scores(this.round, this.users, {super.key});
+  const Scores(this.round, this.playerUsers, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class Scores extends StatelessWidget {
                         mainAxisAlignment: .center,
                         spacing: 100,
                         children: [
-                          if (users[playerId]!.name.isNotEmpty) Column(
+                          if (playerUsers[playerId]!.name.isNotEmpty) Column(
                             children: [
                               Text(
                                 'Player',
@@ -34,7 +34,7 @@ class Scores extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                users[playerId]!.name,
+                                playerUsers[playerId]!.name,
                                 style: TextStyle(fontSize: 20),
                               ),
                             ],
@@ -78,7 +78,7 @@ class Scores extends StatelessWidget {
           ),
           if (round.scores.length > 1) TabBar(
             tabs: [
-              for (final player in users.values)
+              for (final player in playerUsers.values)
                 Tab(text: player.name),
             ],
           ),

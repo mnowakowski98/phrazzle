@@ -3,11 +3,11 @@ import 'package:phrazzle/menu/user_tile.dart';
 import 'package:phrazzle_lib/phrazzle.dart';
 
 class Lobby extends StatefulWidget {
-  final Iterable<User> playerUsers;
+  final Map<String, User> users;
 
   final void Function() startGame;
 
-  const Lobby(this.playerUsers, {
+  const Lobby(this.users, {
     super.key,
     required this.startGame,
   });
@@ -24,7 +24,7 @@ class _LobbyState extends State<Lobby> {
         Text('Players', style: TextStyle(color: Colors.teal, fontSize: 24),),
         Divider(),
         Expanded(child: ListView(children: [
-          for (final user in widget.playerUsers) UserTile(user)
+          for (final user in widget.users.values) UserTile(user)
         ],)),
         Divider(),
         ElevatedButton(

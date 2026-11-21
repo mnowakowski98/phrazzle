@@ -19,5 +19,12 @@ class GameStore {
 
   Future<Map<String, Game?>> getGames(Set<String> gameIds) async => {for (final id in gameIds) id : _games[id]};
 
+  // Future<Map<String, Game>> getActiveGames() async => {
+  //   for (final id in _games.keys.where(
+  //     (id) => _games[id]!.info.isEnded == false,
+  //   ))
+  //     id: _games[id]!,
+  // };
+
   Future<void> removeGame(String gameId) async => _games.remove(gameId);
 }

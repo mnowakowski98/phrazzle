@@ -66,7 +66,7 @@ class Games {
     }
 
     final playerId = game.addPlayer();
-    playerStore.setPlayerRecord(PlayerRecord(gameId, playerId, userId));
+    await playerStore.setPlayerRecord(PlayerRecord(gameId, playerId, userId));
 
     print('Created player $playerId in $gameId with $userId');
     return Response.ok(playerId);
@@ -103,7 +103,17 @@ class Games {
 
         // Send current game state and pipe future updates
         channel.sink.add(game.info.jsonString);
-        game.updateStream.listen((_) => channel.sink.add(game.info.jsonString));
+        game.updateStream.listen((_) async {
+          channel.sink.add(jsonEncode({
+            'typeKey': 'game',
+            'game': game.info.toJson()
+          }));
+          final playerRecords = await playerStore.getGameRecords(gameId);
+          channel.sink.add(jsonEncode({
+            'typeKey': 'playerRecords',
+            'records': playerRecords.map((record) => record.toJson())
+          }));
+        });
 
         print('$playerId authenticated as ${user.name} (${user.id})');
       });

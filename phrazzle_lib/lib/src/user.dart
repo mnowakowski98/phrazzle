@@ -27,6 +27,18 @@ class User {
   User.pending(String id) : _id = id, _name = '';
   User.newId(User user) : _id = Uuid().v4(), _name = user._name;
 
+  @override
+  bool operator ==(Object other) {
+    if (other is User) {
+      if (isUser == false) return false;
+      return id == other.id;
+    }
+    return false;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+
   Map<String, dynamic> toJson() => _$UserToJson(this);
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 

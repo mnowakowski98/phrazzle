@@ -9,7 +9,7 @@ import 'package:phrazzle_lib/phrazzle.dart' show GameInfo, User;
 class Game extends StatelessWidget {
   final String playerId;
   final GameInfo game;
-  final Map<String, User> users;
+  final Map<String, User> playerUsers;
 
   final void Function() startGame;
   final void Function() leaveGame;
@@ -18,31 +18,31 @@ class Game extends StatelessWidget {
   final void Function(String phrase) enterPhrase;
   final void Function() endRound;
 
-  final Widget? child;
+  final Widget? bottomSpace;
 
   const Game(
     this.playerId,
     this.game,
-    this.users, {
+    this.playerUsers, {
     required this.startGame,
     required this.leaveGame,
     required this.startRound,
     required this.enterPhrase,
     required this.endRound,
-    this.child,
+    this.bottomSpace,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     final currentRound = game.rounds[game.currentRoundId];
-    final child = this.child;
+    final bottomSpace = this.bottomSpace;
 
     Widget gameWidget = Placeholder();
 
     if (game.isStarted == false) {
       gameWidget = Lobby(
-        users.values,
+        playerUsers,
         startGame: startGame,
       );
     }
@@ -51,16 +51,16 @@ class Game extends StatelessWidget {
       if (currentRound == null) {
         gameWidget = RoundStart(startRound);
       } else {
-        gameWidget = PhraseEntry(playerId, currentRound, users, enterPhrase, endRound);
+        gameWidget = PhraseEntry(playerId, currentRound, playerUsers, enterPhrase, endRound);
       }
     }
 
-    if (game.isStarted && game.isEnded && currentRound != null) gameWidget = Scores(currentRound, users);
+    if (game.isStarted && game.isEnded && currentRound != null) gameWidget = Scores(currentRound, playerUsers);
 
     return Column(children: [
       Expanded(child: gameWidget),
       Divider(),
-      if (child != null) Column(children: [child, Divider()],),
+      if (bottomSpace != null) Column(children: [bottomSpace, Divider()],),
       TextButton(onPressed: leaveGame, child: Text('Leave', style: TextStyle(color: Colors.red),))
     ],);
   }
